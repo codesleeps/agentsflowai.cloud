@@ -19,11 +19,11 @@ log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # Configuration - EDIT THESE
-APP_DOMAIN="yourdomain.com"
+APP_DOMAIN="agentsflowai.cloud"
 APP_USER="deploy"
 APP_DIR="/var/www/agentsflow-ai"
 NODE_VERSION="20"
-ADMIN_EMAIL="admin@yourdomain.com"
+ADMIN_EMAIL="admin@agentsflowai.cloud"
 
 echo "============================================="
 echo " AgentsFlowAI Production Server Setup"

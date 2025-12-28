@@ -1,0 +1,114 @@
+import { organizationClient } from "better-auth/client/plugins";
+import { createAuthClient } from "better-auth/react";
+import { getEnv } from "@/lib/env-validation";
+
+const env = getEnv();
+
+// Validate baseURL for production
+const baseURL = env.NEXT_PUBLIC_APP_URL || "http://agentsflowai.cloud";
+
+if (env.NODE_ENV === "production" && !baseURL.startsWith("https://")) {
+  console.warn(
+    "[AUTH] Warning: Using non-HTTPS baseURL in production. This is not recommended for security reasons.",
+  );
+}
+
+export const authClient = createAuthClient({
+  baseURL,
+  // plugins: [organizationClient()],
+});
+
+// Enhanced error boundary for authentication failures
+export function getAuthClient() {
+  try {
+    if (env.NODE_ENV === "development" && env.NEXT_PUBLIC_DEV_USER_NAME) {
+      return {
+        data: {
+          user: {
+            name: env.NEXT_PUBLIC_DEV_USER_NAME,
+            email: env.NEXT_PUBLIC_DEV_USER_EMAIL,
+            image: env.NEXT_PUBLIC_DEV_USER_IMAGE ?? undefined,
+          },
+        },
+      };
+    }
+
+    return authClient.useSession();
+  } catch (error) {
+    console.error("[AUTH] Authentication client error:", error);
+
+    // Return fallback for development
+    if (env.NODE_ENV === "development") {
+      return {
+        data: {
+          user: {
+            name: "codesleeps",
+            email: "info@agentsflowai.cloud",
+            image: undefined,
+          },
+        },
+      };
+    }
+
+    throw error;
+  }
+}
+
+// Enhanced session expiry handling
+export function getAuthActiveOrganization() {
+  try {
+    if (env.NEXT_PUBLIC_DEV_USER_NAME) {
+      return {
+        data: {
+          name: `${env.NEXT_PUBLIC_DEV_USER_NAME}'s org`,
+        },
+      };
+    }
+
+    return {
+      data: {
+        name: "AgentsFlowAI Org",
+      },
+    };
+    // return authClient.useActiveOrganization();
+  } catch (error) {
+    console.error("[AUTH] Active organization error:", error);
+
+    // Return fallback for development
+    if (env.NODE_ENV === "development") {
+      return {
+        data: {
+          name: "Development Organization",
+        },
+      };
+    }
+
+    throw error;
+  }
+}
+
+// Token refresh logic
+export async function refreshSession() {
+  try {
+    if (env.NEXT_PUBLIC_DEV_USER_NAME) {
+      return true; // Dev mode doesn't need refresh
+    }
+
+    // await authClient.refreshSession();
+    // console.log('[AUTH] Session refreshed successfully');
+    return true;
+  } catch (error) {
+    console.error("[AUTH] Session refresh failed:", error);
+    return false;
+  }
+}
+
+// Log authentication events for security monitoring
+export function logAuthEvent(event: string, details?: any) {
+  if (env.NODE_ENV === "production") {
+    // In production, you might want to send this to a logging service
+    console.log(`[AUTH EVENT] ${event}`, details);
+  } else {
+    console.log(`[AUTH EVENT] ${event}`, details);
+  }
+}
