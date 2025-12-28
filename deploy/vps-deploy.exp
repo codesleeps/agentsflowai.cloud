@@ -1,0 +1,99 @@
+#!/usr/bin/expect -f
+
+set timeout 900
+set user "root"
+set host "72.61.16.111"
+set password "n/6Y#PRl(.ovLy@D,veW"
+set prompt "(%|#|\\$) $"
+
+spawn ssh $user@$host
+
+expect {
+    "Are you sure you want to continue connecting" {
+        send "yes\r"
+        exp_continue
+    }
+    "password:" {
+        send "$password\r"
+    }
+}
+
+expect -re $prompt
+send "rm -rf /var/www/agentsflow-ai\r"
+
+expect -re $prompt
+send "mkdir -p /var/www/agentsflow-ai\r"
+
+expect -re $prompt
+send "mkdir -p /var/backups/agentsflow-ai\r"
+
+expect -re $prompt
+send "chown -R deploy:deploy /var/www/agentsflow-ai\r"
+
+expect -re $prompt
+send "chown -R deploy:deploy /var/backups/agentsflow-ai\r"
+
+expect -re $prompt
+send "su - deploy\r"
+
+expect -re $prompt
+send "cd /var/www/agentsflow-ai\r"
+
+expect -re $prompt
+send "git clone https://github.com/codesleeps/agentsflowai.cloud1.git .\r"
+
+expect -re $prompt
+send "cat > .env.production.local << 'EOF'\r"
+send "# Database\r"
+send "DATABASE_URL=\"postgresql://neondb_owner:npg_fr9mQj6TJHWc@ep-nameless-sound-a9f05rit-pooler.gwc.azure.neon.tech/neondb?sslmode=require&channel_binding=require\"\r"
+send "\r"
+send "# Vybe Integration\r"
+send "VYBE_SERVER_SECRET=\"2lePFvtXZ55RlMQbXMczDJaLTMfRh2GL8RpewQu1jJz1Rit0hdSizIuBoy9jM\"\r"
+send "\r"
+send "# AI Services (Local Ollama)\r"
+send "OLLAMA_BASE_URL=\"http://localhost:11434\"\r"
+send "\r"
+send "# Application\r"
+send "NODE_ENV=\"production\"\r"
+send "PORT=3000\r"
+send "NEXT_PUBLIC_APP_URL=\"https://agentsflowai.cloud\"\r"
+send "SESSION_SECRET=\"SdeDMfRJTddxHYDxvycIZRLhzCpvAebYIG4To2rA\"\r"
+send "\r"
+send "# Inngest (Background Jobs)\r"
+send "INNGEST_APP_ID=\"agentsflowai-app\"\r"
+send "INNGEST_SIGNING_KEY=\"agentsflow_signing_key_72_61_16_111\"\r"
+send "INNGEST_EVENT_KEY=\"agentsflow_event_key_72_61_16_111\"\r"
+send "EOF\r"
+
+expect -re $prompt
+send "chmod +x deploy/deploy.sh\r"
+
+expect -re $prompt
+send "./deploy/deploy.sh main\r"
+
+expect {
+    "password" {
+        send "$password\r"
+        exp_continue
+    }
+    "Deployment Complete!" {
+        puts "Deployment finished successfully."
+    }
+    timeout {
+        puts "Deployment reached timeout limit."
+    }
+}
+
+expect -re $prompt
+send "exit\r"
+expect -re $prompt
+
+# Update Nginx config as root
+send "cp /var/www/agentsflow-ai/deploy/nginx.conf /etc/nginx/sites-available/agentsflow-ai\r"
+expect -re $prompt
+send "nginx -t && systemctl reload nginx\r"
+expect -re $prompt
+puts "Nginx configuration updated and reloaded."
+
+send "exit\r"
+expect eof
