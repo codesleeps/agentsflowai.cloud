@@ -69,10 +69,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log("AI Agent Request:", JSON.stringify(body, null, 2));
+    console.log("[DEBUG] AI Agent Request Body:", JSON.stringify(body, null, 2));
 
     // Validate input using Zod schema
     const validatedData = validateAndSanitize(AIAgentRequestSchema, body);
+    console.log("[DEBUG] Validation successful");
     const { agentId, message } = validatedData;
     let { conversationHistory = [] } = validatedData;
 
@@ -188,6 +189,11 @@ async function handleGoogleProvider(
     role: msg.role === "assistant" ? "model" : "user",
     parts: [{ text: msg.content }],
   }));
+
+  // Google Generative AI requires the first message to be from 'user'
+  while (history.length > 0 && history[0].role === 'model') {
+    history.shift();
+  }
 
   const chat = model.startChat({
     history,
@@ -340,6 +346,7 @@ async function executeWithFallback(
 
   for (const providerConfig of providers) {
     const { provider, model } = providerConfig;
+    console.log(`[DEBUG] Attempting provider: ${provider}, model: ${model}`);
     try {
       let result;
       const systemPrompt = agent.systemPrompt;
