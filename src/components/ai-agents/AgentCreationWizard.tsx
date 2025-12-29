@@ -63,6 +63,7 @@ type FormData = z.infer<typeof combinedSchema>;
 
 interface AgentCreationWizardProps {
   onComplete: () => void;
+  initialData?: Partial<FormData>;
 }
 
 const steps = [
