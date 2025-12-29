@@ -233,51 +233,58 @@ export default function ServicesPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {services?.map((service) => (
-          <Card key={service.id} className="relative overflow-hidden">
-            {service.tier === "enterprise" && (
-              <div className="absolute right-0 top-0 rounded-bl-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white">
-                Most Popular
-              </div>
-            )}
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className={`rounded-lg p-2 ${tierColors[service.tier]}`}>
-                  {tierIcons[service.tier]}
+        {services
+          ?.filter(
+            (service, index, self) =>
+              index === self.findIndex((s) => s.id === service.id),
+          )
+          .map((service) => (
+            <Card key={service.id} className="relative overflow-hidden">
+              {service.tier === "enterprise" && (
+                <div className="absolute right-0 top-0 rounded-bl-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white">
+                  Most Popular
                 </div>
-                <Badge variant="outline" className={tierColors[service.tier]}>
-                  {service.tier}
-                </Badge>
-              </div>
-              <CardTitle className="mt-4">{service.name}</CardTitle>
-              <CardDescription>{service.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">
-                  ${service.price.toLocaleString()}
-                </span>
-                <span className="text-muted-foreground">/package</span>
-              </div>
-              <ul className="space-y-3">
-                {service.features?.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 flex-shrink-0 text-green-500" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button
-                className="w-full"
-                variant={service.tier === "enterprise" ? "default" : "outline"}
-              >
-                Learn More
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+              )}
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className={`rounded-lg p-2 ${tierColors[service.tier]}`}>
+                    {tierIcons[service.tier]}
+                  </div>
+                  <Badge variant="outline" className={tierColors[service.tier]}>
+                    {service.tier}
+                  </Badge>
+                </div>
+                <CardTitle className="mt-4">{service.name}</CardTitle>
+                <CardDescription>{service.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">
+                    ${service.price.toLocaleString()}
+                  </span>
+                  <span className="text-muted-foreground">/package</span>
+                </div>
+                <ul className="space-y-3">
+                  {service.features?.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 flex-shrink-0 text-green-500" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  variant={
+                    service.tier === "enterprise" ? "default" : "outline"
+                  }
+                >
+                  Learn More
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
       </div>
 
       {services?.length === 0 && (
