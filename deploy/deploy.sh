@@ -25,7 +25,8 @@ rsync -avz --delete \
   --exclude='node_modules' \
   --exclude='.next' \
   --exclude='*.log' \
-  --exclude='.env*' \
+  --exclude='.env.local'
+  --exclude='.env.example' \
   "$LOCAL_DIR" "$SERVER:$REMOTE_DIR"
 
 # 3. Install dependencies and start on server
@@ -51,7 +52,7 @@ npx prisma db seed 2>/dev/null || echo "Seed skipped"
 
 # Restart PM2
 echo "Restarting PM2..."
-pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+pm2 reload ecosystem.config.mjs --env production || pm2 start ecosystem.config.mjs --env production
 
 # Save PM2 config
 pm2 save
