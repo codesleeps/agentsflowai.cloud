@@ -149,6 +149,7 @@ enum ActivityType {
   LEAD_UPDATE
   LEAD_DELETE
   LEAD_VIEW
+  LEAD_IMPORT
   
   // AI Agent actions
   AGENT_CREATE
@@ -305,6 +306,27 @@ model Lead {
   callSessions    CallSession[]
 
   @@map("leads")
+}
+
+// ============================================
+// LEAD SEGMENTATION MODELS
+// ============================================
+
+model LeadSegment {
+  id                   String    @id @default(uuid())
+  name                 String
+  description          String?
+  conditions           Json // Array of segment conditions
+  is_active            Boolean   @default(true)
+  created_by           String
+  lead_count           Int? // Cached count of matching leads
+  last_count_update    DateTime?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  @@index([created_by])
+  @@index([is_active])
+  @@map("lead_segments")
 }
 
 // ============================================

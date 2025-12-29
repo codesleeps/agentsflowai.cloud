@@ -18,6 +18,7 @@ export type ActivityType =
   | "LEAD_UPDATE"
   | "LEAD_DELETE"
   | "LEAD_VIEW"
+  | "LEAD_IMPORT"
   | "AGENT_CREATE"
   | "AGENT_UPDATE"
   | "AGENT_DELETE"
@@ -102,7 +103,7 @@ export async function getTeamActivities(
     select: { userId: true },
   });
 
-  const userIds = teamMembers.map((m) => m.userId);
+  const userIds = teamMembers.map((m) => m.user_id);
 
   return prisma.activityLog.findMany({
     where: {
@@ -175,6 +176,7 @@ export const ActivityTypeDescriptions: Record<ActivityType, string> = {
   LEAD_UPDATE: "Updated lead",
   LEAD_DELETE: "Deleted lead",
   LEAD_VIEW: "Viewed lead",
+  LEAD_IMPORT: "Imported lead",
   AGENT_CREATE: "Created AI agent",
   AGENT_UPDATE: "Updated AI agent",
   AGENT_DELETE: "Deleted AI agent",
