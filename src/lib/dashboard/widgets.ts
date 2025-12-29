@@ -8,6 +8,7 @@ import {
   Calendar,
   MessageSquare,
   Mail,
+  Target,
 } from "lucide-react";
 
 // Widget interface
@@ -46,6 +47,52 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     order: 1,
     enabled: true,
   },
+  aiUsageAnalytics: {
+    title: "AI Usage Analytics",
+    description: "AI model usage, performance, and cost tracking",
+    icon: Bot,
+    component: "AIUsageAnalyticsWidget",
+    defaultSize: "medium",
+    configurable: true,
+    category: "ai",
+    order: 2,
+    enabled: true,
+  },
+  leadConversionAnalytics: {
+    title: "Lead Conversion Analytics",
+    description: "Conversion rates, source performance, and funnel analysis",
+    icon: Target,
+    component: "LeadConversionAnalyticsWidget",
+    defaultSize: "large",
+    configurable: true,
+    category: "leads",
+    order: 3,
+    enabled: true,
+  },
+  appointmentStatistics: {
+    title: "Appointment Statistics",
+    description:
+      "Appointment metrics, completion rates, and scheduling insights",
+    icon: Calendar,
+    component: "AppointmentStatisticsWidget",
+    defaultSize: "medium",
+    configurable: true,
+    category: "appointments",
+    order: 4,
+    enabled: true,
+  },
+  chatAnalytics: {
+    title: "Chat Analytics",
+    description:
+      "Conversation metrics, sentiment analysis, and channel performance",
+    icon: MessageSquare,
+    component: "ChatAnalyticsWidget",
+    defaultSize: "medium",
+    configurable: true,
+    category: "communications",
+    order: 5,
+    enabled: true,
+  },
   aiAgents: {
     title: "AI Agents Status",
     description: "Current status of AI automation agents",
@@ -54,7 +101,7 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "medium",
     configurable: true,
     category: "ai",
-    order: 2,
+    order: 6,
     enabled: true,
   },
   leadPipeline: {
@@ -65,7 +112,7 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "medium",
     configurable: true,
     category: "leads",
-    order: 3,
+    order: 7,
     enabled: true,
   },
   leadSources: {
@@ -76,7 +123,7 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "medium",
     configurable: true,
     category: "leads",
-    order: 4,
+    order: 8,
     enabled: true,
   },
   recentLeads: {
@@ -87,7 +134,7 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "large",
     configurable: true,
     category: "leads",
-    order: 5,
+    order: 9,
     enabled: true,
   },
   quickActions: {
@@ -98,7 +145,7 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "small",
     configurable: true,
     category: "analytics",
-    order: 6,
+    order: 10,
     enabled: true,
   },
   appointments: {
@@ -109,7 +156,7 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "medium",
     configurable: true,
     category: "appointments",
-    order: 7,
+    order: 11,
     enabled: true,
   },
   conversations: {
@@ -120,7 +167,7 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "medium",
     configurable: true,
     category: "communications",
-    order: 8,
+    order: 12,
     enabled: true,
   },
   emailMetrics: {
@@ -131,19 +178,19 @@ export const WIDGETS_REGISTRY: Record<string, Omit<DashboardWidget, "id">> = {
     defaultSize: "medium",
     configurable: true,
     category: "communications",
-    order: 9,
+    order: 13,
     enabled: true,
   },
   aiUsage: {
-    title: "AI Usage Analytics",
-    description: "AI model usage and cost tracking",
+    title: "AI Usage Summary",
+    description: "Basic AI usage statistics",
     icon: Bot,
     component: "AIUsageWidget",
     defaultSize: "small",
     configurable: true,
     category: "ai",
-    order: 10,
-    enabled: true,
+    order: 14,
+    enabled: false, // Disabled by default since we have the more detailed analytics
   },
 };
 
