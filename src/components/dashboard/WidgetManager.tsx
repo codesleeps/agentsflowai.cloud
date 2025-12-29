@@ -18,6 +18,10 @@ import { AppointmentsWidget } from "./widgets/AppointmentsWidget";
 import { ConversationsWidget } from "./widgets/ConversationsWidget";
 import { EmailMetricsWidget } from "./widgets/EmailMetricsWidget";
 import { AIUsageWidget } from "./widgets/AIUsageWidget";
+import { AIUsageAnalyticsWidget } from "./widgets/AIUsageAnalyticsWidget";
+import { LeadConversionAnalyticsWidget } from "./widgets/LeadConversionAnalyticsWidget";
+import { AppointmentStatisticsWidget } from "./widgets/AppointmentStatisticsWidget";
+import { ChatAnalyticsWidget } from "./widgets/ChatAnalyticsWidget";
 
 interface WidgetManagerProps {
   stats: any;
@@ -77,6 +81,14 @@ export function WidgetManager({ stats, className }: WidgetManagerProps) {
     switch (widget.component) {
       case "StatsOverviewWidget":
         return <StatsOverviewWidget {...widgetProps} />;
+      case "AIUsageAnalyticsWidget":
+        return <AIUsageAnalyticsWidget {...widgetProps} />;
+      case "LeadConversionAnalyticsWidget":
+        return <LeadConversionAnalyticsWidget {...widgetProps} />;
+      case "AppointmentStatisticsWidget":
+        return <AppointmentStatisticsWidget {...widgetProps} />;
+      case "ChatAnalyticsWidget":
+        return <ChatAnalyticsWidget {...widgetProps} />;
       case "AIAgentsWidget":
         return <AIAgentsWidget {...widgetProps} />;
       case "LeadPipelineWidget":
