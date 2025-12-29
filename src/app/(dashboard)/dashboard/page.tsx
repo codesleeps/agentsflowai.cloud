@@ -14,6 +14,7 @@ import {
   Zap,
   Code,
   Lock,
+  CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +30,48 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getAuthClient } from "@/client-lib/auth-client";
 import { useDashboardStats } from "@/client-lib/api-client";
+import { WidgetManager } from "@/components/dashboard/WidgetManager";
+
+// Date range presets
+const DATE_PRESETS = [
+  { label: "Last 7 days", days: 7 },
+  { label: "Last 30 days", days: 30 },
+  { label: "Last 90 days", days: 90 },
+  { label: "This month", days: 30, isCurrentMonth: true },
+  { label: "Last month", days: 30, isLastMonth: true },
+];
+
+// Helper function to format date for input
+function formatDateForInput(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
+
+// Helper function to get preset date range
+function getPresetDateRange(preset: (typeof DATE_PRESETS)[0]): {
+  start: Date;
+  end: Date;
+} {
+  const today = new Date();
+
+  if (preset.isCurrentMonth) {
+    return {
+      start: new Date(today.getFullYear(), today.getMonth(), 1),
+      end: new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59),
+    };
+  }
+
+  if (preset.isLastMonth) {
+    return {
+      start: new Date(today.getFullYear(), today.getMonth() - 1, 1),
+      end: new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59),
+    };
+  }
+
+  const end = today;
+  const start = new Date(today.getTime() - preset.days * 24 * 60 * 60 * 1000);
+
+  return { start, end };
+}
 
 const statusColors: Record<string, string> = {
   new: "bg-blue-500",
@@ -48,9 +91,47 @@ const sourceIcons: Record<string, string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { data: stats, isLoading } = useDashboardStats();
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>(
+    () => {
+      // Default to current month
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const end = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+      );
+      return {
+        start: formatDateForInput(start),
+        end: formatDateForInput(end),
+      };
+    },
+  );
+  const [customRange, setCustomRange] = useState(false);
+
+  const { data: stats, isLoading } = useDashboardStats(
+    dateRange.start,
+    dateRange.end,
+  );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+
+  const handlePresetSelect = (preset: (typeof DATE_PRESETS)[0]) => {
+    const range = getPresetDateRange(preset);
+    setDateRange({
+      start: formatDateForInput(range.start),
+      end: formatDateForInput(range.end),
+    });
+    setCustomRange(false);
+  };
+
+  const handleCustomDateChange = (field: "start" | "end", value: string) => {
+    setDateRange((prev) => ({ ...prev, [field]: value }));
+    setCustomRange(true);
+  };
 
   useEffect(() => {
     // Check authentication
@@ -103,19 +184,87 @@ export default function DashboardPage() {
             AI-Powered Business Automation Dashboard
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/chat">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              AI Chat Agent
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/leads">
-              <Users className="mr-2 h-4 w-4" />
-              Manage Leads
-            </Link>
-          </Button>
+        <div className="flex flex-col items-end gap-2">
+          {/* Date Range Controls */}
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Period:</span>
+            <div className="flex gap-1">
+              {DATE_PRESETS.map((preset) => (
+                <Button
+                  key={preset.label}
+                  variant={!customRange ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePresetSelect(preset)}
+                  className="text-xs"
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Date Range */}
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => handleCustomDateChange("start", e.target.value)}
+              className="rounded-md border border-input bg-background px-3 py-1 text-sm"
+            />
+            <span className="text-muted-foreground">to</span>
+            <input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => handleCustomDateChange("end", e.target.value)}
+              className="rounded-md border border-input bg-background px-3 py-1 text-sm"
+            />
+            {customRange && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const today = new Date();
+                  const start = new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    1,
+                  );
+                  const end = new Date(
+                    today.getFullYear(),
+                    today.getMonth() + 1,
+                    0,
+                    23,
+                    59,
+                    59,
+                  );
+                  setDateRange({
+                    start: formatDateForInput(start),
+                    end: formatDateForInput(end),
+                  });
+                  setCustomRange(false);
+                }}
+                className="text-xs"
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <Button asChild>
+              <Link href="/chat">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                AI Chat Agent
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/leads">
+                <Users className="mr-2 h-4 w-4" />
+                Manage Leads
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -129,7 +278,28 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalLeads ?? 0}</div>
             <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-              {stats?.monthlyGrowth && (
+              {stats?.periodComparison && (
+                <>
+                  <ArrowUpRight
+                    className={`h-3 w-3 ${
+                      stats.periodComparison.growthPercentage >= 0
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }`}
+                  />
+                  <span
+                    className={
+                      stats.periodComparison.growthPercentage >= 0
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }
+                  >
+                    {stats.periodComparison.growthPercentage >= 0 ? "+" : ""}
+                    {stats.periodComparison.growthPercentage}%
+                  </span>
+                </>
+              )}
+              {stats?.monthlyGrowth && !stats?.periodComparison && (
                 <>
                   <ArrowUpRight
                     className={`h-3 w-3 ${
@@ -150,7 +320,7 @@ export default function DashboardPage() {
                   </span>
                 </>
               )}
-              from last month
+              from previous period
             </p>
           </CardContent>
         </Card>
@@ -222,9 +392,15 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats.aiUsage.requestsThisMonth.toLocaleString()}
+                  {(
+                    stats.aiUsage?.requestsThisPeriod ||
+                    stats.aiUsage?.requestsThisMonth ||
+                    0
+                  ).toLocaleString()}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">This month</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {stats.dateRange ? "This period" : "This month"}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -267,258 +443,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* AI Agents Status */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-primary" />
-              AI Agents
-            </CardTitle>
-            <CardDescription>Active automation agents</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-green-500/20 bg-green-500/10 p-3">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                <span className="font-medium">Chat Agent</span>
-              </div>
-              <Badge
-                variant="secondary"
-                className="bg-green-500/20 text-green-700 dark:text-green-400"
-              >
-                Active
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-green-500/20 bg-green-500/10 p-3">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                <span className="font-medium">Lead Qualifier</span>
-              </div>
-              <Badge
-                variant="secondary"
-                className="bg-green-500/20 text-green-700 dark:text-green-400"
-              >
-                Active
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-green-500/20 bg-green-500/10 p-3">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                <span className="font-medium">Service Recommender</span>
-              </div>
-              <Badge
-                variant="secondary"
-                className="bg-green-500/20 text-green-700 dark:text-green-400"
-              >
-                Active
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-blue-500/20 bg-blue-500/10 p-3">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-                <span className="font-medium">Web Developer</span>
-              </div>
-              <Badge
-                variant="secondary"
-                className="bg-blue-500/20 text-blue-700 dark:text-blue-400"
-              >
-                Active
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-purple-500/20 bg-purple-500/10 p-3">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-purple-500" />
-                <span className="font-medium">Analytics Agent</span>
-              </div>
-              <Badge
-                variant="secondary"
-                className="bg-purple-500/20 text-purple-700 dark:text-purple-400"
-              >
-                Standby
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lead Pipeline */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Lead Pipeline
-            </CardTitle>
-            <CardDescription>Leads by status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {stats?.leadsByStatus?.map((item) => (
-              <div key={item.status} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium capitalize">
-                    {item.status}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {item.count}
-                  </span>
-                </div>
-                <Progress
-                  value={(item.count / (stats.totalLeads || 1)) * 100}
-                  className={`h-2 ${statusColors[item.status] || "bg-gray-500"}`}
-                />
-              </div>
-            ))}
-            {(!stats?.leadsByStatus || stats.leadsByStatus.length === 0) && (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                No leads yet
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Lead Sources */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Lead Sources
-            </CardTitle>
-            <CardDescription>Where leads come from</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {stats?.leadsBySource?.map((item) => (
-              <div
-                key={item.source}
-                className="flex items-center justify-between rounded-lg bg-muted/50 p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">
-                    {sourceIcons[item.source] || "📊"}
-                  </span>
-                  <span className="font-medium capitalize">{item.source}</span>
-                </div>
-                <Badge variant="outline">{item.count}</Badge>
-              </div>
-            ))}
-            {(!stats?.leadsBySource || stats.leadsBySource.length === 0) && (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                No source data yet
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent Leads */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Recent Leads
-              </CardTitle>
-              <CardDescription>Latest incoming leads</CardDescription>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/leads">View All</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stats?.recentLeads?.map((lead) => (
-                <div
-                  key={lead.id}
-                  className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      <span className="text-sm font-semibold text-primary">
-                        {lead.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{lead.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {lead.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="hidden text-right md:block">
-                      <p className="text-sm font-medium">
-                        {lead.company || "No company"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Score: {lead.score}/100
-                      </p>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className={`${statusColors[lead.status]}/20 capitalize`}
-                    >
-                      {lead.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-              {(!stats?.recentLeads || stats.recentLeads.length === 0) && (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No leads yet. Start by creating one or using the AI Chat
-                  Agent.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Quick Actions
-            </CardTitle>
-            <CardDescription>Common tasks</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full justify-start" variant="outline" asChild>
-              <Link href="/chat">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Start AI Conversation
-              </Link>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" asChild>
-              <Link href="/leads/new">
-                <Users className="mr-2 h-4 w-4" />
-                Add New Lead
-              </Link>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" asChild>
-              <Link href="/services">
-                <Target className="mr-2 h-4 w-4" />
-                Manage Services
-              </Link>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" asChild>
-              <Link href="/analytics">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                View Analytics
-              </Link>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" asChild>
-              <Link href="/ai-agents">
-                <Code className="mr-2 h-4 w-4" />
-                Web Developer Agent
-              </Link>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" asChild>
-              <Link href="/appointments">
-                <Calendar className="mr-2 h-4 w-4" />
-                Appointments
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Dashboard Widgets */}
+      <WidgetManager stats={stats} />
     </div>
   );
 }

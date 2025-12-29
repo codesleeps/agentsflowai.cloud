@@ -18,8 +18,13 @@ const fetcher = <T>(url: string) =>
   apiClient.get<T>(url).then((res) => res.data);
 
 // Dashboard
-export function useDashboardStats() {
-  return useSWR<DashboardStats, Error>("/dashboard/stats", fetcher, {
+export function useDashboardStats(startDate?: string, endDate?: string) {
+  const params = new URLSearchParams();
+  if (startDate) params.set("startDate", startDate);
+  if (endDate) params.set("endDate", endDate);
+  const queryString = params.toString();
+  const url = `/dashboard/stats${queryString ? `?${queryString}` : ""}`;
+  return useSWR<DashboardStats, Error>(url, fetcher, {
     refreshInterval: 30000, // Refresh every 30 seconds
   });
 }

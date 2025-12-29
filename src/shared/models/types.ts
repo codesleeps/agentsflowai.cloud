@@ -100,14 +100,29 @@ export interface DashboardStats {
   leadsByStatus: { status: string; count: number }[];
   leadsBySource: { source: string; count: number }[];
   recentLeads: Lead[];
-  // Additional analytics
+  // Enhanced analytics with period comparison
+  periodComparison?: {
+    current: {
+      leads: number;
+      startDate: string;
+      endDate: string;
+    };
+    previous: {
+      leads: number;
+      startDate: string;
+      endDate: string;
+    };
+    growthPercentage: number;
+  };
+  // Legacy support for monthlyGrowth (for backward compatibility)
   monthlyGrowth?: {
     current: number;
     previous: number;
     percentage: number;
   };
   aiUsage?: {
-    requestsThisMonth: number;
+    requestsThisMonth?: number; // Legacy
+    requestsThisPeriod?: number; // New
   };
   emailMetrics?: {
     totalSent: number;
@@ -115,6 +130,11 @@ export interface DashboardStats {
     totalClicked: number;
     openRate: number;
     clickRate: number;
+  };
+  // Date range information
+  dateRange?: {
+    start: string;
+    end: string;
   };
 }
 
