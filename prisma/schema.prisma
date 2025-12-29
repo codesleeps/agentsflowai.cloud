@@ -48,9 +48,10 @@ model User {
   ownedTeams    Team[]         @relation("TeamOwner")
   teamMemberships TeamMember[]
   activities    ActivityLog[]
-  
+
   AIModelConfig AIModelConfig[]
   AIModelUsage  AIModelUsage[]
+  userAIAgents  UserAIAgent[]
 
   @@map("users")
 }
@@ -708,6 +709,35 @@ model AIProviderCost {
   updated_at                DateTime @updatedAt
 
   @@map("ai_provider_costs")
+}
+
+// User-created AI Agents
+model UserAIAgent {
+  id                String    @id @default(uuid())
+  user_id           String
+  name              String
+  description       String?
+  icon              String    @default("🤖")
+  category          String    @default("custom")
+  system_prompt     String
+  model             String    @default("mistral:latest")
+  provider          String    @default("ollama")
+  supported_providers Json    @default("[]") // Array of provider configs
+  default_provider  String   @default("ollama")
+  cost_tier         String    @default("medium") // 'free' | 'low' | 'medium' | 'high'
+  is_active         Boolean   @default(true)
+  is_public         Boolean   @default(false) // Can be shared with team
+  usage_count       Int       @default(0)
+  last_used_at      DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([is_public])
+  @@index([category])
+  @@map("user_ai_agents")
 }
 
 // ============================================
