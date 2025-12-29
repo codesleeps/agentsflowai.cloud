@@ -466,11 +466,11 @@ export async function getSegments(createdBy?: string): Promise<Segment[]> {
     orderBy: { created_at: "desc" },
   });
 
-  return segments.map((segment) => ({
+  return segments.map((segment: any) => ({
     id: segment.id,
     name: segment.name,
     description: segment.description || undefined,
-    conditions: segment.conditions as SegmentCondition[],
+    conditions: segment.conditions as unknown as SegmentCondition[],
     isActive: segment.is_active,
     createdBy: segment.created_by,
     createdAt: segment.created_at,
@@ -492,7 +492,7 @@ export async function getSegment(id: string): Promise<Segment | null> {
     id: segment.id,
     name: segment.name,
     description: segment.description || undefined,
-    conditions: segment.conditions as SegmentCondition[],
+    conditions: segment.conditions as unknown as SegmentCondition[],
     isActive: segment.is_active,
     createdBy: segment.created_by,
     createdAt: segment.created_at,
@@ -609,7 +609,7 @@ export async function getSegmentStatistics(segmentId: string) {
     "81-100": 0,
   };
 
-  scoreDistribution.forEach((lead) => {
+  scoreDistribution.forEach((lead: any) => {
     if (lead.score <= 20) scoreRanges["0-20"]++;
     else if (lead.score <= 40) scoreRanges["21-40"]++;
     else if (lead.score <= 60) scoreRanges["41-60"]++;
@@ -619,11 +619,11 @@ export async function getSegmentStatistics(segmentId: string) {
 
   return {
     totalCount,
-    statusBreakdown: statusBreakdown.map((item) => ({
+    statusBreakdown: statusBreakdown.map((item: any) => ({
       status: item.status,
       count: item._count.id,
     })),
-    sourceBreakdown: sourceBreakdown.map((item) => ({
+    sourceBreakdown: sourceBreakdown.map((item: any) => ({
       source: item.source,
       count: item._count.id,
     })),
@@ -746,15 +746,18 @@ export function validateSegmentConditions(conditions: SegmentCondition[]): {
         if (
           condition.operator === "equals" &&
           fieldDef.options &&
-          !fieldDef.options.includes(condition.value)
+          typeof condition.value === "string" &&
+          !(fieldDef.options as readonly string[]).includes(condition.value)
         ) {
           errors.push(
             `Invalid value "${condition.value}" for enum field "${condition.field}"`,
           );
         }
         if (condition.operator === "in" && fieldDef.options) {
-          const invalidValues = condition.value.filter(
-            (v: any) => !fieldDef.options!.includes(v),
+          const invalidValues = (condition.value as any[]).filter(
+            (v) =>
+              typeof v === "string" &&
+              !(fieldDef.options as readonly string[])!.includes(v),
           );
           if (invalidValues.length > 0) {
             errors.push(
