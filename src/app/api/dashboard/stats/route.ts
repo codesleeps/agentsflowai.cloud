@@ -4,19 +4,74 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { handleApiError } from "@/lib/api-errors";
 import type { DashboardStats } from "@/shared/models/types";
 
+// Date range type for filtering
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
+// Helper function to parse date range from query params
+function parseDateRange(searchParams: URLSearchParams): DateRange {
+  const startParam = searchParams.get("startDate");
+  const endParam = searchParams.get("endDate");
+
+  const today = new Date();
+
+  if (startParam && endParam) {
+    return {
+      start: new Date(startParam),
+      end: new Date(endParam),
+    };
+  }
+
+  // Default to current month
+  return {
+    start: new Date(today.getFullYear(), today.getMonth(), 1),
+    end: new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59),
+  };
+}
+
+// Helper function to get comparison period
+function getComparisonPeriod(dateRange: DateRange): DateRange {
+  const rangeLength = dateRange.end.getTime() - dateRange.start.getTime();
+  const comparisonStart = new Date(dateRange.start.getTime() - rangeLength);
+  const comparisonEnd = new Date(dateRange.start.getTime() - 1);
+
+  return {
+    start: comparisonStart,
+    end: comparisonEnd,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Authenticate user
     const user = await requireAuth(request);
 
-    // Get total leads
-    const totalLeads = await prisma.lead.count();
+    // Parse date range from query params
+    const { searchParams } = new URL(request.url);
+    const dateRange = parseDateRange(searchParams);
+    const comparisonRange = getComparisonPeriod(dateRange);
 
-    // Get qualified leads (qualified, proposal, won)
+    // Get total leads for the date range
+    const totalLeads = await prisma.lead.count({
+      where: {
+        created_at: {
+          gte: dateRange.start,
+          lte: dateRange.end,
+        },
+      },
+    });
+
+    // Get qualified leads (qualified, proposal, won) for the date range
     const qualifiedLeads = await prisma.lead.count({
       where: {
         status: {
           in: ["qualified", "proposal", "won"],
+        },
+        created_at: {
+          gte: dateRange.start,
+          lte: dateRange.end,
         },
       },
     });
@@ -38,17 +93,27 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Calculate revenue from won leads
+    // Calculate revenue from won leads in the date range
     const wonLeads = await prisma.lead.count({
       where: {
         status: "won",
+        created_at: {
+          gte: dateRange.start,
+          lte: dateRange.end,
+        },
       },
     });
     const revenue = wonLeads * 4999; // Estimated based on enterprise package
 
-    // Get leads by status
+    // Get leads by status for the date range
     const leadsByStatusData = await prisma.lead.groupBy({
       by: ["status"],
+      where: {
+        created_at: {
+          gte: dateRange.start,
+          lte: dateRange.end,
+        },
+      },
       _count: {
         id: true,
       },
@@ -59,9 +124,15 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get leads by source
+    // Get leads by source for the date range
     const leadsBySourceData = await prisma.lead.groupBy({
       by: ["source"],
+      where: {
+        created_at: {
+          gte: dateRange.start,
+          lte: dateRange.end,
+        },
+      },
       _count: {
         id: true,
       },
@@ -72,8 +143,14 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get recent leads
+    // Get recent leads for the date range
     const recentLeads = await prisma.lead.findMany({
+      where: {
+        created_at: {
+          gte: dateRange.start,
+          lte: dateRange.end,
+        },
+      },
       orderBy: {
         created_at: "desc",
       },
@@ -91,46 +168,36 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Get additional analytics
-    const today = new Date();
-    const lastMonth = new Date(
-      today.getFullYear(),
-      today.getMonth() - 1,
-      today.getDate(),
-    );
+    // Get additional analytics with date range comparison
 
-    // Monthly leads growth
-    const currentMonthLeads = await prisma.lead.count({
+    // Period comparison for growth calculation
+    const currentPeriodLeads = totalLeads;
+
+    const previousPeriodLeads = await prisma.lead.count({
       where: {
         created_at: {
-          gte: new Date(today.getFullYear(), today.getMonth(), 1),
+          gte: comparisonRange.start,
+          lte: comparisonRange.end,
         },
       },
     });
 
-    const lastMonthLeads = await prisma.lead.count({
+    // AI Model Usage Stats for the date range
+    const aiUsageThisPeriod = await prisma.aIModelUsage.count({
       where: {
         created_at: {
-          gte: lastMonth,
-          lt: new Date(today.getFullYear(), today.getMonth(), 1),
+          gte: dateRange.start,
+          lte: dateRange.end,
         },
       },
     });
 
-    // AI Model Usage Stats
-    const aiUsageThisMonth = await prisma.aIModelUsage.count({
-      where: {
-        created_at: {
-          gte: new Date(today.getFullYear(), today.getMonth(), 1),
-        },
-      },
-    });
-
-    // Email campaign performance
+    // Email campaign performance for the date range
     const emailCampaigns = await prisma.emailCampaign.findMany({
       where: {
         created_at: {
-          gte: new Date(today.getFullYear(), today.getMonth(), 1),
+          gte: dateRange.start,
+          lte: dateRange.end,
         },
       },
       select: {
@@ -181,20 +248,31 @@ export async function GET(request: NextRequest) {
         updated_at: lead.created_at.toISOString(),
         status: lead.status as Lead["status"],
         source: lead.source as Lead["source"],
+        created_at: lead.created_at.toISOString(),
       })),
-      // Additional analytics data
-      monthlyGrowth: {
-        current: currentMonthLeads,
-        previous: lastMonthLeads,
-        percentage:
-          lastMonthLeads > 0
+      // Enhanced analytics with period comparison
+      periodComparison: {
+        current: {
+          leads: currentPeriodLeads,
+          startDate: dateRange.start.toISOString(),
+          endDate: dateRange.end.toISOString(),
+        },
+        previous: {
+          leads: previousPeriodLeads,
+          startDate: comparisonRange.start.toISOString(),
+          endDate: comparisonRange.end.toISOString(),
+        },
+        growthPercentage:
+          previousPeriodLeads > 0
             ? Math.round(
-                ((currentMonthLeads - lastMonthLeads) / lastMonthLeads) * 100,
+                ((currentPeriodLeads - previousPeriodLeads) /
+                  previousPeriodLeads) *
+                  100,
               )
             : 0,
       },
       aiUsage: {
-        requestsThisMonth: aiUsageThisMonth,
+        requestsThisPeriod: aiUsageThisPeriod,
       },
       emailMetrics: {
         totalSent: totalEmailsSent,
@@ -208,6 +286,10 @@ export async function GET(request: NextRequest) {
           totalEmailsSent > 0
             ? Math.round((totalEmailsClicked / totalEmailsSent) * 100)
             : 0,
+      },
+      dateRange: {
+        start: dateRange.start.toISOString(),
+        end: dateRange.end.toISOString(),
       },
     };
 
