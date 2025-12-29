@@ -439,7 +439,7 @@ export async function updateSegment(
     id: segment.id,
     name: segment.name,
     description: segment.description || undefined,
-    conditions: segment.conditions as SegmentCondition[],
+    conditions: segment.conditions as unknown as SegmentCondition[],
     isActive: segment.is_active,
     createdBy: segment.created_by,
     createdAt: segment.created_at,
