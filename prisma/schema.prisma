@@ -305,6 +305,8 @@ model Lead {
   emailsSent      EmailSent[]
   callSessions    CallSession[]
 
+  notificationLogs NotificationLog[]
+
   @@map("leads")
 }
 
@@ -666,7 +668,56 @@ model Appointment {
 
   lead Lead @relation(fields: [lead_id], references: [id])
 
+  notificationLogs NotificationLog[]
+  reminders AppointmentReminder[]
+
   @@map("appointments")
+}
+
+model NotificationLog {
+  id             String       @id @default(uuid())
+  type           String
+  recipient      String
+  template_id    String
+  appointment_id String?
+  lead_id        String?
+  status         String
+  sent_at        DateTime
+  metadata       Json?
+  created_at     DateTime     @default(now())
+
+  appointment Appointment? @relation(fields: [appointment_id], references: [id])
+  lead        Lead?        @relation(fields: [lead_id], references: [id])
+
+  @@index([appointment_id])
+  @@index([lead_id])
+  @@index([status])
+  @@index([sent_at])
+  @@index([type])
+  @@map("notification_logs")
+}
+
+model AppointmentReminder {
+  id             String   @id @default(uuid())
+  appointment_id String
+  reminder_type  String
+  timing         String
+  custom_minutes Int?
+  template_id    String
+  scheduled_for  DateTime
+  status         String   @default("pending")
+  sent_at        DateTime?
+  error_message  String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointment_id], references: [id], onDelete: Cascade)
+
+  @@index([appointment_id])
+  @@index([status])
+  @@index([scheduled_for])
+  @@index([status, scheduled_for])
+  @@map("appointment_reminders")
 }
 
 model AnalyticsEvent {
