@@ -12,7 +12,7 @@ const ScheduleRemindersSchema = z.object({
   appointmentId: z.string().min(1, "Appointment ID is required"),
   configs: z.array(
     z.object({
-      enabled: z.boolean(),
+      enabled: z.boolean().optional().default(true),
       timing: z.enum(["24h", "1h", "15m", "custom"]),
       customMinutes: z.number().optional(),
       templateId: z.string().min(1, "Template ID is required"),
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     const { appointmentId, configs } = ScheduleRemindersSchema.parse(body);
 
-    await scheduleAppointmentReminders(appointmentId, configs);
+    await scheduleAppointmentReminders(appointmentId, configs as any);
 
     return NextResponse.json({
       success: true,

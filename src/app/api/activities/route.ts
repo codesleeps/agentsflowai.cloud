@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ActivityType } from "@prisma/client";
 import { requireAuth } from "@/lib/auth-helpers";
 import {
   getUserActivities,

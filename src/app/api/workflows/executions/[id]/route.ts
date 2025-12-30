@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -15,18 +14,21 @@ const updateExecutionSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const execution = await prisma.workflowExecution.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id,
+        workflow: {
+          created_by: user.id
+        }
       },
       include: {
         workflow: {
@@ -34,7 +36,7 @@ export async function GET(
             id: true,
             name: true,
             description: true,
-            steps: true,
+            actions: true, // was steps, but schema has actions
           },
         },
       },
@@ -59,22 +61,29 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     const validatedData = updateExecutionSchema.parse(body);
 
-    // Verify execution ownership
+    // Verify execution ownership - note: WorkflowExecution doesn't have userId, so we check via workflow
+    // But since we can't easily do nested where on update with simple findFirst logic cleanly without include,
+    // we'll fetch first.
+
+    // Check if execution exists and belongs to a workflow created by user
     const existingExecution = await prisma.workflowExecution.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id,
+        workflow: {
+          created_by: user.id
+        }
       },
     });
 
@@ -88,8 +97,10 @@ export async function PUT(
     const execution = await prisma.workflowExecution.update({
       where: { id: params.id },
       data: {
-        ...validatedData,
-        completedAt: validatedData.completedAt
+        status: validatedData.status,
+        // output_data: validatedData.outputData, // Removed as not in schema
+        error_message: validatedData.errorMessage,
+        completed_at: validatedData.completedAt
           ? new Date(validatedData.completedAt)
           : undefined,
       },
@@ -123,11 +134,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  props: { params: Promise<{ id: string }> },
 ) {
+  const params = await props.params;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -135,7 +147,9 @@ export async function DELETE(
     const existingExecution = await prisma.workflowExecution.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id,
+        workflow: {
+          created_by: user.id
+        }
       },
     });
 

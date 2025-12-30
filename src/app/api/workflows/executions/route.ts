@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -21,8 +20,8 @@ const updateExecutionSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -33,11 +32,13 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get("offset") || "0");
 
     const where: any = {
-      userId: session.user.id,
+      workflow: {
+        created_by: user.id
+      }
     };
 
     if (workflowId) {
-      where.workflowId = workflowId;
+      where.workflow_id = workflowId;
     }
 
     if (status) {
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        created_at: "desc",
       },
       take: limit,
       skip: offset,
@@ -84,8 +85,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
     const workflow = await prisma.workflow.findFirst({
       where: {
         id: validatedData.workflowId,
-        userId: session.user.id,
+        created_by: user.id,
       },
     });
 
@@ -109,13 +110,11 @@ export async function POST(request: NextRequest) {
 
     const execution = await prisma.workflowExecution.create({
       data: {
-        workflowId: validatedData.workflowId,
-        userId: session.user.id,
+        workflow_id: validatedData.workflowId,
+        trigger_type: "manual",
+        trigger_data: validatedData.inputData || {}, // Map inputData to trigger_data
         status: "pending",
-        inputData: validatedData.inputData || {},
-        scheduledAt: validatedData.scheduledAt
-          ? new Date(validatedData.scheduledAt)
-          : null,
+        // validatedData.scheduledAt ignored as per schema
       },
       include: {
         workflow: {
@@ -159,7 +158,17 @@ export async function POST(request: NextRequest) {
 async function executeWorkflow(executionId: string) {
   const execution = await prisma.workflowExecution.findUnique({
     where: { id: executionId },
-    include: { workflow: true },
+    include: {
+      workflow: {
+        include: {
+          actions: {
+            orderBy: {
+              order: 'asc'
+            }
+          }
+        }
+      }
+    },
   });
 
   if (!execution) return;
@@ -174,23 +183,23 @@ async function executeWorkflow(executionId: string) {
     // This is a simplified implementation - in a real system,
     // you'd have a proper workflow engine
 
-    const steps = execution.workflow.steps as any[];
-    let currentData = execution.inputData;
+    const actions = execution.workflow.actions;
+    let currentData = execution.trigger_data;
 
-    for (const step of steps) {
+    for (const action of actions) {
       // Execute each step based on its type
-      switch (step.type) {
+      switch (action.action_type) {
         case "ai_agent":
           // Call AI agent
-          currentData = await executeAIAgentStep(step, currentData);
+          currentData = await executeAIAgentStep(action, currentData);
           break;
         case "api_call":
           // Make API call
-          currentData = await executeAPICallStep(step, currentData);
+          currentData = await executeAPICallStep(action, currentData);
           break;
         case "condition":
           // Evaluate condition
-          currentData = await executeConditionStep(step, currentData);
+          currentData = await executeConditionStep(action, currentData);
           break;
         default:
           break;
@@ -201,8 +210,8 @@ async function executeWorkflow(executionId: string) {
       where: { id: executionId },
       data: {
         status: "completed",
-        outputData: currentData,
-        completedAt: new Date(),
+        completed_at: new Date(),
+        // output_data: currentData, // Not supported in schema
       },
     });
   } catch (error) {
@@ -210,8 +219,8 @@ async function executeWorkflow(executionId: string) {
       where: { id: executionId },
       data: {
         status: "failed",
-        errorMessage: error instanceof Error ? error.message : "Unknown error",
-        completedAt: new Date(),
+        error_message: error instanceof Error ? error.message : "Unknown error",
+        completed_at: new Date(),
       },
     });
   }

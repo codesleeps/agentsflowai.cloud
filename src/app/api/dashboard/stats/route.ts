@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server-lib/prisma";
+import { Lead } from "@prisma/client";
 import { requireAuth } from "@/lib/auth-helpers";
 import { handleApiError } from "@/lib/api-errors";
-import type { DashboardStats } from "@/shared/models/types";
+import type { DashboardStats, Lead as AppLead } from "@/shared/models/types";
 
 // Date range type for filtering
 interface DateRange {
@@ -246,8 +247,8 @@ export async function GET(request: NextRequest) {
         notes: null,
         qualified_at: null,
         updated_at: lead.created_at.toISOString(),
-        status: lead.status as Lead["status"],
-        source: lead.source as Lead["source"],
+        status: lead.status as AppLead["status"],
+        source: lead.source as AppLead["source"],
         created_at: lead.created_at.toISOString(),
       })),
       // Enhanced analytics with period comparison
@@ -265,10 +266,10 @@ export async function GET(request: NextRequest) {
         growthPercentage:
           previousPeriodLeads > 0
             ? Math.round(
-                ((currentPeriodLeads - previousPeriodLeads) /
-                  previousPeriodLeads) *
-                  100,
-              )
+              ((currentPeriodLeads - previousPeriodLeads) /
+                previousPeriodLeads) *
+              100,
+            )
             : 0,
       },
       aiUsage: {

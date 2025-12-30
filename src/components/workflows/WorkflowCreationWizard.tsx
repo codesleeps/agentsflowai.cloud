@@ -244,7 +244,7 @@ export function WorkflowCreationWizard({
         status: "draft",
         triggerType: data.triggerType,
         triggerConfig: data.triggerConfig || {},
-        actions: data.actions,
+        actions: data.actions as any,
       });
 
       onComplete();
@@ -315,11 +315,10 @@ export function WorkflowCreationWizard({
                 {triggerOptions.map((trigger) => (
                   <div
                     key={trigger.value}
-                    className={`cursor-pointer rounded-lg border p-4 transition-all ${
-                      watchedValues.triggerType === trigger.value
+                    className={`cursor-pointer rounded-lg border p-4 transition-all ${watchedValues.triggerType === trigger.value
                         ? "border-primary bg-primary/5"
                         : "hover:bg-muted/50"
-                    }`}
+                      }`}
                     onClick={() => setValue("triggerType", trigger.value)}
                   >
                     <div className="flex items-center gap-3">
@@ -501,11 +500,10 @@ export function WorkflowCreationWizard({
         {steps.map((step, index) => (
           <div key={step.id} className="flex items-center">
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                index <= currentStep
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${index <= currentStep
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground"
-              }`}
+                }`}
             >
               {index < currentStep ? (
                 <Check className="h-4 w-4" />
@@ -515,9 +513,8 @@ export function WorkflowCreationWizard({
             </div>
             {index < steps.length - 1 && (
               <div
-                className={`mx-2 h-0.5 w-12 ${
-                  index < currentStep ? "bg-primary" : "bg-muted"
-                }`}
+                className={`mx-2 h-0.5 w-12 ${index < currentStep ? "bg-primary" : "bg-muted"
+                  }`}
               />
             )}
           </div>
