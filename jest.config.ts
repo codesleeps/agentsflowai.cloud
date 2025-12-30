@@ -15,6 +15,49 @@ const config: Config = {
 
   // The test environment that will be used for testing
   testEnvironment: "node",
+
+  // Test match patterns
+  testMatch: [
+    "**/__tests__/**/*.test.ts",
+    "**/__tests__/**/*.test.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+  ],
+
+  // Coverage configuration
+  collectCoverageFrom: [
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/__tests__/**",
+  ],
+
+  // Coverage thresholds
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 80,
+      statements: 80,
+    },
+  },
+
+  // Global test setup
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+
+  // Test path ignore patterns
+  testPathIgnorePatterns: ["/node_modules/", "/.next/", "/dist/"],
+
+  // Module directories
+  moduleDirectories: ["node_modules", "<rootDir>"],
+
+  // Parallel execution
+  maxWorkers: "50%",
+
+  // Test timeout
+  testTimeout: 10000,
+
+  // Transform ES modules
+  transformIgnorePatterns: ["node_modules/(?!(jose|@better-auth)/)"],
 };
 
 const createJestConfig = nextJest({
