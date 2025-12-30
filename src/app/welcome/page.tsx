@@ -206,26 +206,20 @@ export default function WelcomePage() {
     e.preventDefault();
     setIsLoggingIn(true);
 
-    try {
-      await signIn.email({
-        email: loginForm.email,
-        password: loginForm.password,
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success("Welcome back!");
-            router.push("/dashboard");
-          },
-          onError: (ctx) => {
-            toast.error(ctx.error.message);
-            setIsLoggingIn(false);
-          },
+    await signIn.email({
+      email: loginForm.email,
+      password: loginForm.password,
+      fetchOptions: {
+        onSuccess: () => {
+          toast.success("Welcome back!");
+          router.push("/dashboard");
         },
-      });
-    } catch (err) {
-      toast.error("An error occurred during login");
-      console.error(err);
-      setIsLoggingIn(false);
-    }
+        onError: (ctx) => {
+          toast.error(ctx.error.message);
+          setIsLoggingIn(false);
+        },
+      },
+    });
   };
 
   const handleContactSubmit = (e: React.FormEvent) => {
