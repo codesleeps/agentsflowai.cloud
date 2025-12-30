@@ -73,7 +73,7 @@
     "@types/json-schema": "^7.0.15",
     "@types/nodemailer": "^7.0.4",
     "axios": "^1.13.2",
-    "better-auth": "~1.3.26",
+    "better-auth": "^1.4.9",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -98,7 +98,7 @@
     "swr": "^2.3.3",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
-    "tiptap": "^1.32.2",
+    "tiptap": "^0.15.0",
     "twilio": "^5.11.1"
   },
   "optionalDependencies": {
@@ -119,7 +119,7 @@
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "^8.57.0",
+    "eslint": "^9.39.2",
     "eslint-config-next": "^15.0.1",
     "jest": "^30.1.3",
     "jest-environment-jsdom": "^30.1.2",
