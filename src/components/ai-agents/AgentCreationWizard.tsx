@@ -334,7 +334,7 @@ export function AgentCreationWizard({ onComplete }: AgentCreationWizardProps) {
                 <CardTitle className="text-sm">Prompt Tips</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-muted-foreground">
-                <p>• Be specific about the agent's role and capabilities</p>
+                <p>• Be specific about the agent&apos;s role and capabilities</p>
                 <p>• Define the tone and communication style</p>
                 <p>• Include relevant context and background knowledge</p>
                 <p>• Specify any constraints or limitations</p>
@@ -490,7 +490,7 @@ export function AgentCreationWizard({ onComplete }: AgentCreationWizardProps) {
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
               <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Note:</strong> You can modify these settings later.
-                Click "Create Agent" to proceed with the current configuration.
+                Click &quot;Create Agent&quot; to proceed with the current configuration.
               </p>
             </div>
           </div>
@@ -508,11 +508,10 @@ export function AgentCreationWizard({ onComplete }: AgentCreationWizardProps) {
         {steps.map((step, index) => (
           <div key={step.id} className="flex items-center">
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                index <= currentStep
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${index <= currentStep
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground"
-              }`}
+                }`}
             >
               {index < currentStep ? (
                 <Check className="h-4 w-4" />
@@ -522,9 +521,8 @@ export function AgentCreationWizard({ onComplete }: AgentCreationWizardProps) {
             </div>
             {index < steps.length - 1 && (
               <div
-                className={`mx-2 h-0.5 w-12 ${
-                  index < currentStep ? "bg-primary" : "bg-muted"
-                }`}
+                className={`mx-2 h-0.5 w-12 ${index < currentStep ? "bg-primary" : "bg-muted"
+                  }`}
               />
             )}
           </div>

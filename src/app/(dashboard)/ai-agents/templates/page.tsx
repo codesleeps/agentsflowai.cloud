@@ -737,8 +737,8 @@ export default function AgentTemplatesPage() {
             <DialogHeader>
               <DialogTitle>Create Agent from Template</DialogTitle>
               <DialogDescription>
-                Customize and create your agent based on the "
-                {selectedTemplate.name}" template
+                Customize and create your agent based on the &quot;
+                {selectedTemplate.name}&quot; template
               </DialogDescription>
             </DialogHeader>
             <AgentCreationWizard

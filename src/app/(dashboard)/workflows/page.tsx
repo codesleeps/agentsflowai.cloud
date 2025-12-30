@@ -301,7 +301,7 @@ export default function WorkflowsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Workflow</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingWorkflow?.name}"? This
+              Are you sure you want to delete &quot;{deletingWorkflow?.name}&quot;? This
               action cannot be undone and will permanently remove the workflow
               and all its configuration.
             </AlertDialogDescription>

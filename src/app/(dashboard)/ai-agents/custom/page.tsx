@@ -279,7 +279,7 @@ export default function CustomAIAgentsPage() {
             <DialogHeader>
               <DialogTitle>Configure AI Agent</DialogTitle>
               <DialogDescription>
-                Modify your AI agent's settings and behavior
+                Modify your AI agent&apos;s settings and behavior
               </DialogDescription>
             </DialogHeader>
             <AgentConfigurationDialog
@@ -299,7 +299,7 @@ export default function CustomAIAgentsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete AI Agent</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingAgent?.name}"? This
+              Are you sure you want to delete &quot;{deletingAgent?.name}&quot;? This
               action cannot be undone and will permanently remove the agent and
               all its configuration.
             </AlertDialogDescription>
