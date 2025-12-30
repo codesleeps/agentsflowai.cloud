@@ -31,7 +31,7 @@ const tierIcons: Record<string, React.ReactNode> = {
 const SERVICE_PACKAGES = [
   {
     id: "basic",
-    name: "Basic Package",
+    name: "Basic",
     description: "Perfect for getting started with essential features",
     tier: "basic" as const,
     price: 99,
@@ -45,7 +45,7 @@ const SERVICE_PACKAGES = [
   },
   {
     id: "growth",
-    name: "Growth Package",
+    name: "Growth",
     description: "Ideal for growing businesses with advanced features",
     tier: "growth" as const,
     price: 299,
@@ -61,7 +61,7 @@ const SERVICE_PACKAGES = [
   },
   {
     id: "enterprise",
-    name: "Enterprise Package",
+    name: "Enterprise",
     description: "Complete solution for large organizations",
     tier: "enterprise" as const,
     price: 999,
