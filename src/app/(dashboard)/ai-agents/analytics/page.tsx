@@ -137,7 +137,7 @@ export default function AIAgentAnalyticsPage() {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card>
           <CardContent className="flex items-center gap-4 p-6">
             <Bot className="h-8 w-8 text-primary" />
@@ -176,33 +176,80 @@ export default function AIAgentAnalyticsPage() {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-6">
+            <Clock className="h-8 w-8 text-orange-500" />
+            <div>
+              <p className="text-2xl font-bold">
+                {agents?.filter((a) => a.last_used_at)?.length || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">Used Recently</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-4 p-6">
+            <Filter className="h-8 w-8 text-indigo-500" />
+            <div>
+              <p className="text-2xl font-bold">{categoryData.length}</p>
+              <p className="text-sm text-muted-foreground">Categories</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Top Performing Agents */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Top Performing Agents</CardTitle>
             <CardDescription>
-              Most active custom agents by usage
+              Most active custom agents by usage and performance metrics
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {topAgents.length > 0 ? (
                 topAgents.map((agent, index) => (
-                  <div key={agent.id} className="flex items-center gap-4">
+                  <div
+                    key={agent.id}
+                    className="flex items-center gap-4 rounded-lg border p-4"
+                  >
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
                       {index + 1}
                     </div>
                     <div className="text-2xl">{agent.icon}</div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{agent.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {agent.usage_count} interactions
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate font-medium">{agent.name}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {agent.category}
+                        </Badge>
+                      </div>
+                      <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {agent.usage_count} interactions
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {agent.last_used_at
+                            ? new Date(agent.last_used_at).toLocaleDateString()
+                            : "Never"}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {agent.provider}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant="outline">{agent.category}</Badge>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">
+                        {agent.cost_tier}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Cost tier
+                      </div>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -248,6 +295,132 @@ export default function AIAgentAnalyticsPage() {
                   </p>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance Insights */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance Insights</CardTitle>
+            <CardDescription>
+              Key metrics and recommendations for optimization
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
+              <div className="flex items-start gap-3">
+                <TrendingUp className="mt-0.5 h-5 w-5 text-blue-600" />
+                <div>
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100">
+                    High-Performing Agents
+                  </h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    {topAgents.length > 0
+                      ? `${topAgents[0]?.name} leads with ${topAgents[0]?.usage_count} interactions`
+                      : "No performance data available yet"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/20">
+              <div className="flex items-start gap-3">
+                <Zap className="mt-0.5 h-5 w-5 text-green-600" />
+                <div>
+                  <h4 className="font-medium text-green-900 dark:text-green-100">
+                    Cost Efficiency
+                  </h4>
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    {agents?.filter((a) => a.cost_tier === "free").length || 0}{" "}
+                    agents using free models,
+                    {agents?.filter((a) => a.cost_tier === "low").length ||
+                      0}{" "}
+                    using budget-friendly options
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-950/20">
+              <div className="flex items-start gap-3">
+                <Bot className="mt-0.5 h-5 w-5 text-orange-600" />
+                <div>
+                  <h4 className="font-medium text-orange-900 dark:text-orange-100">
+                    Agent Health
+                  </h4>
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    {agents?.filter((a) => !a.is_active).length || 0} inactive
+                    agents could be optimized or removed
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Usage Trends</CardTitle>
+            <CardDescription>
+              Recent activity and engagement patterns
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Most Used Category</span>
+                <Badge variant="outline">
+                  {categoryData.length > 0
+                    ? categoryData.sort((a, b) => b.usage - a.usage)[0]
+                        ?.category
+                    : "None"}
+                </Badge>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  Avg Interactions per Active Agent
+                </span>
+                <span className="text-sm font-bold">
+                  {avgInteractionsPerAgent}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  Recently Active Agents
+                </span>
+                <span className="text-sm font-bold">
+                  {agents?.filter(
+                    (a) =>
+                      a.last_used_at &&
+                      new Date(a.last_used_at) >
+                        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                  ).length || 0}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">
+                  Provider Distribution
+                </span>
+                <div className="flex gap-1">
+                  {Array.from(
+                    new Set(agents?.map((a) => a.provider) || []),
+                  ).map((provider) => (
+                    <Badge
+                      key={provider}
+                      variant="secondary"
+                      className="text-xs"
+                    >
+                      {provider}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

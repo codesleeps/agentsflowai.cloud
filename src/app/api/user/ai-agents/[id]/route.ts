@@ -30,14 +30,15 @@ const UpdateAgentSchema = z.object({
 // GET /api/user/ai-agents/[id] - Get specific agent
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
 
     const agent = await prisma.userAIAgent.findFirst({
       where: {
-        id: params.id,
+        id,
         user_id: user.id,
       },
     });
@@ -61,10 +62,11 @@ export async function GET(
 // PUT /api/user/ai-agents/[id] - Update agent
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
     const body = await request.json();
 
     const validatedData = UpdateAgentSchema.parse(body);
@@ -72,7 +74,7 @@ export async function PUT(
     // Check if agent exists and belongs to user
     const existingAgent = await prisma.userAIAgent.findFirst({
       where: {
-        id: params.id,
+        id,
         user_id: user.id,
       },
     });
@@ -93,7 +95,7 @@ export async function PUT(
         where: {
           user_id: user.id,
           name: validatedData.name,
-          id: { not: params.id }, // Exclude current agent
+          id: { not: id }, // Exclude current agent
         },
       });
 
@@ -110,7 +112,7 @@ export async function PUT(
 
     const updatedAgent = await prisma.userAIAgent.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         ...(validatedData.name && { name: validatedData.name }),
@@ -173,15 +175,16 @@ export async function PUT(
 // DELETE /api/user/ai-agents/[id] - Delete agent
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
 
     // Check if agent exists and belongs to user
     const existingAgent = await prisma.userAIAgent.findFirst({
       where: {
-        id: params.id,
+        id,
         user_id: user.id,
       },
     });
@@ -199,7 +202,7 @@ export async function DELETE(
     // Delete the agent
     await prisma.userAIAgent.delete({
       where: {
-        id: params.id,
+        id,
       },
     });
 
@@ -210,7 +213,7 @@ export async function DELETE(
         type: "AGENT_DELETE",
         description: `Deleted AI agent: ${existingAgent.name}`,
         metadata: {
-          agent_id: params.id,
+          agent_id: id,
           agent_name: existingAgent.name,
         },
       },

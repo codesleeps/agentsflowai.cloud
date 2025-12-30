@@ -120,24 +120,32 @@ export default function CustomAIAgentsPage() {
             </p>
           </div>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Agent
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Custom AI Agent</DialogTitle>
-              <DialogDescription>
-                Build a personalized AI assistant tailored to your specific
-                needs
-              </DialogDescription>
-            </DialogHeader>
-            <AgentCreationWizard onComplete={handleAgentCreated} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/ai-agents/playground">
+              <TestTube className="mr-2 h-4 w-4" />
+              Test Playground
+            </Link>
+          </Button>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Agent
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create Custom AI Agent</DialogTitle>
+                <DialogDescription>
+                  Build a personalized AI assistant tailored to your specific
+                  needs
+                </DialogDescription>
+              </DialogHeader>
+              <AgentCreationWizard onComplete={handleAgentCreated} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
