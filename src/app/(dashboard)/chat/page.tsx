@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateText } from "@/client-lib/built-in-integrations/ai";
-import { useServices } from "@/client-lib/api-client";
+import { useAIAgents } from "@/client-lib/ai-agents-client";
 import type { ChatMessage } from "@/shared/models/types";
 
 const SYSTEM_PROMPT = `You are an AI assistant for AgentsFlowAI, an AI-powered business automation platform. You help potential customers:
@@ -23,16 +23,33 @@ const SYSTEM_PROMPT = `You are an AI assistant for AgentsFlowAI, an AI-powered b
 Be helpful, professional, and concise. When appropriate, recommend specific service packages based on the customer's needs.
 
 Services:
-- Starter Package ($999): Perfect for small businesses - includes social media setup, basic SEO audit, 1 month support, email template
-- Growth Package ($2499): For scaling businesses - includes full SEO optimization, PPC campaign management, content strategy, 3 months support, monthly reporting
-- Enterprise Package ($4999): Complete digital transformation - includes dedicated account manager, custom integrations, advanced analytics, 24/7 support, quarterly strategy reviews, multi-channel campaigns
+- Basic ($99): Perfect for getting started - includes up to 1,000 leads/month, basic lead scoring, email notifications
+- Growth ($299): For growing businesses - includes up to 10,000 leads, AI scoring, priority support, custom workflows
+- Enterprise ($999): Complete solution - includes unlimited leads, dedicated account manager, custom integrations, white-label solutions`;
 
-Always try to understand the customer's:
-- Business type and size
-- Current challenges
-- Budget range
-- Timeline for implementation
-- Goals they want to achieve`;
+const SERVICES = [
+  {
+    id: "basic",
+    name: "Basic",
+    description: "Perfect for getting started with essential features",
+    tier: "basic" as const,
+    price: 99,
+  },
+  {
+    id: "growth",
+    name: "Growth",
+    description: "Ideal for growing businesses with advanced features",
+    tier: "growth" as const,
+    price: 299,
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    description: "Complete solution for large organizations",
+    tier: "enterprise" as const,
+    price: 999,
+  },
+];
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -45,7 +62,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { data: services } = useServices();
+  const services = SERVICES;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -169,9 +186,8 @@ Provide a helpful, concise response as the AI assistant:`;
               {messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`flex gap-3 ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
                 >
                   {message.role === "assistant" && (
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -179,11 +195,10 @@ Provide a helpful, concise response as the AI assistant:`;
                     </div>
                   )}
                   <div
-                    className={`max-w-[80%] rounded-lg p-4 ${
-                      message.role === "user"
+                    className={`max-w-[80%] rounded-lg p-4 ${message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
-                    }`}
+                      }`}
                   >
                     <p className="whitespace-pre-wrap text-sm">{message.content}</p>
                     <p className="text-xs mt-2 opacity-60">

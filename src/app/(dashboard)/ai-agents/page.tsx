@@ -257,11 +257,10 @@ export default function AIAgentsPage() {
           {/* Ollama Status */}
           <div className="flex items-center gap-2">
             <div
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${
-                ollamaStatus?.status === "connected"
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${ollamaStatus?.status === "connected"
                   ? "bg-green-500/20 text-green-700 dark:text-green-400"
                   : "bg-red-500/20 text-red-700 dark:text-red-400"
-              }`}
+                }`}
             >
               {ollamaStatus?.status === "connected" ? (
                 <CheckCircle2 className="h-4 w-4" />
@@ -329,43 +328,66 @@ export default function AIAgentsPage() {
       <div className="grid flex-1 gap-6 lg:grid-cols-3">
         {/* Agent Selection */}
         <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-primary" />
-              AI Agents
-            </CardTitle>
-            <CardDescription>Select a specialized agent</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {agents?.map((agent) => (
-                <button
-                  key={agent.id}
-                  onClick={() => handleSelectAgent(agent)}
-                  className={`w-full rounded-lg border p-4 text-left transition-all ${
-                    selectedAgent?.id === agent.id
-                      ? `${agentColors[agent.id]} border-2`
-                      : "hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`rounded-lg p-2 ${agentColors[agent.id]}`}>
-                      {agentIcons[agent.id]}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="flex items-center gap-2 font-medium">
-                        {agent.name}
-                        <span>{agent.icon}</span>
-                      </h3>
-                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                        {agent.description}
-                      </p>
-                    </div>
+          <Tabs defaultValue="browse" className="w-full">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-primary" />
+                  AI Agents
+                </CardTitle>
+              </div>
+              <TabsList className="grid w-full grid-cols-2 mt-2">
+                <TabsTrigger value="browse">Browse Agents</TabsTrigger>
+                <TabsTrigger value="my-agents">My Agents</TabsTrigger>
+              </TabsList>
+            </CardHeader>
+            <CardContent>
+              <TabsContent value="browse" className="mt-0">
+                <div className="space-y-3">
+                  <div className="relative mb-3">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Search agents..."
+                      className="pl-9"
+                    />
                   </div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
+                  {agents?.map((agent) => (
+                    <button
+                      key={agent.id}
+                      onClick={() => handleSelectAgent(agent)}
+                      className={`w-full rounded-lg border p-4 text-left transition-all ${selectedAgent?.id === agent.id
+                          ? `${agentColors[agent.id]} border-2`
+                          : "hover:bg-muted/50"
+                        }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`rounded-lg p-2 ${agentColors[agent.id]}`}>
+                          {agentIcons[agent.id]}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="flex items-center gap-2 font-medium">
+                            {agent.name}
+                            <span>{agent.icon}</span>
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                            {agent.description}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </TabsContent>
+              <TabsContent value="my-agents" className="mt-0">
+                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                  <Bot className="h-10 w-10 mb-3 opacity-20" />
+                  <p className="text-sm font-medium">No active agents</p>
+                  <p className="text-xs">Agents you configure will appear here</p>
+                </div>
+              </TabsContent>
+            </CardContent>
+          </Tabs>
         </Card>
 
         {/* Chat Interface */}
@@ -413,11 +435,10 @@ export default function AIAgentsPage() {
                   {messages.map((message, index) => (
                     <div
                       key={index}
-                      className={`flex gap-3 ${
-                        message.role === "user"
+                      className={`flex gap-3 ${message.role === "user"
                           ? "justify-end"
                           : "justify-start"
-                      }`}
+                        }`}
                     >
                       {message.role === "assistant" && (
                         <div
@@ -427,11 +448,10 @@ export default function AIAgentsPage() {
                         </div>
                       )}
                       <div
-                        className={`max-w-[85%] rounded-lg p-4 ${
-                          message.role === "user"
+                        className={`max-w-[85%] rounded-lg p-4 ${message.role === "user"
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
-                        }`}
+                          }`}
                       >
                         <div className="whitespace-pre-wrap text-sm">
                           {renderMessageContent(message.content)}
