@@ -16,7 +16,7 @@ export interface NotificationTemplate {
 }
 
 export interface NotificationConfig {
-  enabled: boolean;
+  enabled?: boolean;
   timing: ReminderTiming;
   customMinutes?: number; // For custom timing
   templateId: string;
@@ -176,7 +176,7 @@ let twilioClient: twilio.Twilio | null = null;
 // Initialize email transporter
 function getEmailTransporter() {
   if (!emailTransporter) {
-    emailTransporter = nodemailer.createTransporter({
+    emailTransporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: parseInt(process.env.SMTP_PORT || "587"),
       secure: false, // true for 465, false for other ports
@@ -441,7 +441,7 @@ export async function scheduleAppointmentReminders(
         case "custom":
           reminderTime = new Date(
             appointmentDate.getTime() -
-              (config.customMinutes || 60) * 60 * 1000,
+            (config.customMinutes || 60) * 60 * 1000,
           );
           break;
         default:

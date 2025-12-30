@@ -25,7 +25,7 @@ rsync -avz --delete \
   --exclude='node_modules' \
   --exclude='.next' \
   --exclude='*.log' \
-  --exclude='.env.local'
+  --exclude='.env.local' \
   --exclude='.env.example' \
   "$LOCAL_DIR" "$SERVER:$REMOTE_DIR"
 

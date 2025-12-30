@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -24,8 +23,8 @@ const createStepSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
     const workflow = await prisma.workflow.findFirst({
       where: {
         id: workflowId,
-        userId: session.user.id,
+        created_by: user.id,
       },
     });
 
@@ -54,8 +53,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const steps = await prisma.workflowStep.findMany({
-      where: { workflowId },
+    const steps = await prisma.workflowAction.findMany({
+      where: { workflow_id: workflowId },
       orderBy: { order: "asc" },
     });
 
@@ -71,8 +70,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const user = await getUserFromRequest(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -83,7 +82,7 @@ export async function POST(request: NextRequest) {
     const workflow = await prisma.workflow.findFirst({
       where: {
         id: validatedData.workflowId,
-        userId: session.user.id,
+        created_by: user.id,
       },
     });
 
@@ -94,10 +93,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const step = await prisma.workflowStep.create({
+    // Map step data to WorkflowAction
+    // WorkflowAction: action_type, action_config, order, workflow_id.
+    // We'll store name/description in config since they don't exist in model.
+    const actionConfig = {
+      ...validatedData.config,
+      name: validatedData.name,
+      description: validatedData.description,
+      dependencies: validatedData.dependencies,
+    };
+
+    const step = await prisma.workflowAction.create({
       data: {
-        ...validatedData,
-        userId: session.user.id,
+        workflow_id: validatedData.workflowId,
+        action_type: validatedData.type,
+        action_config: actionConfig,
+        order: validatedData.order,
       },
     });
 

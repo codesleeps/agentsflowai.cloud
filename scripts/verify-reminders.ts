@@ -10,8 +10,7 @@ async function main() {
     console.log(`Creating test lead: ${leadEmail}`);
     const lead = await prisma.lead.create({
         data: {
-            first_name: "Test",
-            last_name: "User",
+            name: "Test User",
             email: leadEmail,
             phone: "+15555555555",
             status: "New",
@@ -34,10 +33,8 @@ async function main() {
             lead_id: lead.id,
             title: "Test Inngest Reminder Appointment",
             scheduled_at: oneHourFromNow,
-            end_time: new Date(oneHourFromNow.getTime() + 30 * 60 * 1000),
             duration_minutes: 30,
-            status: "Scheduled",
-            type: "Consultation"
+            status: "Scheduled"
         }
     });
 

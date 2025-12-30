@@ -47,14 +47,14 @@ export async function logActivity(params: LogActivityParams): Promise<void> {
   try {
     await prisma.activityLog.create({
       data: {
-        userId: params.userId,
+        user_id: params.userId,
         type: params.type,
         description: params.description,
         metadata: params.metadata || {},
-        ipAddress: params.ipAddress,
-        userAgent: params.userAgent,
-        resourceType: params.resourceType,
-        resourceId: params.resourceId,
+        ip_address: params.ipAddress,
+        user_agent: params.userAgent,
+        resource_type: params.resourceType,
+        resource_id: params.resourceId,
       },
     });
   } catch (error) {
@@ -76,7 +76,7 @@ export async function getUserActivities(
 ) {
   return prisma.activityLog.findMany({
     where: {
-      userId,
+      user_id: userId,
       ...(options?.type && { type: options.type }),
     },
     orderBy: {
@@ -99,15 +99,15 @@ export async function getTeamActivities(
   },
 ) {
   const teamMembers = await prisma.teamMember.findMany({
-    where: { teamId },
-    select: { userId: true },
+    where: { team_id: teamId },
+    select: { user_id: true },
   });
 
   const userIds = teamMembers.map((m) => m.user_id);
 
   return prisma.activityLog.findMany({
     where: {
-      userId: { in: userIds },
+      user_id: { in: userIds },
       ...(options?.type && { type: options.type }),
     },
     orderBy: {
@@ -132,9 +132,9 @@ export async function getAllActivities(options?: {
 }) {
   return prisma.activityLog.findMany({
     where: {
-      ...(options?.userId && { userId: options.userId }),
+      ...(options?.userId && { user_id: options.userId }),
       ...(options?.type && { type: options.type }),
-      ...(options?.resourceType && { resourceType: options.resourceType }),
+      ...(options?.resourceType && { resource_type: options.resourceType }),
       ...(options?.startDate && { created_at: { gte: options.startDate } }),
       ...(options?.endDate && { created_at: { lte: options.endDate } }),
     },

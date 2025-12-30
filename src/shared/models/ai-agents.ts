@@ -32,6 +32,7 @@ export interface AIAgent {
   defaultProvider: string;
   costTier: "free" | "low" | "medium" | "high";
   isActive: boolean;
+  usage_count?: number;
 }
 
 export type AIAgentCategory =
@@ -112,12 +113,12 @@ export interface OllamaModel {
 
 export interface ContentGenerationRequest {
   type:
-    | "blog-post"
-    | "social-post"
-    | "ad-copy"
-    | "email"
-    | "seo-content"
-    | "code";
+  | "blog-post"
+  | "social-post"
+  | "ad-copy"
+  | "email"
+  | "seo-content"
+  | "code";
   topic: string;
   tone?: string;
   length?: "short" | "medium" | "long";
