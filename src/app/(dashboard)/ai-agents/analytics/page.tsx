@@ -118,7 +118,7 @@ export default function AIAgentAnalyticsPage() {
               Agent Performance Analytics
             </h1>
             <p className="mt-1 text-muted-foreground">
-              Insights into your custom AI agents' performance and usage
+              Insights into your custom AI agents&apos; performance and usage
               patterns
             </p>
           </div>
@@ -375,7 +375,7 @@ export default function AIAgentAnalyticsPage() {
                 <Badge variant="outline">
                   {categoryData.length > 0
                     ? categoryData.sort((a, b) => b.usage - a.usage)[0]
-                        ?.category
+                      ?.category
                     : "None"}
                 </Badge>
               </div>
@@ -398,7 +398,7 @@ export default function AIAgentAnalyticsPage() {
                     (a) =>
                       a.last_used_at &&
                       new Date(a.last_used_at) >
-                        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
                   ).length || 0}
                 </span>
               </div>

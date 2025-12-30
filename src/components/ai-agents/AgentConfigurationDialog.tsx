@@ -133,7 +133,7 @@ export function AgentConfigurationDialog({
         <div>
           <h2 className="text-xl font-semibold">Configure {agent.name}</h2>
           <p className="text-muted-foreground">
-            Modify your AI agent's settings
+            Modify your AI agent&apos;s settings
           </p>
         </div>
       </div>
@@ -195,7 +195,7 @@ export function AgentConfigurationDialog({
         <CardHeader>
           <CardTitle className="text-lg">System Prompt</CardTitle>
           <CardDescription>
-            Define your agent's personality and capabilities
+            Define your agent&apos;s personality and capabilities
           </CardDescription>
         </CardHeader>
         <CardContent>

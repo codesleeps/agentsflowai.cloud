@@ -152,7 +152,7 @@ export default function SignIn() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-gray-500">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/sign-up" className="ml-1 underline hover:text-gray-900">
             Sign Up
           </Link>

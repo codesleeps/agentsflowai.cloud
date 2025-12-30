@@ -110,7 +110,7 @@ export function WidgetManager({ stats, className }: WidgetManagerProps) {
       default:
         return (
           <div className="p-4 text-center text-muted-foreground">
-            Widget component "{widget.component}" not found
+            Widget component &quot;{widget.component}&quot; not found
           </div>
         );
     }
