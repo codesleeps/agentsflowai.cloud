@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 
 // Set up global test environment variables
 process.env.TZ = "UTC";
-process.env.NODE_ENV = "test";
+(process.env as any).NODE_ENV = "test";
 
 // Global mocks for Next.js specific modules
 jest.mock("next/navigation", () => ({
