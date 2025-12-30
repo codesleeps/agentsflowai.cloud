@@ -15,9 +15,10 @@ export async function POST(request: NextRequest) {
     const validatedData = ForgotPasswordSchema.parse(body);
 
     // Send password reset email using Better Auth
-    await auth.api.forgetPassword({
+    await auth.api.requestPasswordReset({
       body: {
         email: validatedData.email,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
       },
     });
 
