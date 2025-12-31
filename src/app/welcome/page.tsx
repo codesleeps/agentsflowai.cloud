@@ -211,6 +211,7 @@ export default function WelcomePage() {
       password: loginForm.password,
       fetchOptions: {
         onSuccess: () => {
+          setIsLoggingIn(false);
           toast.success("Welcome back!");
           router.push("/dashboard");
         },
