@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleAnthropicProvider(
+export async function handleAnthropicProvider(
   agent: AIAgent,
   messages: AIMessage[],
   systemPrompt: string,
@@ -170,7 +170,7 @@ async function handleAnthropicProvider(
   };
 }
 
-async function handleGoogleProvider(
+export async function handleGoogleProvider(
   agent: AIAgent,
   message: string,
   conversationHistory: AIMessage[],
@@ -208,7 +208,7 @@ async function handleGoogleProvider(
   };
 }
 
-async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
+export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
   const OLLAMA_BASE_URL =
     process.env.OLLAMA_BASE_URL || "http://localhost:11434";
   const ollamaResponse = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -232,7 +232,7 @@ async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
   };
 }
 
-async function handleOpenRouterProvider(
+export async function handleOpenRouterProvider(
   agent: AIAgent,
   messages: AIMessage[],
   systemPrompt: string,
@@ -287,7 +287,7 @@ async function handleOpenRouterProvider(
   };
 }
 
-async function handleOpenAIProvider(
+export async function handleOpenAIProvider(
   agent: AIAgent,
   messages: AIMessage[],
   systemPrompt: string,

@@ -24,6 +24,7 @@
     "test:unit": "jest --testPathPattern=__tests__",
     "test:integration": "jest --testPathPattern=integration",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "test:ai-providers": "tsx scripts/test-ai-providers.ts",
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",

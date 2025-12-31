@@ -138,3 +138,34 @@ export async function logIntegrationError(
     console.error("Failed to log integration error:", logError);
   }
 }
+
+export async function logDiagnosticTest(params: {
+  provider: string;
+  model: string;
+  status: "success" | "failed";
+  latency_ms: number;
+  error_message?: string;
+  test_type: "api" | "cli" | "dashboard";
+  metadata?: Record<string, any>;
+}) {
+  return logModelUsage({
+    user_id: "system",
+    agent_id: "health-check-diagnostic",
+    provider: params.provider,
+    model: params.model,
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    cost_usd: 0,
+    latency_ms: params.latency_ms,
+    status: params.status === "success" ? "success" : "failed",
+    error_message: params.error_message,
+  });
+}
+
+export async function getRecentDiagnostics(limit: number = 20) {
+  return db.aIModelUsage.findMany({
+    where: { agent_id: "health-check-diagnostic" },
+    orderBy: { created_at: "desc" },
+    take: limit,
+  });
+}
