@@ -254,23 +254,44 @@ export default function AIAgentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          {/* Ollama Status */}
+          {/* Provider Status Indicators */}
           <div className="flex items-center gap-2">
-            <div
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${ollamaStatus?.status === "connected"
-                  ? "bg-green-500/20 text-green-700 dark:text-green-400"
-                  : "bg-red-500/20 text-red-700 dark:text-red-400"
-                }`}
-            >
-              {ollamaStatus?.status === "connected" ? (
-                <CheckCircle2 className="h-4 w-4" />
-              ) : (
-                <XCircle className="h-4 w-4" />
-              )}
-              <span>Ollama: {ollamaStatus?.status || "checking..."}</span>
+            <div className="flex items-center gap-1 text-xs">
+              <span className="text-muted-foreground">Providers:</span>
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${ollamaStatus?.status === "connected"
+                    ? "bg-green-500/20 text-green-700 dark:text-green-400"
+                    : "bg-red-500/20 text-red-700 dark:text-red-400"
+                  }`}
+              >
+                {ollamaStatus?.status === "connected" ? (
+                  <CheckCircle2 className="h-3 w-3" />
+                ) : (
+                  <XCircle className="h-3 w-3" />
+                )}
+                <span>Ollama</span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">
+                <XCircle className="h-3 w-3" />
+                <span>Gemini</span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">
+                <XCircle className="h-3 w-3" />
+                <span>OpenRouter</span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">
+                <XCircle className="h-3 w-3" />
+                <span>Anthropic</span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">
+                <XCircle className="h-3 w-3" />
+                <span>OpenAI</span>
+              </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => refreshStatus()}>
-              <RefreshCw className="h-4 w-4" />
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/ai-agents/diagnostics">
+                Test All Providers
+              </Link>
             </Button>
           </div>
           <Button variant="outline" asChild>
