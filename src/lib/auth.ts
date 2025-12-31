@@ -6,6 +6,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import nodemailer from "nodemailer";
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

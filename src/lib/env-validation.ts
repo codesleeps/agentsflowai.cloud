@@ -7,7 +7,7 @@ const serverEnvSchema = z.object({
   }),
 
   // AI Services
-  OLLAMA_BASE_URL: z.string().url("OLLAMA_BASE_URL must be a valid URL"),
+  OLLAMA_BASE_URL: z.string().url("OLLAMA_BASE_URL must be a valid URL").optional().default("http://localhost:11434"),
   GOOGLE_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
