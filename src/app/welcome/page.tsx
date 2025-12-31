@@ -298,7 +298,7 @@ export default function WelcomePage() {
                 <Button
                   onClick={() =>
                     document
-                      .getElementById("signup")
+                      .getElementById("pricing")
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
                 >
@@ -377,7 +377,7 @@ export default function WelcomePage() {
                   className="w-full"
                   onClick={() =>
                     document
-                      .getElementById("signup")
+                      .getElementById("pricing")
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
                 >
@@ -497,7 +497,7 @@ export default function WelcomePage() {
                       Don&apos;t have an account?{" "}
                     </span>
                     <a
-                      href="#signup"
+                      href="#pricing"
                       className="font-medium text-primary hover:underline"
                     >
                       Sign up
@@ -524,68 +524,6 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      {/* Sign Up Section */}
-      <section id="signup" className="bg-muted/30 px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-16 text-center">
-            <Badge variant="outline" className="mb-4">
-              Get Started
-            </Badge>
-            <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
-              Ready to Transform Your Business?
-            </h2>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-              Join hundreds of businesses already using AgentsFlowAI to automate
-              their customer interactions and scale faster.
-            </p>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-3">
-            {pricingPlans.map((plan) => (
-              <Card
-                key={plan.name}
-                className={`relative ${plan.popular ? "scale-105 border-primary shadow-xl" : ""}`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary">Most Popular</Badge>
-                  </div>
-                )}
-                <CardHeader className="pb-4 text-center">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">${plan.price}</span>
-                    <span className="text-muted-foreground">/month</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="mb-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2">
-                        <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-green-500" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
-                    asChild
-                  >
-                    <Link href="/sign-up">Start Free Trial</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            All plans include 14-day free trial. No credit card required to
-            start.
-          </p>
-        </div>
-      </section>
 
       {/* Features Section */}
       <section id="features" className="px-4 py-20 sm:px-6 lg:px-8">
