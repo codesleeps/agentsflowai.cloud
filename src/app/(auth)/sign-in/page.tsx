@@ -28,20 +28,26 @@ export default function SignIn() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await signIn.email({
-      email,
-      password,
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("Signed in successfully");
-          router.push("/dashboard");
+    try {
+      await signIn.email({
+        email,
+        password,
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Signed in successfully");
+            router.push("/dashboard");
+          },
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+            setLoading(false);
+          },
         },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-          setLoading(false);
-        },
-      },
-    });
+      });
+    } catch (error) {
+      console.error("Sign in error:", error);
+      toast.error("An unexpected error occurred");
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {

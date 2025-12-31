@@ -206,21 +206,27 @@ export default function WelcomePage() {
     e.preventDefault();
     setIsLoggingIn(true);
 
-    await signIn.email({
-      email: loginForm.email,
-      password: loginForm.password,
-      fetchOptions: {
-        onSuccess: () => {
-          setIsLoggingIn(false);
-          toast.success("Welcome back!");
-          router.push("/dashboard");
+    try {
+      await signIn.email({
+        email: loginForm.email,
+        password: loginForm.password,
+        fetchOptions: {
+          onSuccess: () => {
+            setIsLoggingIn(false);
+            toast.success("Welcome back!");
+            router.push("/dashboard");
+          },
+          onError: (ctx) => {
+            toast.error(ctx.error.message);
+            setIsLoggingIn(false);
+          },
         },
-        onError: (ctx) => {
-          toast.error(ctx.error.message);
-          setIsLoggingIn(false);
-        },
-      },
-    });
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An unexpected error occurred");
+      setIsLoggingIn(false);
+    }
   };
 
   const handleContactSubmit = (e: React.FormEvent) => {
@@ -766,9 +772,8 @@ export default function WelcomePage() {
             {pricingPlans.map((plan) => (
               <Card
                 key={plan.name}
-                className={`relative ${
-                  plan.popular ? "scale-105 border-primary shadow-xl" : ""
-                }`}
+                className={`relative ${plan.popular ? "scale-105 border-primary shadow-xl" : ""
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">

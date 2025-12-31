@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleAnthropicProvider, handleGoogleProvider, handleOllamaProvider, handleOpenRouterProvider, handleOpenAIProvider } from "../../agents/route";
+import { handleAnthropicProvider, handleGoogleProvider, handleOllamaProvider, handleOpenRouterProvider, handleOpenAIProvider } from "../agents/route";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIAgent } from "@/shared/models/ai-agents";
 
