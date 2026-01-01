@@ -108,9 +108,24 @@ export function validateEnv(): Env {
     if (error instanceof z.ZodError) {
       console.error("Validation errors:", error.errors);
     }
-    // Only exit process on server
+    // Only exit process on server during runtime, not during build
     if (typeof window === "undefined") {
-      process.exit(1);
+      // Check if we're in build mode (Next.js sets NEXT_PHASE=phase-production-build)
+      const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
+                         process.env.npm_lifecycle_event === 'build' ||
+                         !process.env.NODE_ENV;
+
+      if (!isBuildTime) {
+        process.exit(1);
+      } else {
+        // During build time, log warning but don't fail
+        console.warn("⚠️ Environment validation failed during build. This is expected - variables will be validated at runtime.");
+        // Return a minimal valid env for build time
+        return {
+          NODE_ENV: "production",
+          NEXT_PUBLIC_APP_URL: "https://agentsflowai.cloud",
+        } as Env;
+      }
     } else {
       throw error;
     }
