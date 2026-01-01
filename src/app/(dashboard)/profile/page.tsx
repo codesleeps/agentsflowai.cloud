@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAuthClient } from "@/client-lib/auth-client";
+import { useAuthSession } from "@/client-lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session } = getAuthClient();
+  const { data: session } = useAuthSession();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
