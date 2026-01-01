@@ -2,7 +2,7 @@
 
 import { ExternalLink, Home } from "lucide-react";
 import Link from "next/link";
-import { authClient, getAuthActiveOrganization, getAuthClient } from "@/client-lib/auth-client";
+import { authClient, getAuthActiveOrganization, useAuthSession } from "@/client-lib/auth-client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function Topbar() {
-  const { data: session } = getAuthClient();
+  const { data: session } = useAuthSession();
   const { data: activeOrganization } = getAuthActiveOrganization();
 
   const handleSignOut = async () => {

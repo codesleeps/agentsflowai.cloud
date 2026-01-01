@@ -20,7 +20,7 @@ import { usePathname } from "next/navigation";
 import {
   authClient,
   getAuthActiveOrganization,
-  getAuthClient,
+  useAuthSession,
 } from "@/client-lib/auth-client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,7 +66,7 @@ const settingsNavItems = [
 ];
 
 export function Sidebar() {
-  const { data: session } = getAuthClient();
+  const { data: session } = useAuthSession();
   const { data: activeOrganization } = getAuthActiveOrganization();
   const { state, isMobile } = useSidebar();
   const pathname = usePathname();

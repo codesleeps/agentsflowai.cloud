@@ -28,7 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { getAuthClient } from "@/client-lib/auth-client";
+import { useAuthSession } from "@/client-lib/auth-client";
 import { useDashboardStats } from "@/client-lib/api-client";
 import { WidgetManager } from "@/components/dashboard/WidgetManager";
 
@@ -116,8 +116,7 @@ export default function DashboardPage() {
     dateRange.start,
     dateRange.end,
   );
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const { data: sessionData, isPending: isAuthPending, error: authError } = useAuthSession();
 
   const handlePresetSelect = (preset: (typeof DATE_PRESETS)[0]) => {
     const range = getPresetDateRange(preset);
@@ -133,19 +132,7 @@ export default function DashboardPage() {
     setCustomRange(true);
   };
 
-  useEffect(() => {
-    // Check authentication
-    const auth = getAuthClient();
-    if (auth.data?.user) {
-      setIsAuthenticated(true);
-    } else {
-      // Redirect to welcome if not authenticated
-      router.replace("/welcome");
-    }
-    setIsChecking(false);
-  }, [router]);
-
-  if (isChecking) {
+  if (isAuthPending) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -156,8 +143,9 @@ export default function DashboardPage() {
     );
   }
 
-  if (!isAuthenticated) {
-    return null; // Will redirect
+  if (authError || !sessionData?.user) {
+    router.replace("/welcome");
+    return null;
   }
 
   if (isLoading) {
