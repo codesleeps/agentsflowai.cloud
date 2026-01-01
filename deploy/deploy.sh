@@ -58,8 +58,10 @@ check_command rsync
 test_ssh_connection() {
     if [ "$USE_PASSWORD_AUTH" = false ]; then
         # Try key-based authentication
+        set +e
         output=$(ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$SSH_KEY_EXPANDED" "$SERVER" "echo 'Connection successful'" 2>&1)
         exit_code=$?
+        set -e
         if [ $exit_code -eq 0 ]; then
             print_success "SSH connection test passed"
             return 0
@@ -90,8 +92,10 @@ test_ssh_connection() {
         fi
         # Set password
         export SSHPASS="n/6Y#PRl(.ovLy@D,veW"
+        set +e
         output=$(sshpass -e ssh -o ConnectTimeout=10 -o BatchMode=yes "$SERVER" "echo 'Connection successful'" 2>&1)
         exit_code=$?
+        set -e
         if [ $exit_code -eq 0 ]; then
             print_success "SSH connection test passed with password"
             return 0
