@@ -7,8 +7,23 @@ import { useAuthSession } from "@/client-lib/auth-client";
 export default function HomePage() {
   const router = useRouter();
   const { data: auth, isPending, error } = useAuthSession();
+  const [mounted, setMounted] = useState(false);
 
-  if (isPending) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && !isPending) {
+      if (error || !auth?.user) {
+        router.replace("/welcome");
+      } else {
+        router.replace("/dashboard");
+      }
+    }
+  }, [mounted, isPending, auth, error, router]);
+
+  if (!mounted || isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -17,12 +32,6 @@ export default function HomePage() {
         </div>
       </div>
     );
-  }
-
-  if (error || !auth?.user) {
-    router.replace("/welcome");
-  } else {
-    router.replace("/dashboard");
   }
 
   return null;
