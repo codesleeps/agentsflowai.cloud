@@ -23,7 +23,6 @@ rsync -avz --delete \
   -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
   --exclude='.git' \
   --exclude='node_modules' \
-  --exclude='.next' \
   --exclude='*.log' \
   --exclude='.env.local' \
   --exclude='.env.example' \
@@ -37,10 +36,6 @@ cd /var/www/agentsflow-ai
 # Install dependencies
 echo "Installing npm packages..."
 npm ci --production=false
-
-# Build application
-echo "Building application..."
-npm run build
 
 # Run database migrations
 echo "Running database migrations..."
