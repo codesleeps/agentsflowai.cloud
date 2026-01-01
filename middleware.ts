@@ -21,7 +21,7 @@ const adminRoutes = ["/api/users", "/api/teams", "/api/api-keys"];
 // Routes requiring admin or team owner/admin role
 const adminTeamRoutes = ["/api/teams/"];
 
-const publicRoutes = ["/api/health", "/api/inngest"];
+const publicRoutes = ["/", "/api/health", "/api/inngest"];
 
 // Routes that require authentication but not onboarding completion
 const onboardingExemptRoutes = ["/onboarding", "/api/onboarding"];
@@ -284,5 +284,16 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/api/:path*",
+    "/dashboard/:path*",
+    "/leads/:path*",
+    "/chat/:path*",
+    "/services/:path*",
+    "/analytics/:path*",
+    "/appointments/:path*",
+    "/ai-agents/:path*",
+    "/ai-usage/:path*",
+    "/onboarding/:path*",
+  ],
 };
