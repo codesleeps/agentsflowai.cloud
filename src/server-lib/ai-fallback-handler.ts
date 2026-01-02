@@ -110,7 +110,7 @@ async function handleGoogleProvider(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": process.env.GOOGLE_AI_API_KEY!,
+          "x-api-key": process.env.GOOGLE_API_KEY!,
         },
         body: JSON.stringify({
           contents: [

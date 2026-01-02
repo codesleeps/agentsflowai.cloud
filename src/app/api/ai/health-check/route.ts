@@ -18,7 +18,7 @@ const TEST_AGENT: AIAgent = {
     { provider: "ollama", model: "mistral:latest", priority: 1 },
     { provider: "google", model: "gemini-2.0-flash", priority: 2 },
     { provider: "anthropic", model: "claude-3-5-sonnet-20241022", priority: 3 },
-    { provider: "openai", model: "gpt-4-turbo", priority: 4 },
+    { provider: "openai", model: "gpt-4o", priority: 4 },
     { provider: "openrouter", model: "anthropic/claude-3.5-sonnet", priority: 5 },
   ],
   defaultProvider: "ollama",
@@ -202,7 +202,7 @@ export async function GET() {
     testProviderWithTimeout("ollama", "mistral:latest"),
     environment.google_key_configured ? testProviderWithTimeout("google", "gemini-2.0-flash") : Promise.resolve({ status: "unhealthy" as const, model: "gemini-2.0-flash", error: "GOOGLE_API_KEY not configured" }),
     environment.anthropic_key_configured ? testProviderWithTimeout("anthropic", "claude-3-5-sonnet-20241022") : Promise.resolve({ status: "unhealthy" as const, model: "claude-3-5-sonnet-20241022", error: "ANTHROPIC_API_KEY not configured" }),
-    environment.openai_key_configured ? testProviderWithTimeout("openai", "gpt-4-turbo") : Promise.resolve({ status: "unhealthy" as const, model: "gpt-4-turbo", error: "OPENAI_API_KEY not configured" }),
+    environment.openai_key_configured ? testProviderWithTimeout("openai", "gpt-4o") : Promise.resolve({ status: "unhealthy" as const, model: "gpt-4o", error: "OPENAI_API_KEY not configured" }),
     environment.openrouter_key_configured ? testProviderWithTimeout("openrouter", "anthropic/claude-3.5-sonnet") : Promise.resolve({ status: "unhealthy" as const, model: "anthropic/claude-3.5-sonnet", error: "OPENROUTER_API_KEY not configured" }),
   ]);
 

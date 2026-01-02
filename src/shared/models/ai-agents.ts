@@ -224,7 +224,7 @@ export const AI_AGENTS: AIAgent[] = [
       },
       {
         provider: "openai",
-        model: "gpt-4-turbo",
+        model: "gpt-4o",
         priority: 5,
       },
     ],
@@ -280,7 +280,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       },
       {
         provider: "openai",
-        model: "gpt-4-turbo",
+        model: "gpt-4o",
         priority: 5,
       },
     ],
@@ -300,9 +300,9 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "mistral:latest",
-    provider: "ollama",
-    defaultProvider: "ollama",
+    model: "zhipu/glm-4",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "medium",
     isActive: true,
     capabilities: [
@@ -315,29 +315,24 @@ Always provide specific, actionable recommendations. Use data to support your in
     ],
     supportedProviders: [
       {
-        provider: "ollama",
-        model: "mistral:latest",
+        provider: "google",
+        model: "gemini-1.5-flash",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "llama3.1:8b",
+        provider: "openai",
+        model: "gpt-4o",
         priority: 2,
       },
       {
-        provider: "openrouter",
-        model: "anthropic/claude-3.5-sonnet",
+        provider: "anthropic",
+        model: "claude-3-5-sonnet-20241022",
         priority: 3,
       },
       {
-        provider: "google",
-        model: "gemini-pro",
+        provider: "ollama",
+        model: "mistral:latest",
         priority: 4,
-      },
-      {
-        provider: "openai",
-        model: "gpt-4-turbo",
-        priority: 5,
       },
     ],
     systemPrompt: `You are an expert content creator and copywriter with years of experience in digital marketing. You help users:
@@ -357,9 +352,9 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "mistral:latest",
-    provider: "ollama",
-    defaultProvider: "ollama",
+    model: "gemini-1.5-flash",
+    provider: "google",
+    defaultProvider: "google",
     costTier: "medium",
     isActive: true,
     capabilities: [
@@ -393,7 +388,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       },
       {
         provider: "openai",
-        model: "gpt-4-turbo",
+        model: "gpt-4o",
         priority: 5,
       },
     ],
@@ -428,29 +423,24 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     ],
     supportedProviders: [
       {
-        provider: "ollama",
-        model: "mistral:latest",
+        provider: "openrouter",
+        model: "zhipu/glm-4",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "llama3.1:8b",
+        provider: "google",
+        model: "gemini-1.5-flash",
         priority: 2,
       },
       {
-        provider: "openrouter",
-        model: "anthropic/claude-3.5-sonnet",
+        provider: "ollama",
+        model: "glm4:9b",
         priority: 3,
       },
       {
-        provider: "google",
-        model: "gemini-pro",
-        priority: 4,
-      },
-      {
         provider: "openai",
-        model: "gpt-4-turbo",
-        priority: 5,
+        model: "gpt-4o-mini",
+        priority: 4,
       },
     ],
     systemPrompt: `You are a social media expert with deep knowledge of all major platforms including Twitter/X, LinkedIn, Instagram, Facebook, and TikTok. You help users:
@@ -490,13 +480,13 @@ Always consider platform-specific best practices. Focus on engagement and commun
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "llama3.1:8b",
+        provider: "openai",
+        model: "gpt-4o",
         priority: 2,
       },
       {
-        provider: "openrouter",
-        model: "anthropic/claude-3.5-sonnet",
+        provider: "anthropic",
+        model: "claude-3-5-sonnet-20241022",
         priority: 3,
       },
       {
@@ -505,8 +495,8 @@ Always consider platform-specific best practices. Focus on engagement and commun
         priority: 4,
       },
       {
-        provider: "openai",
-        model: "gpt-4-turbo",
+        provider: "openrouter",
+        model: "anthropic/claude-3.5-sonnet",
         priority: 5,
       },
     ],
@@ -613,7 +603,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       },
       {
         provider: "openai",
-        model: "gpt-4-turbo",
+        model: "gpt-4o",
         priority: 2,
       },
       {
