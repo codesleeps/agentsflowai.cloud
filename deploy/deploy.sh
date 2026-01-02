@@ -154,6 +154,8 @@ echo "🚀 Starting deployment to $SERVER..."
 # 1. Build the project locally
 echo "📦 Building project locally..."
 cd "$LOCAL_DIR"
+export NEXT_PUBLIC_APP_URL="https://agentsflowai.cloud"
+export BETTER_AUTH_URL="https://agentsflowai.cloud"
 npm run build
 
 # 2. Sync files to server

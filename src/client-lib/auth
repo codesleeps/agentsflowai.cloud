@@ -5,7 +5,7 @@ import { getEnv } from "@/lib/env-validation";
 const env = getEnv();
 
 // Validate baseURL for production
-const baseURL = env.NEXT_PUBLIC_APP_URL || "http://agentsflowai.cloud";
+const baseURL = env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://agentsflowai.cloud");
 
 if (env.NODE_ENV === "production" && !baseURL.startsWith("https://")) {
   console.warn(

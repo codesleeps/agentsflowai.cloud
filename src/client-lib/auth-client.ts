@@ -4,7 +4,7 @@ import { getEnv } from "@/lib/env-validation";
 const env = getEnv();
 
 // Validate baseURL for production
-const baseURL = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const baseURL = env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://agentsflowai.cloud");
 
 if (env.NODE_ENV === "production" && !baseURL.startsWith("https://")) {
   console.warn(
@@ -20,8 +20,8 @@ export const { signIn, signUp, useSession, signOut } = authClient;
 
 // Google sign-in helper
 export async function signInWithGoogle() {
-  const baseURL = env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  window.location.href = `${baseURL}/api/auth/signin/google`;
+  const currentBaseURL = env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://agentsflowai.cloud");
+  window.location.href = `${currentBaseURL}/api/auth/signin/google`;
 }
 
 // TypeScript types for better type safety
