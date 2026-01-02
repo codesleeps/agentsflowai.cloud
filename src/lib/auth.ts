@@ -54,6 +54,10 @@ export const auth = betterAuth({
   plugins: [nextCookies()],
   user: {
     modelName: "User",
+    fields: {
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+    },
   },
   session: {
     modelName: "Session",

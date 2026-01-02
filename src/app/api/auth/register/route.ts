@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user using Better Auth
-    const signUpResult = await (auth.api as any).signUp({
+    const signUpResult = await (auth.api as any).signUpEmail({
       body: {
         email: validatedData.email,
         password: validatedData.password,
