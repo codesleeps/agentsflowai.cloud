@@ -260,8 +260,8 @@ export default function AIAgentsPage() {
               <span className="text-muted-foreground">Providers:</span>
               <div
                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${ollamaStatus?.status === "connected"
-                    ? "bg-green-500/20 text-green-700 dark:text-green-400"
-                    : "bg-red-500/20 text-red-700 dark:text-red-400"
+                  ? "bg-green-500/20 text-green-700 dark:text-green-400"
+                  : "bg-red-500/20 text-red-700 dark:text-red-400"
                   }`}
               >
                 {ollamaStatus?.status === "connected" ? (
@@ -378,8 +378,8 @@ export default function AIAgentsPage() {
                       key={agent.id}
                       onClick={() => handleSelectAgent(agent)}
                       className={`w-full rounded-lg border p-4 text-left transition-all ${selectedAgent?.id === agent.id
-                          ? `${agentColors[agent.id]} border-2`
-                          : "hover:bg-muted/50"
+                        ? `${agentColors[agent.id]} border-2`
+                        : "hover:bg-muted/50"
                         }`}
                     >
                       <div className="flex items-start gap-3">
@@ -412,7 +412,7 @@ export default function AIAgentsPage() {
         </Card>
 
         {/* Chat Interface */}
-        <Card className="flex flex-col lg:col-span-2">
+        <Card className="flex flex-col lg:col-span-2 bg-glass">
           <CardHeader className="border-b">
             {selectedAgent ? (
               <div className="flex items-center justify-between">
@@ -429,10 +429,12 @@ export default function AIAgentsPage() {
                     </CardDescription>
                   </div>
                 </div>
-                <ModelSelector
-                  agent={selectedAgent}
-                  onModelChange={handleModelChange}
-                />
+                <div className="animate-fadeIn">
+                  <ModelSelector
+                    agent={selectedAgent}
+                    onModelChange={handleModelChange}
+                  />
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-3">
@@ -457,8 +459,8 @@ export default function AIAgentsPage() {
                     <div
                       key={index}
                       className={`flex gap-3 ${message.role === "user"
-                          ? "justify-end"
-                          : "justify-start"
+                        ? "justify-end"
+                        : "justify-start"
                         }`}
                     >
                       {message.role === "assistant" && (
@@ -470,8 +472,8 @@ export default function AIAgentsPage() {
                       )}
                       <div
                         className={`max-w-[85%] rounded-lg p-4 ${message.role === "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
                           }`}
                       >
                         <div className="whitespace-pre-wrap text-sm">
