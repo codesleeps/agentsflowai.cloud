@@ -5,8 +5,8 @@
 set -e
 
 # Configuration
-SERVER="root@srv1187860.hstgr.cloud"
-REMOTE_DIR="/var/www/agentsflow-ai"
+SERVER="deploy@srv1187860.hstgr.cloud"
+REMOTE_DIR="/home/deploy/agentsflow-ai"
 LOCAL_DIR="$(pwd)/"
 SSH_KEY="~/.ssh/deploy_key"
 
@@ -165,6 +165,7 @@ if [ "$USE_PASSWORD_AUTH" = false ]; then
       --exclude='.git' \
       --exclude='node_modules' \
       --exclude='*.log' \
+      --exclude='.env*' \
       --exclude='.env.local' \
       --exclude='.env.example' \
       "$LOCAL_DIR" "$SERVER:$REMOTE_DIR"
@@ -174,6 +175,7 @@ else
       --exclude='.git' \
       --exclude='node_modules' \
       --exclude='*.log' \
+      --exclude='.env*' \
       --exclude='.env.local' \
       --exclude='.env.example' \
       "$LOCAL_DIR" "$SERVER:$REMOTE_DIR"
@@ -194,16 +196,14 @@ fi
 
 # 3. Install dependencies and start on server
 echo "🔧 Installing dependencies and starting app..."
-if [ "$USE_PASSWORD_AUTH" = false ]; then
-    ssh -i "$SSH_KEY_EXPANDED" -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SERVER" << 'REMOTE_EOF'
-else
-    sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SERVER" << 'REMOTE_EOF'
-fi
-cd /var/www/agentsflow-ai
+# Remote script content
+REMOTE_SCRIPT=$(cat << 'EOF_SCRIPT'
+set -e
+cd /home/deploy/agentsflow-ai
 
 # Install dependencies
 echo "Installing npm packages..."
-npm ci --production=false
+npm ci --production=false --legacy-peer-deps
 
 # Run database migrations
 echo "Running database migrations..."
@@ -215,14 +215,23 @@ npx prisma db seed 2>/dev/null || echo "Seed skipped"
 
 # Restart PM2
 echo "Restarting PM2..."
-pm2 reload ecosystem.config.mjs --env production || pm2 start ecosystem.config.mjs --env production
+pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
 
 # Save PM2 config
 pm2 save
 
 # Show status
 pm2 status
-REMOTE_EOF
+EOF_SCRIPT
+)
+
+# Execute remote script
+echo "🔧 Installing dependencies and starting app..."
+if [ "$USE_PASSWORD_AUTH" = false ]; then
+    echo "$REMOTE_SCRIPT" | ssh -i "$SSH_KEY_EXPANDED" -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SERVER" "bash -s"
+else
+    echo "$REMOTE_SCRIPT" | sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$SERVER" "bash -s"
+fi
 
 auth_method="SSH Key"
 if [ "$USE_PASSWORD_AUTH" = true ]; then
@@ -233,11 +242,11 @@ echo "✅ Deployment complete!"
 echo ""
 echo "Authentication Method: $auth_method"
 echo "Files Synced: [count] files"
-echo "Server: root@srv1187860.hstgr.cloud"
-echo "Remote Path: /var/www/agentsflow-ai"
+echo "Server: deploy@srv1187860.hstgr.cloud"
+echo "Remote Path: /home/deploy/agentsflow-ai"
 echo "App URL: http://72.61.16.111:3005"
 echo ""
 echo "Next steps:"
-echo "- Check app status: ssh -i ~/.ssh/deploy_key root@srv1187860.hstgr.cloud \"pm2 status\""
-echo "- View logs: ssh -i ~/.ssh/deploy_key root@srv1187860.hstgr.cloud \"pm2 logs agentsflow-ai\""
-echo "- Monitor: ./deploy/monitor.sh"
+echo "- Check app status: ssh -i ~/.ssh/deploy_key deploy@srv1187860.hstgr.cloud \"pm2 status\""
+echo "- View logs: ssh -i ~/.ssh/deploy_key deploy@srv1187860.hstgr.cloud \"pm2 logs agentsflow-ai\""
+echo "- Monitor: ssh -i ~/.ssh/deploy_key deploy@srv1187860.hstgr.cloud /home/deploy/agentsflow-ai/deploy/monitor.sh"

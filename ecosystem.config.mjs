@@ -16,9 +16,9 @@ export default {
   apps: [
     {
       name: "agentsflow-ai",
-      script: "node_modules/next/dist/bin/next",
+      script: "/home/deploy/agentsflow-ai/node_modules/next/dist/bin/next",
       args: "start",
-      cwd: "/var/www/agentsflow-ai",
+      cwd: "/home/deploy/agentsflow-ai",
       instances: "max", // Use all available CPUs
       exec_mode: "cluster",
       autorestart: true,
@@ -66,11 +66,11 @@ export default {
    */
   deploy: {
     production: {
-      user: "root",
+      user: "deploy",
       host: "srv1187860.hstgr.cloud",
       ref: "origin/main",
       repo: "https://github.com/codesleeps/agentsflow-ai.cloud.git",
-      path: "/var/www/agentsflow-ai",
+      path: "/home/deploy/agentsflow-ai",
       ssh_options: [
         "IdentityFile=~/.ssh/deploy_key",
         "StrictHostKeyChecking=no",
