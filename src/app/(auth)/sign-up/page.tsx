@@ -72,7 +72,7 @@ export default function SignUp() {
           router.push("/onboarding");
         },
         onError: (ctx) => {
-          toast.error(ctx.error.message);
+          toast.error(ctx.error.message || "Failed to create account. Email might already be in use.");
           setLoading(false);
         },
       },
@@ -145,9 +145,8 @@ export default function SignUp() {
                     {passwordRequirements.map((req, index) => (
                       <span
                         key={index}
-                        className={`flex items-center gap-1 ${
-                          req.valid ? "text-green-600" : "text-gray-500"
-                        }`}
+                        className={`flex items-center gap-1 ${req.valid ? "text-green-600" : "text-gray-500"
+                          }`}
                       >
                         {req.valid ? (
                           <CheckCircle className="h-3 w-3" />
@@ -173,9 +172,8 @@ export default function SignUp() {
               />
               {confirmPassword.length > 0 && (
                 <span
-                  className={`flex items-center gap-1 text-xs ${
-                    passwordsMatch ? "text-green-600" : "text-red-600"
-                  }`}
+                  className={`flex items-center gap-1 text-xs ${passwordsMatch ? "text-green-600" : "text-red-600"
+                    }`}
                 >
                   {passwordsMatch ? (
                     <CheckCircle className="h-3 w-3" />
