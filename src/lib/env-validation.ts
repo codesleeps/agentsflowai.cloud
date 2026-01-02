@@ -7,8 +7,10 @@ const serverEnvSchema = z.object({
   }),
 
   // AI Services
-  OLLAMA_BASE_URL: z.string().url("OLLAMA_BASE_URL must be a valid URL").optional().default("http://localhost:11434"),
+  OLLAMA_BASE_URL: z
+    .preprocess((val) => (val === "" ? undefined : val), z.string().url("OLLAMA_BASE_URL must be a valid URL").optional().default("http://localhost:11434")),
   GOOGLE_API_KEY: z.string().optional(),
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
@@ -23,9 +25,7 @@ const serverEnvSchema = z.object({
     .string()
     .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
   BETTER_AUTH_URL: z
-    .string()
-    .url("BETTER_AUTH_URL must be a valid URL")
-    .optional(),
+    .preprocess((val) => (val === "" ? undefined : val), z.string().url("BETTER_AUTH_URL must be a valid URL").optional()),
 
   // Inngest
   INNGEST_SIGNING_KEY: z.string().optional(),
@@ -38,14 +38,14 @@ const clientEnvSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   NEXT_PUBLIC_APP_URL: z
-    .string()
-    .url("NEXT_PUBLIC_APP_URL must be a valid URL")
-    .optional(),
+    .preprocess((val) => (val === "" ? undefined : val), z.string().url("NEXT_PUBLIC_APP_URL must be a valid URL").optional()),
 
   // Development Only
   NEXT_PUBLIC_DEV_USER_NAME: z.string().optional(),
-  NEXT_PUBLIC_DEV_USER_EMAIL: z.string().email().optional(),
-  NEXT_PUBLIC_DEV_USER_IMAGE: z.string().url().optional(),
+  NEXT_PUBLIC_DEV_USER_EMAIL: z
+    .preprocess((val) => (val === "" ? undefined : val), z.string().email().optional()),
+  NEXT_PUBLIC_DEV_USER_IMAGE: z
+    .preprocess((val) => (val === "" ? undefined : val), z.string().url().optional()),
 });
 
 // Combined schema for type inference
@@ -112,8 +112,8 @@ export function validateEnv(): Env {
     if (typeof window === "undefined") {
       // Check if we're in build mode (Next.js sets NEXT_PHASE=phase-production-build)
       const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
-                         process.env.npm_lifecycle_event === 'build' ||
-                         !process.env.NODE_ENV;
+        process.env.npm_lifecycle_event === 'build' ||
+        !process.env.NODE_ENV;
 
       if (!isBuildTime) {
         process.exit(1);

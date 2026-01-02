@@ -191,7 +191,7 @@ export async function GET() {
   // Check environment variables
   const environment = {
     ollama_configured: !!(process.env.OLLAMA_BASE_URL || true), // Ollama can work without explicit config
-    google_key_configured: !!process.env.GOOGLE_API_KEY,
+    google_key_configured: !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY),
     anthropic_key_configured: !!process.env.ANTHROPIC_API_KEY,
     openai_key_configured: !!process.env.OPENAI_API_KEY,
     openrouter_key_configured: !!process.env.OPENROUTER_API_KEY,
