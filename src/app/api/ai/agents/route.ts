@@ -211,25 +211,34 @@ export async function handleGoogleProvider(
 export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
   const OLLAMA_BASE_URL =
     process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-  const ollamaResponse = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: agent.model,
-      messages,
-      stream: false,
-      options: { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
-    }),
-  });
 
-  if (!ollamaResponse.ok)
-    throw new Error(`Ollama API returned ${ollamaResponse.status}`);
-  const data = await ollamaResponse.json();
+  try {
+    const ollamaResponse = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: agent.model,
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        stream: false,
+        options: { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
+      }),
+      signal: AbortSignal.timeout(3000), // 3 second timeout for local Ollama
+    });
 
-  return {
-    response: data.message?.content || data.response,
-    tokensUsed: data.eval_count,
-  };
+    if (!ollamaResponse.ok)
+      throw new Error(`Ollama API returned ${ollamaResponse.status}`);
+    const data = await ollamaResponse.json();
+
+    return {
+      response: data.message?.content || data.response,
+      tokensUsed: data.eval_count || 0,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new Error("Ollama connection timed out (3s)");
+    }
+    throw error;
+  }
 }
 
 export async function handleOpenRouterProvider(
@@ -455,257 +464,50 @@ function generateFallbackResponse(agentId: string, message: string): string {
         lowercaseMessage.includes("react") ||
         lowercaseMessage.includes("component")
       ) {
-        return `# Web Development Suggestion
+        return `# Web Development Insight (Standard Mode)
 
-Here's a basic React component structure to get you started:
+The AI providers (Google, OpenAI, Anthropic, Ollama) are currently unavailable or hit their rate limits.
 
+**Quick Component Blueprint:**
 \`\`\`tsx
-import { useState } from 'react';
-
-interface Props {
-  title: string;
-}
-
-export function MyComponent({ title }: Props) {
-  const [isActive, setIsActive] = useState(false);
-  
-  return (
-    <div className="p-4 rounded-lg border">
-      <h2 className="text-xl font-bold">{title}</h2>
-      <button 
-        onClick={() => setIsActive(!isActive)}
-        className="mt-2 px-4 py-2 bg-primary text-white rounded"
-      >
-        {isActive ? 'Active' : 'Inactive'}
-      </button>
-    </div>
-  );
+export function Component() {
+  return <div className="p-4 bg-muted rounded">Base Structure</div>;
 }
 \`\`\`
 
-**Best Practices:**
-- Use TypeScript for type safety
-- Keep components small and focused
-- Use meaningful prop names
-- Add proper accessibility attributes
-
-*Note: Connect Ollama for more detailed, context-aware responses.*`;
+*Please check your API keys or ensure your local Ollama instance is running to restore full generative capabilities.*`;
       }
-      return `I can help you with web development! Here are some things I can assist with:
+      return `I'm currently in **Limited Resource Mode**. 
 
-• **React/Next.js Components** - Generate modern, reusable components
-• **TypeScript** - Type-safe code with proper interfaces
-• **API Development** - RESTful endpoints and data handling
-• **Performance** - Optimization techniques and best practices
-• **Testing** - Unit tests and integration tests
+The connection to our AI providers (Anthropic, Google, and OpenAI) or your local Ollama instance is not responding. 
 
-What specific web development task can I help you with?
-
-*Note: Connect Ollama on your VPS for full AI-powered code generation.*`;
+**What you can do:**
+1. Check your \`.env\` file for valid API keys.
+2. If using local models, ensure Ollama is running at \`http://localhost:11434\`.
+3. Try again in a few minutes if this is a rate-limit issue.`;
 
     case "analytics-agent":
-      return `# Analytics Insights
+      return `# Analytics Insights (Fallback)
 
-Based on your query, here are some analytical perspectives:
+Our advanced analytical models are currently unreachable.
 
-**Key Metrics to Consider:**
-1. **Conversion Rate** - Track how visitors become customers
-2. **Customer Lifetime Value** - Long-term revenue per customer
-3. **Churn Rate** - Customer retention analysis
-4. **ROI** - Return on marketing investments
+**General Optimization Framework:**
+1. **Define KPIs**: Focus on conversion rate and ROI.
+2. **Collect Data**: Ensure robust event tracking.
+3. **Analyze**: Look for anomalies in weekly trends.
 
-**Recommended Actions:**
-- Set up proper tracking and attribution
-- Create weekly performance dashboards
-- A/B test key landing pages
-- Monitor competitor benchmarks
-
-**Quick Analysis Framework:**
-1. Define your key performance indicators
-2. Collect baseline data
-3. Identify trends and patterns
-4. Generate actionable insights
-5. Implement and measure changes
-
-*Connect Ollama for detailed data analysis and custom insights.*`;
-
-    case "content-agent":
-      return `# Content Creation Framework
-
-Here's a structure for creating compelling content:
-
-**Blog Post Template:**
-
-## [Attention-Grabbing Headline]
-
-**Introduction** (Hook your readers)
-- Start with a compelling statistic or question
-- Address the reader's pain point
-- Preview what they'll learn
-
-**Main Content**
-- Break into scannable sections
-- Use bullet points and lists
-- Include relevant examples
-- Add visuals where possible
-
-**Conclusion**
-- Summarize key takeaways
-- Include a clear call-to-action
-- Encourage engagement
-
-**SEO Checklist:**
-✅ Keyword in title and first paragraph
-✅ Meta description (150-160 characters)
-✅ Internal and external links
-✅ Image alt text
-✅ Readable URL structure
-
-*Connect Ollama for AI-generated content tailored to your specific needs.*`;
-
-    case "marketing-agent":
-      return `# Marketing Strategy Framework
-
-**Campaign Planning Checklist:**
-
-1. **Define Objectives**
-   - Brand awareness
-   - Lead generation
-   - Sales conversion
-   - Customer retention
-
-2. **Identify Target Audience**
-   - Demographics
-   - Psychographics
-   - Pain points
-   - Buying behavior
-
-3. **Select Channels**
-   - Paid ads (Google, Facebook, LinkedIn)
-   - Content marketing
-   - Email campaigns
-   - Social media
-   - Influencer partnerships
-
-4. **Create Messaging**
-   - Value proposition
-   - Key benefits
-   - Call-to-action
-   - Brand voice
-
-5. **Set Budget & Timeline**
-   - Channel allocation
-   - Testing budget
-   - Scaling plan
-
-**Quick Wins:**
-• Optimize your landing pages for conversion
-• Set up retargeting campaigns
-• Create lead magnets
-• Build email sequences
-
-*Connect Ollama for personalized marketing strategies and ad copy generation.*`;
-
-    case "social-media-agent":
-      return `# Social Media Content Ideas
-
-**Platform-Specific Tips:**
-
-📘 **Facebook**
-- Best posting times: 1-4 PM
-- Use eye-catching visuals
-- Ask questions to boost engagement
-- Go live regularly
-
-📸 **Instagram**
-- Use 5-10 relevant hashtags
-- Post Reels for maximum reach
-- Engage with Stories daily
-- Collaborate with creators
-
-💼 **LinkedIn**
-- Share industry insights
-- Post thought leadership content
-- Engage in comments
-- Use LinkedIn articles
-
-🐦 **Twitter/X**
-- Tweet 3-5 times daily
-- Use trending hashtags
-- Create threads for complex topics
-- Engage with your community
-
-**Content Calendar Template:**
-| Day | Platform | Content Type | Topic |
-|-----|----------|--------------|-------|
-| Mon | LinkedIn | Article | Industry news |
-| Tue | Instagram | Reel | Behind the scenes |
-| Wed | Twitter | Thread | Tips & tricks |
-| Thu | Facebook | Live | Q&A session |
-| Fri | All | Promo | Weekly offer |
-
-*Connect Ollama for AI-generated posts and personalized strategies.*`;
-
-    case "seo-agent":
-      return `# SEO Optimization Guide
-
-**On-Page SEO Checklist:**
-
-✅ **Title Tag** (50-60 characters)
-- Include primary keyword
-- Make it compelling
-- Add brand name
-
-✅ **Meta Description** (150-160 characters)
-- Summarize page content
-- Include call-to-action
-- Use target keyword
-
-✅ **Headers (H1-H6)**
-- One H1 per page
-- Use keywords naturally
-- Create logical hierarchy
-
-✅ **Content Optimization**
-- 1,500+ words for pillar content
-- Include related keywords
-- Add internal links
-- Use multimedia
-
-**Technical SEO:**
-- Page speed < 3 seconds
-- Mobile-friendly design
-- SSL certificate
-- XML sitemap
-- Clean URL structure
-
-**Keyword Research Tips:**
-1. Start with seed keywords
-2. Analyze search intent
-3. Check competition
-4. Find long-tail variations
-5. Group by topic clusters
-
-**Quick Wins:**
-• Fix broken links
-• Optimize images
-• Add schema markup
-• Improve Core Web Vitals
-
-*Connect Ollama for detailed SEO analysis and keyword recommendations.*`;
+*Restoring connectivity will enable deep-dive analysis of your specific metrics.*`;
 
     default:
-      return `I'm your AI assistant! I can help you with:
+      return `# AI Capability Note
 
-• **Web Development** - Code, components, debugging
-• **Analytics** - Data insights, trends, forecasting
-• **Content Creation** - Blog posts, copy, articles
-• **Marketing** - Campaigns, strategies, ad copy
-• **Social Media** - Posts, calendars, engagement
-• **SEO** - Keywords, optimization, rankings
+I'm currently running in a limited offline mode because I cannot reach the AI providers (OpenAI, Anthropic, Google, or Ollama).
 
-Please select a specific agent or ask me anything!
+**Troubleshooting:**
+- **External APIs**: Verify your API keys in the environment settings.
+- **Local Models**: Ensure Ollama is active if you're using local inference.
+- **Network**: Check if your server has outgoing internet access for cloud models.
 
-*For full AI capabilities, ensure Ollama is running on your VPS.*`;
+*As soon as a provider becomes available, I will automatically resume full intelligence services.*`;
   }
 }

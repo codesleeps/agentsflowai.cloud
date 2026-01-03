@@ -205,7 +205,7 @@ export const AI_AGENTS: AIAgent[] = [
       {
         provider: "ollama",
         model: "mistral:latest",
-        priority: 1,
+        priority: 4,
       },
       {
         provider: "ollama",
@@ -219,8 +219,8 @@ export const AI_AGENTS: AIAgent[] = [
       },
       {
         provider: "google",
-        model: "gemini-pro",
-        priority: 4,
+        model: "gemini-2.0-flash",
+        priority: 1,
       },
       {
         provider: "openai",
@@ -261,7 +261,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       {
         provider: "ollama",
         model: "mistral:latest",
-        priority: 1,
+        priority: 4,
       },
       {
         provider: "ollama",
@@ -275,8 +275,8 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       },
       {
         provider: "google",
-        model: "gemini-pro",
-        priority: 4,
+        model: "gemini-2.0-flash",
+        priority: 1,
       },
       {
         provider: "openai",
@@ -317,7 +317,7 @@ Always provide specific, actionable recommendations. Use data to support your in
       {
         provider: "google",
         model: "gemini-1.5-flash",
-        priority: 1,
+        priority: 4,
       },
       {
         provider: "openai",
@@ -332,7 +332,7 @@ Always provide specific, actionable recommendations. Use data to support your in
       {
         provider: "ollama",
         model: "mistral:latest",
-        priority: 4,
+        priority: 1,
       },
     ],
     systemPrompt: `You are an expert content creator and copywriter with years of experience in digital marketing. You help users:
@@ -369,7 +369,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       {
         provider: "ollama",
         model: "mistral:latest",
-        priority: 1,
+        priority: 4,
       },
       {
         provider: "ollama",
@@ -383,8 +383,8 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       },
       {
         provider: "google",
-        model: "gemini-pro",
-        priority: 4,
+        model: "gemini-2.0-flash",
+        priority: 1,
       },
       {
         provider: "openai",
@@ -425,7 +425,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
       {
         provider: "openrouter",
         model: "zhipu/glm-4",
-        priority: 1,
+        priority: 4,
       },
       {
         provider: "google",
@@ -440,7 +440,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
       {
         provider: "openai",
         model: "gpt-4o-mini",
-        priority: 4,
+        priority: 1,
       },
     ],
     systemPrompt: `You are a social media expert with deep knowledge of all major platforms including Twitter/X, LinkedIn, Instagram, Facebook, and TikTok. You help users:
@@ -477,7 +477,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       {
         provider: "ollama",
         model: "mistral:latest",
-        priority: 1,
+        priority: 4,
       },
       {
         provider: "openai",
@@ -491,8 +491,8 @@ Always consider platform-specific best practices. Focus on engagement and commun
       },
       {
         provider: "google",
-        model: "gemini-pro",
-        priority: 4,
+        model: "gemini-2.0-flash",
+        priority: 1,
       },
       {
         provider: "openrouter",
@@ -530,7 +530,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Chat and conversation",
     ],
     supportedProviders: [
-      { provider: "ollama", model: "mistral:latest", priority: 1 },
+      { provider: "ollama", model: "mistral:latest", priority: 4 },
       { provider: "ollama", model: "llama3.1:8b", priority: 2 },
       { provider: "google", model: "gemini-2.0-flash", priority: 3 },
     ],
@@ -560,7 +560,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Multimodal understanding",
     ],
     supportedProviders: [
-      { provider: "google", model: "gemini-2.0-flash", priority: 1 },
+      { provider: "google", model: "gemini-2.0-flash", priority: 4 },
       {
         provider: "anthropic",
         model: "claude-3-5-sonnet-20241022",
@@ -599,7 +599,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       {
         provider: "openrouter",
         model: "anthropic/claude-3.5-sonnet",
-        priority: 1,
+        priority: 4,
       },
       {
         provider: "openai",
@@ -608,13 +608,13 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       },
       {
         provider: "google",
-        model: "gemini-pro",
+        model: "gemini-2.0-flash",
         priority: 3,
       },
       {
         provider: "openrouter",
         model: "meta-llama/llama-3.1-70b-instruct",
-        priority: 4,
+        priority: 1,
       },
       {
         provider: "ollama",
