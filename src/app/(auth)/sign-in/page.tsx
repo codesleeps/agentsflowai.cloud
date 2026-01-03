@@ -55,9 +55,10 @@ export default function SignIn() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const baseURL =
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      window.location.href = `${baseURL}/api/auth/signin/google`;
+      await signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
     } catch (error) {
       toast.error("Failed to initiate Google sign-in");
       setGoogleLoading(false);
