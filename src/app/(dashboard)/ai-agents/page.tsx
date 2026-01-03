@@ -18,6 +18,7 @@ import {
   Sparkles,
   Copy,
   Check,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -41,6 +42,9 @@ import {
 import { toast } from "sonner";
 import type { AIAgent, AIProvider } from "@/shared/models/ai-agents";
 import { ModelSelector } from "@/components/ModelSelector";
+import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
+import { cn } from "@/client-lib/utils";
+import ReactMarkdown from "react-markdown";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -117,12 +121,13 @@ export default function AIAgentsPage() {
     toast.info(`Switched to ${provider} model: ${model}`);
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || !selectedAgent || isLoading) return;
+  const handleSend = async (overrideInput?: string) => {
+    const messageContent = overrideInput || input;
+    if (!messageContent.trim() || !selectedAgent || isLoading) return;
 
     const userMessage: ChatMessage = {
       role: "user",
-      content: input.trim(),
+      content: messageContent.trim(),
       timestamp: new Date(),
     };
 
@@ -153,7 +158,10 @@ export default function AIAgentsPage() {
       setMessages((prev) => [...prev, assistantMessage]);
 
       if (response.note) {
-        toast.info(response.note);
+        // Only show if it's not the generic fallback note we already handled in the UI
+        if (!response.note.includes("offline fallback mode")) {
+          toast.info(response.note);
+        }
       }
     } catch (error) {
       console.error("Error generating response:", error);
@@ -186,59 +194,6 @@ export default function AIAgentsPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const renderMessageContent = (content: string) => {
-    // Simple markdown-like rendering for code blocks
-    const parts = content.split(/(```[\s\S]*?```)/g);
-
-    return parts.map((part, index) => {
-      if (part.startsWith("```") && part.endsWith("```")) {
-        const codeContent = part.slice(3, -3);
-        const firstLineEnd = codeContent.indexOf("\n");
-        const language =
-          firstLineEnd > 0 ? codeContent.slice(0, firstLineEnd).trim() : "";
-        const code =
-          firstLineEnd > 0 ? codeContent.slice(firstLineEnd + 1) : codeContent;
-
-        return (
-          <div key={index} className="relative my-3">
-            <div className="flex items-center justify-between rounded-t-lg border-b bg-muted/80 px-3 py-1">
-              <span className="font-mono text-xs text-muted-foreground">
-                {language || "code"}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2"
-                onClick={() => handleCopyCode(code)}
-              >
-                {copiedCode === code ? (
-                  <Check className="h-3 w-3 text-green-500" />
-                ) : (
-                  <Copy className="h-3 w-3" />
-                )}
-              </Button>
-            </div>
-            <pre className="overflow-x-auto rounded-b-lg bg-muted/50 p-3">
-              <code className="font-mono text-sm">{code}</code>
-            </pre>
-          </div>
-        );
-      }
-
-      // Render bold text
-      const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
-      return (
-        <span key={index}>
-          {boldParts.map((boldPart, boldIndex) => {
-            if (boldPart.startsWith("**") && boldPart.endsWith("**")) {
-              return <strong key={boldIndex}>{boldPart.slice(2, -2)}</strong>;
-            }
-            return <span key={boldIndex}>{boldPart}</span>;
-          })}
-        </span>
-      );
-    });
-  };
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
@@ -453,60 +408,73 @@ export default function AIAgentsPage() {
 
           {selectedAgent ? (
             <>
-              <ScrollArea className="max-h-[500px] flex-1 p-4">
+              <ScrollArea className="max-h-[500px] flex-1 p-4 bg-premium-chat/30">
                 <div className="space-y-4">
                   {messages.map((message, index) => (
                     <div
                       key={index}
-                      className={`flex gap-3 ${message.role === "user"
-                        ? "justify-end"
-                        : "justify-start"
-                        }`}
+                      className={cn(
+                        "flex gap-3",
+                        message.role === "user" ? "justify-end" : "justify-start"
+                      )}
                     >
                       {message.role === "assistant" && (
                         <div
-                          className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${agentColors[selectedAgent.id]}`}
+                          className={cn(
+                            "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full",
+                            agentColors[selectedAgent.id] || "bg-primary/10"
+                          )}
                         >
-                          {agentIcons[selectedAgent.id]}
+                          {agentIcons[selectedAgent.id] || <Bot className="h-4 w-4" />}
                         </div>
                       )}
                       <div
-                        className={`max-w-[85%] rounded-lg p-4 ${message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                          }`}
+                        className={cn(
+                          "max-w-[85%] rounded-2xl px-4 py-3 shadow-lg transition-all",
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
+                            : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
+                        )}
                       >
-                        <div className="whitespace-pre-wrap text-sm">
-                          {renderMessageContent(message.content)}
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
                         </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-xs opacity-60">
+                        <div className={cn(
+                          "mt-2 flex items-center gap-3 text-[10px] font-medium opacity-40 uppercase tracking-tight",
+                          message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                        )}>
+                          <span>
                             {message.timestamp.toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
                           </span>
                           {message.model && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs opacity-60"
-                            >
+                            <Badge variant="outline" className="h-[18px] px-1.5 text-[9px] border-muted-foreground/20 font-bold">
                               {message.model}
                             </Badge>
                           )}
                         </div>
                       </div>
+                      {message.role === "user" && (
+                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
                     </div>
                   ))}
                   {isLoading && (
                     <div className="flex justify-start gap-3">
                       <div
-                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${agentColors[selectedAgent.id]}`}
+                        className={cn(
+                          "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full",
+                          agentColors[selectedAgent.id] || "bg-primary/10"
+                        )}
                       >
-                        {agentIcons[selectedAgent.id]}
+                        {agentIcons[selectedAgent.id] || <Bot className="h-4 w-4" />}
                       </div>
-                      <div className="rounded-lg bg-muted p-4">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                      <div className="rounded-lg bg-card/70 backdrop-blur-md p-4 border border-border/50">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
                       </div>
                     </div>
                   )}
@@ -514,29 +482,28 @@ export default function AIAgentsPage() {
                 </div>
               </ScrollArea>
 
-              <div className="border-t p-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder={`Ask ${selectedAgent.name} anything...`}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    disabled={isLoading}
-                    className="min-h-[60px] resize-none"
-                    rows={2}
-                  />
-                  <Button
-                    onClick={handleSend}
-                    disabled={!input.trim() || isLoading}
-                    className="h-auto"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+              <div className="border-t bg-background/50 backdrop-blur-sm">
+                <EnhancedChatInput
+                  onSend={(val) => handleSend(val)}
+                  isLoading={isLoading}
+                  placeholder={`Ask ${selectedAgent.name} anything...`}
+                  models={selectedAgent.supportedProviders?.map((p: any) => ({
+                    id: p.provider,
+                    name: `${p.provider} (${p.model})`,
+                    provider: p.provider,
+                    priority: p.priority,
+                    model: p.model
+                  })) || []}
+                  selectedModelId={currentModel?.provider}
+                  onModelChange={(provider, model) => {
+                    if (model) {
+                      handleModelChange(provider as AIProvider, model);
+                    } else {
+                      const m = selectedAgent.supportedProviders?.find((p: any) => p.provider === provider)?.model;
+                      handleModelChange(provider as AIProvider, m || selectedAgent.model);
+                    }
+                  }}
+                />
               </div>
             </>
           ) : (
