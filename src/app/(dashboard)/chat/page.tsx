@@ -11,6 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateText } from "@/client-lib/built-in-integrations/ai";
 import { useAIAgents } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
+import { cn } from "@/client-lib/utils";
+import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "@/shared/models/types";
 
 const SYSTEM_PROMPT = `You are an AI assistant for AgentsFlowAI, an AI-powered business automation platform. You help potential customers:
@@ -204,7 +206,9 @@ Provide a helpful, concise response as the AI assistant:`;
                         : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
                     )}
                   >
-                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed italic last:not-italic">{message.content}</p>
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
                     <p className={cn(
                       "text-[10px] mt-2 font-medium opacity-40 uppercase tracking-tight",
                       message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"

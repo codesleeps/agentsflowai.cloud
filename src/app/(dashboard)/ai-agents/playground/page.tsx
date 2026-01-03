@@ -38,6 +38,7 @@ import { useAIAgents } from "@/client-lib/ai-agents-client";
 import { generateAgentResponse } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { cn } from "@/client-lib/utils";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
 interface PlaygroundMessage {
@@ -174,57 +175,6 @@ export default function AgentPlaygroundPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const renderMessageContent = (content: string) => {
-    const parts = content.split(/(```[\s\S]*?```)/g);
-
-    return parts.map((part, index) => {
-      if (part.startsWith("```") && part.endsWith("```")) {
-        const codeContent = part.slice(3, -3);
-        const firstLineEnd = codeContent.indexOf("\n");
-        const language =
-          firstLineEnd > 0 ? codeContent.slice(0, firstLineEnd).trim() : "";
-        const code =
-          firstLineEnd > 0 ? codeContent.slice(firstLineEnd + 1) : codeContent;
-
-        return (
-          <div key={index} className="relative my-3">
-            <div className="flex items-center justify-between rounded-t-lg border-b bg-muted/80 px-3 py-1">
-              <span className="font-mono text-xs text-muted-foreground">
-                {language || "code"}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2"
-                onClick={() => handleCopyCode(code)}
-              >
-                {copiedCode === code ? (
-                  <Check className="h-3 w-3 text-green-500" />
-                ) : (
-                  <Copy className="h-3 w-3" />
-                )}
-              </Button>
-            </div>
-            <pre className="overflow-x-auto rounded-b-lg bg-muted/50 p-3">
-              <code className="font-mono text-sm">{code}</code>
-            </pre>
-          </div>
-        );
-      }
-
-      const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
-      return (
-        <span key={index}>
-          {boldParts.map((boldPart, boldIndex) => {
-            if (boldPart.startsWith("**") && boldPart.endsWith("**")) {
-              return <strong key={boldIndex}>{boldPart.slice(2, -2)}</strong>;
-            }
-            return <span key={boldIndex}>{boldPart}</span>;
-          })}
-        </span>
-      );
-    });
-  };
 
   const clearChat = () => {
     setMessages([]);
@@ -386,8 +336,8 @@ export default function AgentPlaygroundPage() {
                             : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
                         )}
                       >
-                        <div className="whitespace-pre-wrap text-[15px] leading-relaxed italic last:not-italic">
-                          {renderMessageContent(message.content)}
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
                         </div>
                         <div className={cn(
                           "mt-2 flex items-center gap-3 text-[10px] font-medium opacity-40 uppercase tracking-tight",
@@ -418,6 +368,11 @@ export default function AgentPlaygroundPage() {
                           )}
                         </div>
                       </div>
+                      {message.role === "user" && (
+                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
                     </div>
                   ))}
                   {isLoading && (

@@ -6,8 +6,11 @@ async function testConnection() {
         console.log("Testing database connection...");
         await prisma.$connect();
         console.log("Successfully connected to the database.");
-        const userCount = await prisma.user.count();
-        console.log(`User count: ${userCount}`);
+        const users = await prisma.user.findMany({
+            select: { email: true }
+        });
+        console.log(`User count: ${users.length}`);
+        console.log("Registered emails:", users.map(u => u.email).join(", "));
     } catch (error) {
         console.error("Database connection failed:");
         console.error(error);
