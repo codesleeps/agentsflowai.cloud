@@ -37,6 +37,7 @@ import { useUserAIAgents } from "@/client-lib/user-ai-agents-client";
 import { useAIAgents } from "@/client-lib/ai-agents-client";
 import { generateAgentResponse } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
+import { ChatArea } from "@/components/chat/ChatArea";
 import { cn } from "@/client-lib/utils";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -313,84 +314,15 @@ export default function AgentPlaygroundPage() {
 
           {selectedAgent ? (
             <>
-              <ScrollArea className="max-h-[500px] flex-1 p-4 bg-premium-chat/30">
-                <div className="space-y-4">
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex gap-3 ${message.role === "user"
-                        ? "justify-end"
-                        : "justify-start"
-                        }`}
-                    >
-                      {message.role === "assistant" && (
-                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-                          <Bot className="h-4 w-4" />
-                        </div>
-                      )}
-                      <div
-                        className={cn(
-                          "max-w-[85%] rounded-2xl px-4 py-3 shadow-lg transition-all",
-                          message.role === "user"
-                            ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
-                            : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
-                        )}
-                      >
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
-                        </div>
-                        <div className={cn(
-                          "mt-2 flex items-center gap-3 text-[10px] font-medium opacity-40 uppercase tracking-tight",
-                          message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
-                        )}>
-                          <span>
-                            {message.timestamp.toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                          {message.model && (
-                            <Badge variant="outline" className="h-[18px] px-1.5 text-[9px] border-muted-foreground/20 font-bold">
-                              {message.model}
-                            </Badge>
-                          )}
-                          {message.responseTime && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-2.5 w-2.5" />
-                              {message.responseTime}ms
-                            </span>
-                          )}
-                          {message.tokensUsed && (
-                            <span className="flex items-center gap-1">
-                              <Zap className="h-2.5 w-2.5" />
-                              {message.tokensUsed} tokens
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {message.role === "user" && (
-                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                          <User className="h-4 w-4 text-primary-foreground" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {isLoading && (
-                    <div className="flex justify-start gap-3">
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-                        <Bot className="h-4 w-4" />
-                      </div>
-                      <div className="rounded-lg bg-muted p-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-primary"></div>
-                          <span className="text-sm">Thinking...</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
+              <ChatArea
+                messages={messages.map(m => ({
+                  ...m,
+                  timestamp: new Date(m.timestamp)
+                }))}
+                isLoading={isLoading}
+                agentIcon={selectedAgent.icon}
+                agentName={selectedAgent.name}
+              />
 
               <div className="border-t bg-background/50 backdrop-blur-sm">
                 <EnhancedChatInput
