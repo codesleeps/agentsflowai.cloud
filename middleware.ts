@@ -75,6 +75,20 @@ function isOnboardingExempt(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Debug logging for authentication troubleshooting
+  if (process.env.NODE_ENV === "development") {
+    // console.log(`[MIDDLEWARE] ${request.method} ${pathname}`);
+  }
+
+  // Development mode bypass (if configured in .env.local)
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.NEXT_PUBLIC_DEV_USER_NAME &&
+    !pathname.startsWith("/api/auth") // Don't bypass auth routes themselves
+  ) {
+    return NextResponse.next();
+  }
+
   // Handle CORS preflight requests
   if (request.method === "OPTIONS") {
     const corsResponse = handleCors(request);
@@ -204,7 +218,7 @@ export async function middleware(request: NextRequest) {
           }
         }
       } catch (error) {
-        console.error("Middleware role check error:", error);
+        console.error(`[MIDDLEWARE AUTH ERROR] ${pathname}:`, error);
       }
 
       // We allow the request to proceed. The actual token verification happens

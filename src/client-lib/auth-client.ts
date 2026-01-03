@@ -20,8 +20,10 @@ export const { signIn, signUp, useSession, signOut } = authClient;
 
 // Google sign-in helper
 export async function signInWithGoogle() {
-  const currentBaseURL = env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://agentsflowai.cloud");
-  window.location.href = `${currentBaseURL}/api/auth/signin/google`;
+  await signIn.social({
+    provider: "google",
+    callbackURL: "/dashboard",
+  });
 }
 
 // TypeScript types for better type safety
