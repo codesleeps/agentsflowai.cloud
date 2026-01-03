@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { cn } from "@/client-lib/utils";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -130,137 +131,135 @@ export default function FastChatPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold">Fast Chat</h1>
-              <p className="text-xs text-muted-foreground">
-                Local AI Assistant (No Login Required)
-              </p>
+              <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-400 mt-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1 animate-pulse" />
+                Online
+              </Badge>
             </div>
-            <Badge variant="secondary" className="ml-2">
-              <Sparkles className="mr-1 h-3 w-3" />
-              Ollama
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open("/", "_self")}
-            >
-              ← Back to Home
-            </Button>
-            {conversationStarted && (
-              <Button variant="outline" size="sm" onClick={clearChat}>
-                Clear Chat
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/", "_self")}
+              >
+                ← Back to Home
               </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Chat Area */}
-      <div className="container mx-auto max-w-4xl flex-1 pb-24 pt-20">
-        <div className="flex h-full flex-col">
-          {/* Chat Messages */}
-          <ScrollArea className="flex-1 px-4 py-6">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-2xl px-4 py-3 shadow-lg transition-all",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
-                        : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed italic last:not-italic">{message.content}</p>
-                    <p className={cn(
-                      "text-[10px] mt-2 font-medium opacity-40 uppercase tracking-tight",
-                      message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
-                    )}>
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  </div>
-                </div>
+              {conversationStarted && (
+                <Button variant="outline" size="sm" onClick={clearChat}>
+                  Clear Chat
+                </Button>
               )}
-              <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
+          </div>
+        </div>
 
-          {/* Quick Actions */}
-          {!isTyping && conversationStarted && (
-            <div className="border-t bg-background px-4 py-4">
-              <p className="mb-2 text-xs text-muted-foreground">
-                Quick Actions:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    handleQuickAction(
-                      "What are some business ideas I could start?",
-                    )
-                  }
-                >
-                  Business Ideas
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    handleQuickAction("Help me write a professional email")
-                  }
-                >
-                  Write Email
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    handleQuickAction("Explain blockchain technology simply")
-                  }
-                >
-                  Explain Tech
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickAction("Give me productivity tips")}
-                >
-                  Productivity Tips
-                </Button>
+        {/* Main Chat Area */}
+        <div className="container mx-auto max-w-4xl flex-1 pb-24 pt-20">
+          <div className="flex h-full flex-col">
+            {/* Chat Messages */}
+            <ScrollArea className="flex-1 px-4 py-6">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"
+                      }`}
+                  >
+                    <div
+                      className={cn(
+                        "max-w-[80%] rounded-2xl px-4 py-3 shadow-lg transition-all",
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
+                          : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
+                      )}
+                    >
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                      <p className={cn(
+                        "text-[10px] mt-2 font-medium opacity-40 uppercase tracking-tight",
+                        message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                      )}>
+                        {message.timestamp.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
-            </div>
-          )}
+            </ScrollArea>
 
-          {/* Input Area */}
-          <div className="fixed bottom-0 left-0 right-0 border-t bg-background/50 backdrop-blur-xl">
-            <EnhancedChatInput
-              onSend={(val) => handleSend(val)}
-              isLoading={isTyping}
-              models={[
-                { id: "ollama", name: "Ollama (Local)", provider: "Local", priority: 1 },
-                { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true },
-              ]}
-              selectedModelId="ollama"
-            />
+            {/* Quick Actions */}
+            {!isTyping && conversationStarted && (
+              <div className="border-t bg-background px-4 py-4">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Quick Actions:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleQuickAction(
+                        "What are some business ideas I could start?",
+                      )
+                    }
+                  >
+                    Business Ideas
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleQuickAction("Help me write a professional email")
+                    }
+                  >
+                    Write Email
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleQuickAction("Explain blockchain technology simply")
+                    }
+                  >
+                    Explain Tech
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickAction("Give me productivity tips")}
+                  >
+                    Productivity Tips
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Input Area */}
+            <div className="fixed bottom-0 left-0 right-0 border-t bg-background/50 backdrop-blur-xl">
+              <EnhancedChatInput
+                onSend={(val) => handleSend(val)}
+                isLoading={isTyping}
+                models={[
+                  { id: "ollama", name: "Ollama (Local)", provider: "Local", priority: 1 },
+                  { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true },
+                ]}
+                selectedModelId="ollama"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+      );
 }
