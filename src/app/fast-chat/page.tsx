@@ -11,6 +11,7 @@ import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { cn } from "@/client-lib/utils";
 import ReactMarkdown from "react-markdown";
+import Link from "next/link";
 
 interface Message {
   id: string;
