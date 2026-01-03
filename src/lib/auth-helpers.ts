@@ -24,8 +24,26 @@ export async function getServerSessionFromRequest(
 ): Promise<AuthResult> {
   const env = getEnv();
 
+  // Check for development mode bypass (priority in dev)
+  if (
+    env.NODE_ENV === "development" &&
+    env.NEXT_PUBLIC_DEV_USER_NAME &&
+    env.NEXT_PUBLIC_DEV_USER_EMAIL
+  ) {
+    return {
+      authenticated: true,
+      user: {
+        id: "dev-user",
+        name: env.NEXT_PUBLIC_DEV_USER_NAME,
+        email: env.NEXT_PUBLIC_DEV_USER_EMAIL,
+        image: env.NEXT_PUBLIC_DEV_USER_IMAGE,
+        role: "admin", // Assume admin for dev user
+      },
+    };
+  }
+
   try {
-    // Check for real session first
+    // Check for real session
     const sessionCallback = await auth.api.getSession({
       headers: request.headers
     });
@@ -39,24 +57,6 @@ export async function getServerSessionFromRequest(
           email: sessionCallback.user.email,
           image: sessionCallback.user.image || undefined,
           role: (sessionCallback.user as any).role,
-        },
-      };
-    }
-
-    // Check for development mode bypass (only if no real session)
-    if (
-      env.NODE_ENV === "development" &&
-      env.NEXT_PUBLIC_DEV_USER_NAME &&
-      env.NEXT_PUBLIC_DEV_USER_EMAIL
-    ) {
-      return {
-        authenticated: true,
-        user: {
-          id: "dev-user",
-          name: env.NEXT_PUBLIC_DEV_USER_NAME,
-          email: env.NEXT_PUBLIC_DEV_USER_EMAIL,
-          image: env.NEXT_PUBLIC_DEV_USER_IMAGE,
-          role: "admin", // Assume admin for dev user
         },
       };
     }
