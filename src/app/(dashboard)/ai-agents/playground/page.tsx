@@ -36,8 +36,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUserAIAgents } from "@/client-lib/user-ai-agents-client";
 import { useAIAgents } from "@/client-lib/ai-agents-client";
 import { generateAgentResponse } from "@/client-lib/ai-agents-client";
-import { ModelSelector } from "@/components/ModelSelector";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
+import { cn } from "@/client-lib/utils";
 import { toast } from "sonner";
 
 interface PlaygroundMessage {
@@ -363,7 +363,7 @@ export default function AgentPlaygroundPage() {
 
           {selectedAgent ? (
             <>
-              <ScrollArea className="max-h-[500px] flex-1 p-4">
+              <ScrollArea className="max-h-[500px] flex-1 p-4 bg-premium-chat/30">
                 <div className="space-y-4">
                   {messages.map((message, index) => (
                     <div
@@ -379,15 +379,20 @@ export default function AgentPlaygroundPage() {
                         </div>
                       )}
                       <div
-                        className={`max-w-[85%] rounded-lg p-4 ${message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                          }`}
+                        className={cn(
+                          "max-w-[85%] rounded-2xl px-4 py-3 shadow-lg transition-all",
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
+                            : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
+                        )}
                       >
-                        <div className="whitespace-pre-wrap text-sm">
+                        <div className="whitespace-pre-wrap text-[15px] leading-relaxed italic last:not-italic">
                           {renderMessageContent(message.content)}
                         </div>
-                        <div className="mt-2 flex items-center gap-2 text-xs opacity-60">
+                        <div className={cn(
+                          "mt-2 flex items-center gap-3 text-[10px] font-medium opacity-40 uppercase tracking-tight",
+                          message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                        )}>
                           <span>
                             {message.timestamp.toLocaleTimeString([], {
                               hour: "2-digit",
@@ -395,19 +400,19 @@ export default function AgentPlaygroundPage() {
                             })}
                           </span>
                           {message.model && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="h-[18px] px-1.5 text-[9px] border-muted-foreground/20 font-bold">
                               {message.model}
                             </Badge>
                           )}
                           {message.responseTime && (
                             <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
+                              <Clock className="h-2.5 w-2.5" />
                               {message.responseTime}ms
                             </span>
                           )}
                           {message.tokensUsed && (
                             <span className="flex items-center gap-1">
-                              <Zap className="h-3 w-3" />
+                              <Zap className="h-2.5 w-2.5" />
                               {message.tokensUsed} tokens
                             </span>
                           )}
