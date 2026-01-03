@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateText } from "@/client-lib/built-in-integrations/ai";
 import { useAIAgents } from "@/client-lib/ai-agents-client";
+import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import type { ChatMessage } from "@/shared/models/types";
 
 const SYSTEM_PROMPT = `You are an AI assistant for AgentsFlowAI, an AI-powered business automation platform. You help potential customers:
@@ -72,12 +73,13 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (overrideInput?: string) => {
+    const messageContent = overrideInput || input;
+    if (!messageContent.trim() || isLoading) return;
 
     const userMessage: ChatMessage = {
       role: "user",
-      content: input.trim(),
+      content: messageContent.trim(),
       timestamp: new Date(),
     };
 
@@ -196,8 +198,8 @@ Provide a helpful, concise response as the AI assistant:`;
                   )}
                   <div
                     className={`max-w-[80%] rounded-lg p-4 ${message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
                       }`}
                   >
                     <p className="whitespace-pre-wrap text-sm">{message.content}</p>
@@ -248,24 +250,16 @@ Provide a helpful, concise response as the AI assistant:`;
             </div>
           )}
 
-          <div className="p-4 border-t bg-background">
-            <div className="max-w-3xl mx-auto flex gap-2">
-              <Input
-                placeholder="Type your message..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button onClick={handleSend} disabled={!input.trim() || isLoading}>
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+          <div className="border-t bg-background/50 backdrop-blur-sm">
+            <EnhancedChatInput
+              onSend={(val) => handleSend(val)}
+              isLoading={isLoading}
+              models={[
+                { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true },
+                { id: "claude-sonnet", name: "Claude Sonnet", provider: "Anthropic" }
+              ]}
+              selectedModelId="gemini-3-flash"
+            />
           </div>
         </div>
 
