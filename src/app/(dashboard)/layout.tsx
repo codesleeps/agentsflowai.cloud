@@ -5,7 +5,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <SidebarProvider>
       <Sidebar />
-      <SidebarInset>
+      <SidebarInset className="bg-premium-chat">
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>

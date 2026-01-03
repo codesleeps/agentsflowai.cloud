@@ -105,9 +105,9 @@ export function EnhancedChatInput({
         <div className="relative mx-auto w-full max-w-4xl px-4 py-4">
             <div
                 className={cn(
-                    "relative flex flex-col rounded-2xl border bg-card/60 shadow-2xl backdrop-blur-xl transition-all duration-300",
+                    "relative flex flex-col rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-3xl transition-all duration-300",
                     "focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/10",
-                    isLoading && "opacity-80 shadow-none border-muted"
+                    isLoading && "opacity-80 shadow-none border-white/5"
                 )}
             >
                 {/* Input Area */}
@@ -241,7 +241,7 @@ export function EnhancedChatInput({
                             className={cn(
                                 "h-9 w-9 rounded-full transition-all duration-300",
                                 !input.trim() || isLoading
-                                    ? "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                                    ? "bg-white/5 text-muted-foreground/30 cursor-not-allowed"
                                     : "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-105 active:scale-90"
                             )}
                             onClick={handleSend}

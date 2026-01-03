@@ -222,7 +222,7 @@ export default function AgentPlaygroundPage() {
 
       <div className="grid flex-1 gap-6 lg:grid-cols-4">
         {/* Agent Selection */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 bg-white/5 border-white/10 shadow-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
@@ -271,7 +271,7 @@ export default function AgentPlaygroundPage() {
         </Card>
 
         {/* Chat Interface */}
-        <Card className="flex flex-col lg:col-span-3">
+        <Card className="flex flex-col lg:col-span-3 bg-transparent border-white/10 shadow-none">
           <CardHeader className="border-b">
             {selectedAgent ? (
               <div className="flex items-center justify-between">

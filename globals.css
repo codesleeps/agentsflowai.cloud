@@ -7,7 +7,7 @@
 /* Glass‑morphism utilities */
 /* --------------------------------------------------- */
 .bg-glass {
-  @apply bg-white/30 backdrop-blur-lg border border-white/20 rounded-xl shadow-lg;
+  @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl;
 }
 
 /* --------------------------------------------------- */
@@ -29,13 +29,12 @@
   animation: fadeIn 0.25s ease-out forwards;
 }
 
-.bg-dot-pattern {
-  background-image: radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.1) 1px, transparent 0);
-  background-size: 24px 24px;
-}
-
 .bg-premium-chat {
-  @apply bg-background bg-dot-pattern;
+  background:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%),
+    linear-gradient(to bottom, #09090b, #11111a);
   background-attachment: fixed;
 }
 
