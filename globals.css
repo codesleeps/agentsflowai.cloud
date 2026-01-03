@@ -14,12 +14,29 @@
 /* Simple fade‑in animation */
 /* --------------------------------------------------- */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out forwards;
+}
+
+.bg-dot-pattern {
+  background-image: radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.1) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.bg-premium-chat {
+  @apply bg-background bg-dot-pattern;
+  background-attachment: fixed;
 }
 
 @layer base {

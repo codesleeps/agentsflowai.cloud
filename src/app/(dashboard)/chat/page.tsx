@@ -181,7 +181,7 @@ Provide a helpful, concise response as the AI assistant:`;
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden bg-premium-chat">
         <div className="flex-1 flex flex-col">
           <ScrollArea className="flex-1 p-4">
             <div className="max-w-3xl mx-auto space-y-4">
@@ -197,13 +197,18 @@ Provide a helpful, concise response as the AI assistant:`;
                     </div>
                   )}
                   <div
-                    className={`max-w-[80%] rounded-lg p-4 ${message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                      }`}
+                    className={cn(
+                      "max-w-[80%] rounded-2xl px-4 py-3 shadow-lg transition-all",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
+                        : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
+                    )}
                   >
-                    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                    <p className="text-xs mt-2 opacity-60">
+                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed italic last:not-italic">{message.content}</p>
+                    <p className={cn(
+                      "text-[10px] mt-2 font-medium opacity-40 uppercase tracking-tight",
+                      message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                    )}>
                       {message.timestamp.toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",

@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
+import { cn } from "@/client-lib/utils";
 
 interface Message {
   id: string;
@@ -119,7 +120,7 @@ export default function FastChatPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="flex min-h-screen bg-premium-chat font-sans">
       {/* Header */}
       <div className="fixed left-0 right-0 top-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -168,19 +169,22 @@ export default function FastChatPage() {
                     }`}
                 >
                   <div
-                    className={`max-w-xs rounded-2xl px-4 py-3 ${message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "border bg-card text-card-foreground"
-                      }`}
+                    className={cn(
+                      "max-w-[80%] rounded-2xl px-4 py-3 shadow-lg transition-all",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
+                        : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
+                    )}
                   >
-                    <p className="text-sm">{message.content}</p>
-                    <p
-                      className={`mt-1 text-xs ${message.role === "user"
-                          ? "text-primary-foreground/70"
-                          : "text-muted-foreground"
-                        }`}
-                    >
-                      {message.timestamp.toLocaleTimeString()}
+                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed italic last:not-italic">{message.content}</p>
+                    <p className={cn(
+                      "text-[10px] mt-2 font-medium opacity-40 uppercase tracking-tight",
+                      message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                    )}>
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
                   </div>
                 </div>
