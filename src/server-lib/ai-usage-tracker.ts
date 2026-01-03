@@ -43,28 +43,36 @@ export async function logModelUsage(params: LogUsageParams) {
       cost_usd: cost,
     };
 
-    if (user_id && user_id !== "system" && user_id !== "unknown") {
-      data.user = { connect: { id: user_id } };
-    } else {
-      // For system logs, we store the ID as a string but don't connect the relation
-      // Since the relation is mandatory in Prisma, we'll try to find a 'system' user
-      // or just log to a fallback user if it exists.
-      // Better yet: Make the relation optional in Prisma schema if we want true system logs.
-      // For now, let's try to connect to the first admin or a dummy user if it exists.
+    // Verify user exists before connecting
+    let targetUserId = user_id;
+    const userExists = await db.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true }
+    });
+
+    if (!userExists) {
+      // If user doesn't exist (like 'dev-user' or 'system'), 
+      // try to find an admin or ANY user to attach the log to
       const fallbackUser = await db.user.findFirst({
-        where: { role: 'admin' }
+        where: { role: 'admin' },
+        select: { id: true }
+      }) || await db.user.findFirst({
+        select: { id: true }
       });
 
       if (fallbackUser) {
-        data.user = { connect: { id: fallbackUser.id } };
+        targetUserId = fallbackUser.id;
       } else {
-        console.warn("No user found to connect diagnostic log. Skipping DB write.");
+        console.warn(`No user record found in DB to attach AI usage log (original ID: ${user_id}). Skipping log.`);
         return;
       }
     }
 
     await db.aIModelUsage.create({
-      data,
+      data: {
+        ...data,
+        user: { connect: { id: targetUserId } }
+      },
     });
   } catch (error) {
     console.error("Failed to log model usage:", error);
