@@ -45,7 +45,7 @@ export function ChatArea({
     }, [messages, isLoading]);
 
     return (
-        <ScrollArea className={cn("flex-1 p-4 bg-premium-chat/30", className)}>
+        <ScrollArea className={cn("flex-1 p-4", className)}>
             <div className="space-y-6 max-w-4xl mx-auto pb-10">
                 {messages.map((message, index) => (
                     <div
@@ -56,17 +56,17 @@ export function ChatArea({
                         )}
                     >
                         {message.role === "assistant" && (
-                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20 shadow-sm">
+                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/20 border border-primary/30 shadow-sm backdrop-blur-md">
                                 {agentIcon || <Bot className="h-5 w-5 text-primary" />}
                             </div>
                         )}
 
                         <div
                             className={cn(
-                                "group relative max-w-[85%] rounded-2xl px-4 py-3 shadow-lg transition-all hover:shadow-xl",
+                                "group relative max-w-[85%] rounded-2xl px-5 py-3.5 shadow-2xl transition-all hover:shadow-primary/5",
                                 message.role === "user"
-                                    ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
-                                    : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
+                                    ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none border border-primary-foreground/10"
+                                    : "bg-white/5 backdrop-blur-2xl border border-white/10 shadow-black/20 rounded-tl-none"
                             )}
                         >
                             {agentName && message.role === "assistant" && (
@@ -122,13 +122,13 @@ export function ChatArea({
 
                 {isLoading && (
                     <div className="flex justify-start gap-4">
-                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20 shadow-sm">
+                        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/20 border border-primary/30 shadow-sm backdrop-blur-md">
                             {agentIcon || <Bot className="h-5 w-5 text-primary" />}
                         </div>
-                        <div className="rounded-2xl bg-card/70 backdrop-blur-md p-4 border border-border/50 shadow-sm rounded-tl-none">
+                        <div className="rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-black/20 rounded-tl-none p-4">
                             <div className="flex items-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                <span className="text-xs font-medium text-muted-foreground animate-pulse">Thinking...</span>
+                                <span className="text-xs font-semibold text-primary/70 animate-pulse uppercase tracking-widest">Thinking</span>
                             </div>
                         </div>
                     </div>

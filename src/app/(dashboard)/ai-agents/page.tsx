@@ -304,7 +304,7 @@ export default function AIAgentsPage() {
       {/* Main Content */}
       <div className="grid flex-1 gap-6 lg:grid-cols-3">
         {/* Agent Selection */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 bg-white/5 border-white/10 shadow-none">
           <Tabs defaultValue="browse" className="w-full">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -368,7 +368,7 @@ export default function AIAgentsPage() {
         </Card>
 
         {/* Chat Interface */}
-        <Card className="flex flex-col lg:col-span-2 bg-glass">
+        <Card className="flex flex-col lg:col-span-2 bg-transparent border-white/10 shadow-none">
           <CardHeader className="border-b">
             {selectedAgent ? (
               <div className="flex items-center justify-between">
