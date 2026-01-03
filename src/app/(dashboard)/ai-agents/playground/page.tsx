@@ -37,6 +37,7 @@ import { useUserAIAgents } from "@/client-lib/user-ai-agents-client";
 import { useAIAgents } from "@/client-lib/ai-agents-client";
 import { generateAgentResponse } from "@/client-lib/ai-agents-client";
 import { ModelSelector } from "@/components/ModelSelector";
+import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { toast } from "sonner";
 
 interface PlaygroundMessage {
@@ -97,12 +98,13 @@ export default function AgentPlaygroundPage() {
     toast.info(`Switched to ${provider} model: ${model}`);
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || !selectedAgent || isLoading) return;
+  const handleSend = async (overrideInput?: string) => {
+    const messageContent = overrideInput || input;
+    if (!messageContent.trim() || !selectedAgent || isLoading) return;
 
     const userMessage: PlaygroundMessage = {
       role: "user",
-      content: input.trim(),
+      content: messageContent.trim(),
       timestamp: new Date(),
     };
 
@@ -284,11 +286,10 @@ export default function AgentPlaygroundPage() {
                   <button
                     key={agent.id}
                     onClick={() => handleSelectAgent(agent)}
-                    className={`w-full rounded-lg border p-4 text-left transition-all ${
-                      selectedAgent?.id === agent.id
-                        ? "border-primary bg-primary/5"
-                        : "hover:bg-muted/50"
-                    }`}
+                    className={`w-full rounded-lg border p-4 text-left transition-all ${selectedAgent?.id === agent.id
+                      ? "border-primary bg-primary/5"
+                      : "hover:bg-muted/50"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="text-2xl">{agent.icon || "🤖"}</div>
@@ -339,14 +340,10 @@ export default function AgentPlaygroundPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {currentModel && (
-                    <Badge variant="outline">
-                      {currentModel.provider} • {currentModel.model}
+                    <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary/70">
+                      {currentModel.model}
                     </Badge>
                   )}
-                  <ModelSelector
-                    agent={selectedAgent}
-                    onModelChange={handleModelChange}
-                  />
                 </div>
               </div>
             ) : (
@@ -371,11 +368,10 @@ export default function AgentPlaygroundPage() {
                   {messages.map((message, index) => (
                     <div
                       key={index}
-                      className={`flex gap-3 ${
-                        message.role === "user"
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
+                      className={`flex gap-3 ${message.role === "user"
+                        ? "justify-end"
+                        : "justify-start"
+                        }`}
                     >
                       {message.role === "assistant" && (
                         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -383,11 +379,10 @@ export default function AgentPlaygroundPage() {
                         </div>
                       )}
                       <div
-                        className={`max-w-[85%] rounded-lg p-4 ${
-                          message.role === "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        }`}
+                        className={`max-w-[85%] rounded-lg p-4 ${message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                          }`}
                       >
                         <div className="whitespace-pre-wrap text-sm">
                           {renderMessageContent(message.content)}
@@ -437,32 +432,29 @@ export default function AgentPlaygroundPage() {
                 </div>
               </ScrollArea>
 
-              <div className="border-t p-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder={`Test ${selectedAgent.name} with any prompt...`}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    disabled={isLoading}
-                    className="min-h-[60px] resize-none"
-                    rows={2}
-                  />
-                  <Button
-                    onClick={handleSend}
-                    disabled={!input.trim() || isLoading}
-                    className="h-auto"
-                  >
-                    {isLoading ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-current" />
-                    ) : (
-                      <MessageSquare className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Press Enter to send, Shift+Enter for new line
-                </p>
+              <div className="border-t bg-background/50 backdrop-blur-sm">
+                <EnhancedChatInput
+                  onSend={(val) => handleSend(val)}
+                  isLoading={isLoading}
+                  placeholder={`Test ${selectedAgent.name} with any prompt...`}
+                  models={selectedAgent.supportedProviders?.map((p: any) => ({
+                    id: p.provider,
+                    name: `${p.provider} (${p.model})`,
+                    provider: p.provider,
+                    priority: p.priority,
+                    model: p.model
+                  })) || []}
+                  selectedModelId={currentModel?.provider}
+                  onModelChange={(provider, model) => {
+                    if (model) {
+                      handleModelChange(provider, model);
+                    } else {
+                      // Find the model for this provider in agent config
+                      const m = selectedAgent.supportedProviders?.find((p: any) => p.provider === provider)?.model;
+                      handleModelChange(provider, m || selectedAgent.model);
+                    }
+                  }}
+                />
               </div>
             </>
           ) : (

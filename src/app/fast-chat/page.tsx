@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 
 interface Message {
   id: string;
@@ -38,14 +39,14 @@ export default function FastChatPage() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isTyping) return;
+  const handleSend = async (overrideInput?: string) => {
+    const messageContent = overrideInput || input;
+    if (!messageContent.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input.trim(),
+      content: messageContent.trim(),
       timestamp: new Date(),
     };
 
@@ -62,7 +63,7 @@ export default function FastChatPage() {
         },
         body: JSON.stringify({
           agentId: "fast-chat-agent",
-          message: input.trim(),
+          message: messageContent.trim(),
           conversationHistory: messages.map((m) => ({
             role: m.role,
             content: m.content,
@@ -100,14 +101,7 @@ export default function FastChatPage() {
   };
 
   const handleQuickAction = (action: string) => {
-    setInput(action);
-    // Auto-submit for quick actions
-    setTimeout(() => {
-      const form = document.querySelector("form");
-      form?.dispatchEvent(
-        new Event("submit", { cancelable: true, bubbles: true }),
-      );
-    }, 100);
+    handleSend(action);
   };
 
   const clearChat = () => {
@@ -170,24 +164,21 @@ export default function FastChatPage() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
                 >
                   <div
-                    className={`max-w-xs rounded-2xl px-4 py-3 ${
-                      message.role === "user"
+                    className={`max-w-xs rounded-2xl px-4 py-3 ${message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "border bg-card text-card-foreground"
-                    }`}
+                      }`}
                   >
                     <p className="text-sm">{message.content}</p>
                     <p
-                      className={`mt-1 text-xs ${
-                        message.role === "user"
+                      className={`mt-1 text-xs ${message.role === "user"
                           ? "text-primary-foreground/70"
                           : "text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       {message.timestamp.toLocaleTimeString()}
                     </p>
@@ -253,28 +244,16 @@ export default function FastChatPage() {
           )}
 
           {/* Input Area */}
-          <div className="fixed bottom-0 left-0 right-0 border-t bg-background/80 backdrop-blur-md">
-            <div className="container mx-auto max-w-4xl px-4 py-4">
-              <form onSubmit={handleSubmit} className="flex gap-3">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type your message..."
-                  disabled={isTyping}
-                  className="flex-1"
-                />
-                <Button type="submit" disabled={!input.trim() || isTyping}>
-                  {isTyping ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </Button>
-              </form>
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                Powered by local Ollama model • No data stored • Free to use
-              </p>
-            </div>
+          <div className="fixed bottom-0 left-0 right-0 border-t bg-background/50 backdrop-blur-xl">
+            <EnhancedChatInput
+              onSend={(val) => handleSend(val)}
+              isLoading={isTyping}
+              models={[
+                { id: "ollama", name: "Ollama (Local)", provider: "Local", priority: 1 },
+                { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true },
+              ]}
+              selectedModelId="ollama"
+            />
           </div>
         </div>
       </div>
