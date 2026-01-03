@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateText } from "@/client-lib/built-in-integrations/ai";
 import { useAIAgents } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
+import { ChatArea } from "@/components/chat/ChatArea";
 import { cn } from "@/client-lib/utils";
 import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "@/shared/models/types";
@@ -185,60 +186,14 @@ Provide a helpful, concise response as the AI assistant:`;
 
       <div className="flex flex-1 overflow-hidden bg-premium-chat">
         <div className="flex-1 flex flex-col">
-          <ScrollArea className="flex-1 p-4">
-            <div className="max-w-3xl mx-auto space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"
-                    }`}
-                >
-                  {message.role === "assistant" && (
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-2xl px-4 py-3 shadow-lg transition-all",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground shadow-primary/20 rounded-tr-none"
-                        : "bg-card/70 backdrop-blur-md border border-border/50 shadow-black/5 rounded-tl-none"
-                    )}
-                  >
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
-                    </div>
-                    <p className={cn(
-                      "text-[10px] mt-2 font-medium opacity-40 uppercase tracking-tight",
-                      message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
-                    )}>
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  {message.role === "user" && (
-                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex gap-3 justify-start">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="bg-muted rounded-lg p-4">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
+          <ChatArea
+            messages={messages.map(m => ({
+              ...m,
+              timestamp: new Date(m.timestamp)
+            }))}
+            isLoading={isLoading}
+            agentName="Chat Agent"
+          />
 
           {messages.length <= 2 && (
             <div className="p-4 border-t bg-muted/30">
