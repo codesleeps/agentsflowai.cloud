@@ -85,10 +85,13 @@ export async function middleware(request: NextRequest) {
 
   // Handle public routes (no authentication required)
   if (isPublicRoute(pathname)) {
-    const corsResponse = handleCors(request);
-    if (corsResponse) {
-      return corsResponse;
+    // For OPTIONS requests, return the CORS response early
+    if (request.method === "OPTIONS") {
+      const corsResponse = handleCors(request);
+      if (corsResponse) return corsResponse;
     }
+
+    // For other requests, just continue
     return NextResponse.next();
   }
 
@@ -128,11 +131,13 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // Check CORS for API routes
+  // Check CORS for API routes - only intercept for OPTIONS
   if (pathname.startsWith("/api/")) {
-    const corsResponse = handleCors(request);
-    if (corsResponse) {
-      return corsResponse;
+    if (request.method === "OPTIONS") {
+      const corsResponse = handleCors(request);
+      if (corsResponse) {
+        return corsResponse;
+      }
     }
   }
 

@@ -38,7 +38,9 @@ export default function SignIn() {
             router.push("/dashboard");
           },
           onError: (ctx) => {
-            toast.error(ctx.error.message || "Invalid email or password. Please try again.");
+            const errorMessage = ctx.error.message || ctx.error.statusText || "Authentication server error. Please check your connection.";
+            console.error("Sign-in failed:", ctx.error);
+            toast.error(errorMessage);
             setLoading(false);
           },
         },
