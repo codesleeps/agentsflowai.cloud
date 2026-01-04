@@ -209,7 +209,7 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
         stream: false,
         options: { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
       }),
-      signal: AbortSignal.timeout(3000), // 3 second timeout for local Ollama
+      signal: AbortSignal.timeout(30000), // 30 second timeout for local Ollama
     });
 
     if (!ollamaResponse.ok)
@@ -222,7 +222,7 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'TimeoutError') {
-      throw new Error("Ollama connection timed out (3s)");
+      throw new Error("Ollama connection timed out (30s)");
     }
     throw error;
   }
