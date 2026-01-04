@@ -145,7 +145,7 @@ export default function DashboardPage() {
               onChange={(e) => handleCustomDateChange("start", e.target.value)}
               className="bg-transparent border-none text-[10px] font-mono text-white p-0 focus:ring-0 w-24"
             />
-            <span className="text-[10px] text-primary/30 font-mono">>></span>
+            <span className="text-[10px] text-primary/30 font-mono">{" >> "}</span>
             <input
               type="date"
               value={dateRange.end}
