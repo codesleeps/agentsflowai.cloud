@@ -3,11 +3,14 @@
 export type AIProvider =
   | "ollama"
   | "google"
+  | "anthropic"
+  | "openai"
+  | "openrouter";
 
 export interface ModelFallbackConfig {
   provider: AIProvider;
   model: string;
-  priority: number; // 1 = primary, 2 = secondary
+  priority: number; // 1 = primary, 2 = secondary, 3 = tertiary
   maxRetries: number;
 }
 
@@ -22,11 +25,11 @@ export interface AIAgent {
   model: string;
   provider?: AIProvider;
   supportedProviders: Array<{
-    provider: AIProvider;
+    provider: string;
     model: string;
     priority: number;
   }>;
-  defaultProvider: AIProvider;
+  defaultProvider: string;
   costTier: "free" | "low" | "medium" | "high";
   isActive: boolean;
   usage_count?: number;
@@ -40,6 +43,13 @@ export type AIAgentCategory =
   | "social-media"
   | "seo"
   | "fast-chat";
+
+// ... (keep intermediate interfaces as they are, but since I'm only replacing AIAgent definition and AI_AGENTS list, I need to include them in the chunk or use logic. Wait, replace_file_content requires a single contiguous block.
+// I will rewrite the AIAgent interface and then use a separate call or a very large block to update AI_AGENTS if they are far apart.
+// Actually, they are far apart (lines 3-13 vs 145-301). I should use MULTI_REPLACE.
+
+// WAIT, I only have replace_file_content or multi_replace.
+// I will use multi_replace.
 
 export interface AIAgentMessage {
   id: string;
@@ -177,9 +187,9 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "gemini-2.0-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "mistral:latest",
+    provider: "ollama",
+    defaultProvider: "ollama",
     costTier: "medium",
     isActive: true,
     capabilities: [
@@ -193,19 +203,29 @@ export const AI_AGENTS: AIAgent[] = [
     ],
     supportedProviders: [
       {
+        provider: "ollama",
+        model: "mistral:latest",
+        priority: 4,
+      },
+      {
+        provider: "ollama",
+        model: "llama3.1:8b",
+        priority: 2,
+      },
+      {
+        provider: "openrouter",
+        model: "anthropic/claude-3.5-sonnet",
+        priority: 3,
+      },
+      {
         provider: "google",
         model: "gemini-2.0-flash",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "codellama:7b",
-        priority: 2,
-      },
-      {
-        provider: "ollama",
-        model: "mistral:latest",
-        priority: 3,
+        provider: "openai",
+        model: "gpt-4o",
+        priority: 5,
       },
     ],
     systemPrompt: `You are an expert web developer specializing in modern technologies including React, Next.js, Python, TypeScript, Node.js, and Tailwind CSS. You help users:
@@ -224,9 +244,9 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "gemini-2.0-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "mistral:latest",
+    provider: "ollama",
+    defaultProvider: "ollama",
     costTier: "medium",
     isActive: true,
     capabilities: [
@@ -239,14 +259,29 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-2.0-flash",
-        priority: 1,
+        provider: "ollama",
+        model: "mistral:latest",
+        priority: 4,
       },
       {
         provider: "ollama",
         model: "llama3.1:8b",
         priority: 2,
+      },
+      {
+        provider: "openrouter",
+        model: "anthropic/claude-3.5-sonnet",
+        priority: 3,
+      },
+      {
+        provider: "google",
+        model: "gemini-2.0-flash",
+        priority: 1,
+      },
+      {
+        provider: "openai",
+        model: "gpt-4o",
+        priority: 5,
       },
     ],
     systemPrompt: `You are a data analytics expert specializing in business intelligence and data-driven decision making. You help users:
@@ -265,9 +300,9 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "gemini-1.5-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "zhipu/glm-4",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "medium",
     isActive: true,
     capabilities: [
@@ -282,12 +317,22 @@ Always provide specific, actionable recommendations. Use data to support your in
       {
         provider: "google",
         model: "gemini-1.5-flash",
-        priority: 1,
+        priority: 4,
+      },
+      {
+        provider: "openai",
+        model: "gpt-4o",
+        priority: 2,
+      },
+      {
+        provider: "anthropic",
+        model: "claude-3-5-sonnet-20241022",
+        priority: 3,
       },
       {
         provider: "ollama",
-        model: "gemma2:9b",
-        priority: 2,
+        model: "mistral:latest",
+        priority: 1,
       },
     ],
     systemPrompt: `You are an expert content creator and copywriter with years of experience in digital marketing. You help users:
@@ -307,7 +352,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -322,14 +367,29 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     ],
     supportedProviders: [
       {
+        provider: "ollama",
+        model: "mistral:latest",
+        priority: 4,
+      },
+      {
+        provider: "ollama",
+        model: "llama3.1:8b",
+        priority: 2,
+      },
+      {
+        provider: "openrouter",
+        model: "anthropic/claude-3.5-sonnet",
+        priority: 3,
+      },
+      {
         provider: "google",
         model: "gemini-2.0-flash",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "mistral:latest",
-        priority: 2,
+        provider: "openai",
+        model: "gpt-4o",
+        priority: 5,
       },
     ],
     systemPrompt: `You are a marketing strategist with expertise in digital marketing, growth hacking, and conversion optimization. You help users:
@@ -348,9 +408,9 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "gemini-1.5-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "mistral:latest",
+    provider: "ollama",
+    defaultProvider: "ollama",
     costTier: "medium",
     isActive: true,
     capabilities: [
@@ -363,14 +423,24 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     ],
     supportedProviders: [
       {
+        provider: "openrouter",
+        model: "zhipu/glm-4",
+        priority: 4,
+      },
+      {
         provider: "google",
         model: "gemini-1.5-flash",
-        priority: 1,
+        priority: 2,
       },
       {
         provider: "ollama",
-        model: "ministral-3:3b",
-        priority: 2,
+        model: "glm4:9b",
+        priority: 3,
+      },
+      {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        priority: 1,
       },
     ],
     systemPrompt: `You are a social media expert with deep knowledge of all major platforms including Twitter/X, LinkedIn, Instagram, Facebook, and TikTok. You help users:
@@ -390,9 +460,9 @@ Always consider platform-specific best practices. Focus on engagement and commun
       "Search engine optimization, keywords, meta tags, and rankings",
     icon: "🔍",
     category: "seo",
-    model: "gemini-2.0-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "mistral:latest",
+    provider: "ollama",
+    defaultProvider: "ollama",
     costTier: "medium",
     isActive: true,
     capabilities: [
@@ -405,14 +475,29 @@ Always consider platform-specific best practices. Focus on engagement and commun
     ],
     supportedProviders: [
       {
+        provider: "ollama",
+        model: "mistral:latest",
+        priority: 4,
+      },
+      {
+        provider: "openai",
+        model: "gpt-4o",
+        priority: 2,
+      },
+      {
+        provider: "anthropic",
+        model: "claude-3-5-sonnet-20241022",
+        priority: 3,
+      },
+      {
         provider: "google",
         model: "gemini-2.0-flash",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "mistral:latest",
-        priority: 2,
+        provider: "openrouter",
+        model: "anthropic/claude-3.5-sonnet",
+        priority: 5,
       },
     ],
     systemPrompt: `You are an SEO expert with comprehensive knowledge of search engine algorithms, keyword research, and content optimization. You help users:
@@ -445,16 +530,9 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Chat and conversation",
     ],
     supportedProviders: [
-      {
-        provider: "ollama",
-        model: "mistral:latest",
-        priority: 1
-      },
-      {
-        provider: "google",
-        model: "gemini-2.0-flash",
-        priority: 2
-      },
+      { provider: "ollama", model: "mistral:latest", priority: 4 },
+      { provider: "ollama", model: "llama3.1:8b", priority: 2 },
+      { provider: "google", model: "gemini-2.0-flash", priority: 3 },
     ],
     systemPrompt: `You are a helpful, fast, and efficient AI assistant powered by Ollama's Mistral model.
 - Keep answers concise and to the point.
@@ -482,22 +560,86 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Multimodal understanding",
     ],
     supportedProviders: [
+      { provider: "google", model: "gemini-2.0-flash", priority: 4 },
       {
-        provider: "google",
-        model: "gemini-2.0-flash",
-        priority: 1
+        provider: "anthropic",
+        model: "claude-3-5-sonnet-20241022",
+        priority: 2,
       },
-      {
-        provider: "ollama",
-        model: "gemma2:9b",
-        priority: 2
-      },
+      { provider: "ollama", model: "mistral:latest", priority: 3 },
     ],
     systemPrompt: `You are an advanced AI assistant powered by Google's Gemini Flash model.
 - Leverage your advanced reasoning capabilities for complex problems.
 - Provide detailed, high-quality responses.
 - You have a large context window, so feel free to reference previous parts of the conversation in detail.
 - Be helpful, harmless, and honest.`,
+  },
+  {
+    id: "openrouter-agent",
+    name: "OpenRouter Unified Agent",
+    description:
+      "Access to 100+ models through OpenRouter including GPT-4, Claude, Gemini, Llama, and more",
+    icon: "🌐",
+    category: "fast-chat",
+    model: "anthropic/claude-3.5-sonnet",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
+    costTier: "medium",
+    isActive: true,
+    capabilities: [
+      "Access to 100+ models",
+      "GPT-4, Claude, Gemini, Llama support",
+      "Advanced reasoning",
+      "Code generation",
+      "Creative writing",
+      "Multimodal capabilities",
+      "Cost optimization",
+    ],
+    supportedProviders: [
+      {
+        provider: "openrouter",
+        model: "anthropic/claude-3.5-sonnet",
+        priority: 4,
+      },
+      {
+        provider: "openai",
+        model: "gpt-4o",
+        priority: 2,
+      },
+      {
+        provider: "google",
+        model: "gemini-2.0-flash",
+        priority: 3,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-70b-instruct",
+        priority: 1,
+      },
+      {
+        provider: "ollama",
+        model: "mistral:latest",
+        priority: 5,
+      },
+    ],
+    systemPrompt: `You are an advanced AI assistant with access to multiple state-of-the-art models through OpenRouter. You can leverage the best models including GPT-4, Claude 3.5, Gemini Pro, and Llama 3.1.
+
+Your capabilities include:
+- Advanced reasoning and problem-solving
+- Code generation in multiple languages
+- Creative writing and content creation
+- Data analysis and mathematical reasoning
+- Multimodal understanding (text, images, audio)
+- Access to cutting-edge AI models
+
+Always provide:
+- Clear, well-structured responses
+- Code examples when relevant
+- Step-by-step explanations for complex problems
+- Creative solutions and alternative approaches
+- Acknowledge when you're using specific model capabilities
+
+You have access to extensive knowledge and can handle complex, multi-step tasks. Be helpful, accurate, and thorough in your responses.`,
   },
 ];
 
