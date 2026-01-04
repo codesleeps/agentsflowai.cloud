@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleAnthropicProvider, handleGoogleProvider, handleOllamaProvider, handleOpenRouterProvider, handleOpenAIProvider } from "../agents/route";
+import { handleGoogleProvider, handleOllamaProvider } from "../agents/route";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIAgent } from "@/shared/models/ai-agents";
 
@@ -40,9 +40,6 @@ interface HealthCheckResponse {
   providers: {
     ollama: ProviderStatus;
     google: ProviderStatus;
-    anthropic: ProviderStatus;
-    openai: ProviderStatus;
-    openrouter: ProviderStatus;
   };
   environment: {
     ollama_configured: boolean;
@@ -79,27 +76,6 @@ async function testProvider(providerName: string, model: string): Promise<Provid
           { ...TEST_AGENT, model },
           testMessage,
           [],
-          TEST_AGENT.systemPrompt
-        );
-        break;
-      case "anthropic":
-        result = await handleAnthropicProvider(
-          { ...TEST_AGENT, model },
-          testMessages,
-          TEST_AGENT.systemPrompt
-        );
-        break;
-      case "openai":
-        result = await handleOpenAIProvider(
-          { ...TEST_AGENT, model },
-          testMessages,
-          TEST_AGENT.systemPrompt
-        );
-        break;
-      case "openrouter":
-        result = await handleOpenRouterProvider(
-          { ...TEST_AGENT, model },
-          testMessages,
           TEST_AGENT.systemPrompt
         );
         break;
@@ -198,12 +174,9 @@ export async function GET() {
   };
 
   // Test all providers concurrently
-  const [ollamaResult, googleResult, anthropicResult, openaiResult, openrouterResult] = await Promise.all([
+  const [ollamaResult, googleResult] = await Promise.all([
     testProviderWithTimeout("ollama", "mistral:latest"),
     environment.google_key_configured ? testProviderWithTimeout("google", "gemini-2.0-flash") : Promise.resolve({ status: "unhealthy" as const, model: "gemini-2.0-flash", error: "GOOGLE_API_KEY not configured" }),
-    environment.anthropic_key_configured ? testProviderWithTimeout("anthropic", "claude-3-5-sonnet-20241022") : Promise.resolve({ status: "unhealthy" as const, model: "claude-3-5-sonnet-20241022", error: "ANTHROPIC_API_KEY not configured" }),
-    environment.openai_key_configured ? testProviderWithTimeout("openai", "gpt-4o") : Promise.resolve({ status: "unhealthy" as const, model: "gpt-4o", error: "OPENAI_API_KEY not configured" }),
-    environment.openrouter_key_configured ? testProviderWithTimeout("openrouter", "anthropic/claude-3.5-sonnet") : Promise.resolve({ status: "unhealthy" as const, model: "anthropic/claude-3.5-sonnet", error: "OPENROUTER_API_KEY not configured" }),
   ]);
 
   // Get Ollama models
@@ -215,9 +188,6 @@ export async function GET() {
   const providers = {
     ollama: ollamaResult,
     google: googleResult,
-    anthropic: anthropicResult,
-    openai: openaiResult,
-    openrouter: openrouterResult,
   };
 
   // Determine overall status
