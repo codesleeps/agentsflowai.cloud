@@ -10,11 +10,11 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 150 100% 50%;
-    /* Neon Lime */
+    --primary: 150 100% 45%;
+    /* Neon Lime slightly darkened */
     --primary-foreground: 0 0% 0%;
-    --secondary: 180 100% 50%;
-    /* Neon Turquoise */
+    --secondary: 180 100% 45%;
+    /* Neon Turquoise slightly darkened */
     --secondary-foreground: 0 0% 0%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
@@ -28,8 +28,8 @@
     --radius: 0.75rem;
 
     /* HUD Themes */
-    --hud-lime: 150 100% 50%;
-    --hud-turquoise: 180 100% 50%;
+    --hud-lime: 150 100% 45%;
+    --hud-turquoise: 180 100% 45%;
     --hud-sec: 0 100% 60%;
   }
 
@@ -40,9 +40,9 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 150 100% 50%;
+    --primary: 150 100% 45%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 180 100% 50%;
+    --secondary: 180 100% 45%;
     --secondary-foreground: 0 0% 0%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
