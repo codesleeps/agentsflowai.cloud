@@ -5,40 +5,32 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 253 88% 59%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 150 100% 50%;
+    /* Neon Lime */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 180 100% 50%;
+    /* Neon Turquoise */
+    --secondary-foreground: 0 0% 0%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
+    --accent: 150 100% 50%;
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 253 88% 59%;
+    --ring: 150 100% 50%;
     --radius: 0.75rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
 
     /* HUD Themes */
-    --hud-ops: 45 100% 50%;
-    /* Yellow */
-    --hud-ai: 280 100% 65%;
-    /* Purple */
+    --hud-lime: 150 100% 50%;
+    --hud-turquoise: 180 100% 50%;
     --hud-sec: 0 100% 60%;
-    /* Red */
-    --hud-growth: 150 100% 50%;
-    /* Green */
   }
 
   .dark {
@@ -48,24 +40,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 253 88% 59%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --primary: 150 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 180 100% 50%;
+    --secondary-foreground: 0 0% 0%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 150 100% 50%;
+    --accent-foreground: 0 0% 0%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 253 88% 59%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --ring: 150 100% 50%;
   }
 }
 
@@ -79,51 +66,68 @@
   }
 }
 
-.bg-glass {
-  @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl;
+.bg-premium-dashboard {
+  background:
+    radial-gradient(circle at 0% 0%, hsla(150, 100%, 10%, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 100% 0%, hsla(180, 100%, 10%, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, hsla(240, 10%, 5%, 1) 0%, #070708 100%);
+  background-attachment: fixed;
 }
 
 /* Futuristic HUD Grid */
 .bg-hud-grid {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 30px 30px;
-  background-attachment: fixed;
+    linear-gradient(to right, rgba(150, 255, 150, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(150, 255, 150, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* HUD Card Styling */
 .hud-card {
-  @apply relative overflow-hidden bg-black/40 backdrop-blur-xl border border-white/5 hover:border-primary/40 transition-all duration-500 rounded-none;
-  box-shadow: 0 0 20px -10px rgba(0, 0, 0, 0.5);
+  @apply relative overflow-hidden bg-black/60 backdrop-blur-xl border border-white/[0.03] transition-all duration-500 rounded-none;
+  box-shadow: 0 0 30px -15px rgba(0, 0, 0, 0.7);
   clip-path: polygon(0 0,
-      calc(100% - 10px) 0, 100% 10px,
+      calc(100% - 12px) 0, 100% 12px,
       100% 100%,
-      10px 100%, 0 calc(100% - 10px));
+      12px 100%, 0 calc(100% - 12px));
+}
+
+.hud-card::before {
+  content: '';
+  @apply absolute top-0 left-0 w-[2px] h-0 bg-primary transition-all duration-700 ease-in-out;
+}
+
+.hud-card:hover::before {
+  @apply h-full;
+  box-shadow: 0 0 15px var(--primary);
 }
 
 .hud-card::after {
   content: '';
-  @apply absolute top-0 right-0 w-[10px] h-[10px] bg-primary/20 transition-all duration-300;
+  @apply absolute top-0 right-0 w-[12px] h-[12px] bg-primary/10 transition-all duration-300;
 }
 
 .hud-card:hover::after {
-  @apply bg-primary;
+  @apply bg-primary/40;
 }
 
-/* HUD Header (Small Monospaced Label) */
+/* HUD Header */
 .hud-header {
-  @apply font-mono text-[10px] uppercase tracking-[0.2em] text-primary/70 mb-2 flex items-center gap-2;
+  @apply font-mono text-[9px] uppercase tracking-[0.3em] text-primary/80 mb-2 flex items-center gap-2;
+}
+
+.hud-header-turquoise {
+  @apply text-secondary/80;
 }
 
 /* Pulsing Status Dot */
 .hud-status-dot {
-  @apply w-1.5 h-1.5 rounded-full bg-green-500 relative;
-  box-shadow: 0 0 8px #22c55e;
+  @apply w-1.5 h-1.5 rounded-full bg-primary relative;
+  box-shadow: 0 0 10px hsla(150, 100%, 50%, 0.8);
 }
 
 .hud-status-dot.pulse {
-  animation: hud-pulse 2s infinite;
+  animation: hud-pulse 2.5s infinite;
 }
 
 @keyframes hud-pulse {
@@ -133,9 +137,9 @@
   }
 
   50% {
-    transform: scale(1.3);
-    opacity: 0.6;
-    box-shadow: 0 0 12px #22c55e;
+    transform: scale(1.4);
+    opacity: 0.4;
+    box-shadow: 0 0 20px var(--primary);
   }
 
   100% {
@@ -144,18 +148,11 @@
   }
 }
 
-.bg-premium-chat {
-  background:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%),
-    linear-gradient(to bottom, #070708, #0a0a14);
-  background-attachment: fixed;
+/* Glitch Effect */
+.hud-glitch-text {
+  text-shadow: 2px 0 10px hsla(150, 100%, 50%, 0.3), -2px 0 10px hsla(180, 100%, 50%, 0.3);
 }
 
-/* --------------------------------------------------- */
-/* Simple fade‑in animation */
-/* --------------------------------------------------- */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -169,5 +166,14 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Glass Tabs */
+.tabs-trigger-hud {
+  @apply opacity-40 transition-all duration-300 hover:opacity-100 data-[state=active]:opacity-100 data-[state=active]:text-primary;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
