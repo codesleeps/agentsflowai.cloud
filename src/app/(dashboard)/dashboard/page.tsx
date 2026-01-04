@@ -358,7 +358,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 border-b border-primary/5 pb-2">
                   <Terminal className="h-3 w-3" />
                   <span className="text-white/30">02:00:22</span>
-                  <span className="text-white/80">SESSION_INIT: {sessionData.user.email} -> MAC_AUTH</span>
+                  <span className="text-white/80">SESSION_INIT: {sessionData.user.email} {"->"} MAC_AUTH</span>
                 </div>
                 <div className="flex items-center gap-3 border-b border-primary/5 pb-2">
                   <Terminal className="h-3 w-3" />
