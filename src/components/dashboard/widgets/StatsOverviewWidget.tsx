@@ -68,7 +68,7 @@ export function StatsOverviewWidget({ stats }: StatsOverviewWidgetProps) {
                     {item.trend >= 0 ? "+" : ""}{item.trend}%
                   </span>
                 </div>
-                <span className="text-[7px] font-mono text-white/30 uppercase tracking-widest mt-0.5">Performance</span>
+                <span className="text-[7px] font-mono text-white/60 uppercase tracking-widest mt-0.5">Performance</span>
               </div>
             )}
           </div>
@@ -76,8 +76,8 @@ export function StatsOverviewWidget({ stats }: StatsOverviewWidgetProps) {
           <div className="mt-2">
             <div className="text-2xl font-black tracking-tighter text-white group-hover:text-primary transition-colors">{item.value}</div>
             <div className="flex justify-between items-center mt-2">
-              <div className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/50">{item.label}</div>
-              {item.subValue && <div className="text-[8px] font-mono text-white/30 italic uppercase tracking-widest">{item.subValue}</div>}
+              <div className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/75">{item.label}</div>
+              {item.subValue && <div className="text-[8px] font-mono text-white/60 italic uppercase tracking-widest">{item.subValue}</div>}
             </div>
           </div>
         </div>

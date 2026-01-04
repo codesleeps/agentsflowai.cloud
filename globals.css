@@ -68,24 +68,26 @@
 
 .bg-premium-dashboard {
   background:
-    radial-gradient(circle at 0% 0%, hsla(150, 100%, 10%, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 100% 0%, hsla(180, 100%, 10%, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 50% 50%, hsla(240, 10%, 5%, 1) 0%, #070708 100%);
+    radial-gradient(at 0% 0%, hsla(150, 100%, 50%, 0.03) 0%, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(180, 100%, 50%, 0.03) 0%, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(150, 100%, 50%, 0.02) 0%, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(180, 100%, 50%, 0.02) 0%, transparent 50%),
+    linear-gradient(135deg, #040405 0%, #09090b 100%);
   background-attachment: fixed;
 }
 
 /* Futuristic HUD Grid */
 .bg-hud-grid {
   background-image:
-    linear-gradient(to right, rgba(150, 255, 150, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(150, 255, 150, 0.02) 1px, transparent 1px);
+    linear-gradient(to right, rgba(150, 255, 150, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(150, 255, 150, 0.015) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
 /* HUD Card Styling */
 .hud-card {
-  @apply relative overflow-hidden bg-black/60 backdrop-blur-xl border border-white/[0.03] transition-all duration-500 rounded-none;
-  box-shadow: 0 0 30px -15px rgba(0, 0, 0, 0.7);
+  @apply relative overflow-hidden bg-white/[0.01] backdrop-blur-2xl border border-white/[0.05] transition-all duration-500 rounded-none;
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.4);
   clip-path: polygon(0 0,
       calc(100% - 12px) 0, 100% 12px,
       100% 100%,
@@ -113,11 +115,11 @@
 
 /* HUD Header */
 .hud-header {
-  @apply font-mono text-[9px] uppercase tracking-[0.3em] text-primary/80 mb-2 flex items-center gap-2;
+  @apply font-mono text-[9px] uppercase tracking-[0.3em] text-primary/90 mb-2 flex items-center gap-2;
 }
 
 .hud-header-turquoise {
-  @apply text-secondary/80;
+  @apply text-secondary/90;
 }
 
 /* Pulsing Status Dot */

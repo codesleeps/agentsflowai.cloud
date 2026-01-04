@@ -150,7 +150,7 @@ export default function DashboardPage() {
             <div className="px-2 py-0.5 border border-primary/20 bg-primary/5 rounded-none font-mono text-[8px] uppercase tracking-widest text-primary shadow-[0_0_10px_rgba(34,197,94,0.1)]">
               Node: Stable
             </div>
-            <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/40">
+            <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/70">
               User // {sessionData.user.name?.toUpperCase() || "ADMIN"}
             </p>
           </div>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
               onChange={(e) => handleCustomDateChange("start", e.target.value)}
               className="bg-transparent border-none text-[10px] font-mono text-white/80 p-0 focus:ring-0 w-24 hover:text-primary transition-colors"
             />
-            <span className="text-[10px] text-white/20 font-mono">{" > "}</span>
+            <span className="text-[10px] text-white/40 font-mono">{" > "}</span>
             <input
               type="date"
               value={dateRange.end}
@@ -193,19 +193,19 @@ export default function DashboardPage() {
       <Tabs defaultValue="overview" className="flex-1 space-y-10">
         <TabsList className="bg-transparent border-b border-white/5 w-full justify-start rounded-none h-12 p-0 gap-10 overflow-x-auto scrollbar-hide">
           <TabsTrigger value="overview" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-primary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/20">01</span> COMMAND
+            <span className="text-white/40">01</span> COMMAND
           </TabsTrigger>
           <TabsTrigger value="growth" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-secondary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/20">02</span> GROWTH
+            <span className="text-white/40">02</span> GROWTH
           </TabsTrigger>
           <TabsTrigger value="ops" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-primary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/20">03</span> OPS
+            <span className="text-white/40">03</span> OPS
           </TabsTrigger>
           <TabsTrigger value="ai" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-secondary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/20">04</span> NEURA
+            <span className="text-white/40">04</span> NEURA
           </TabsTrigger>
           <TabsTrigger value="security" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-primary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/20">05</span> SECURITY
+            <span className="text-white/40">05</span> SECURITY
           </TabsTrigger>
         </TabsList>
 
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                     <Globe className="h-8 w-8 text-secondary animate-pulse" />
                     <div>
                       <p className="text-xl font-black italic">Active</p>
-                      <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Incoming Data streams</p>
+                      <p className="text-[10px] font-mono text-white/70 uppercase tracking-widest">Incoming Data streams</p>
                     </div>
                   </div>
                   <div className="h-[2px] w-full bg-white/5 relative">
@@ -280,19 +280,19 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-black uppercase tracking-[0.1em] text-secondary">Advanced Sync</h3>
-                    <p className="text-[9px] font-mono text-white/40 mt-0.5">GEMINI_1.5_PRO_V2</p>
+                    <p className="text-[9px] font-mono text-white/70 mt-0.5">GEMINI_1.5_PRO_V2</p>
                   </div>
                 </div>
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[9px] font-mono uppercase text-white/50 tracking-widest">
+                    <div className="flex justify-between text-[9px] font-mono uppercase text-white/70 tracking-widest">
                       <span>Reasoning</span>
                       <span className="text-secondary">MAX_CAP</span>
                     </div>
                     <Progress value={95} className="h-1 bg-secondary/5" />
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[9px] font-mono uppercase text-white/50 tracking-widest">
+                    <div className="flex justify-between text-[9px] font-mono uppercase text-white/70 tracking-widest">
                       <span>Efficiency</span>
                       <span className="text-secondary">OPTIMIZED</span>
                     </div>
@@ -311,7 +311,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <Shield className="h-12 w-12 text-primary mb-6 drop-shadow-[0_0_10px_rgba(34,197,94,0.4)]" />
                 <h3 className="font-black text-sm uppercase tracking-[0.3em] text-primary">Certified</h3>
-                <p className="text-[9px] font-mono text-white/30 mt-2 uppercase">Protocol: AES_X256</p>
+                <p className="text-[9px] font-mono text-white/60 mt-2 uppercase">Protocol: AES_X256</p>
               </div>
             </Card>
             <Card className="hud-card p-8 border-primary/20 bg-primary/[0.03]">
@@ -319,7 +319,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <Activity className="h-12 w-12 text-primary mb-6 opacity-30" />
                 <h3 className="font-black text-sm uppercase tracking-[0.3em] opacity-30">Shielding</h3>
-                <p className="text-[9px] font-mono text-white/30 mt-2 uppercase">Firewall: Tier 3</p>
+                <p className="text-[9px] font-mono text-white/60 mt-2 uppercase">Firewall: Tier 3</p>
               </div>
             </Card>
             <Card className="hud-card p-8 border-primary/20 bg-primary/[0.03]">
@@ -327,7 +327,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <Fingerprint className="h-12 w-12 text-primary mb-6 opacity-80" />
                 <h3 className="font-black text-sm uppercase tracking-[0.3em]">Encrypted</h3>
-                <p className="text-[9px] font-mono text-white/30 mt-2 uppercase">ID: ADMIN_ACTIVE</p>
+                <p className="text-[9px] font-mono text-white/60 mt-2 uppercase">ID: ADMIN_ACTIVE</p>
               </div>
             </Card>
             <Card className="hud-card p-8 border-primary/20 bg-primary/[0.03]">
@@ -336,7 +336,7 @@ export default function DashboardPage() {
                 <div className="absolute inset-0 bg-primary/5 rounded-full animate-ping h-24 w-24 mx-auto my-auto blur-xl" />
                 <Radar className="h-12 w-12 text-primary mb-6 animate-pulse z-10" />
                 <h3 className="font-black text-sm uppercase tracking-[0.3em] z-10">Searching</h3>
-                <p className="text-[9px] font-mono text-white/30 mt-2 uppercase z-10">Threats: 0.00%</p>
+                <p className="text-[9px] font-mono text-white/60 mt-2 uppercase z-10">Threats: 0.00%</p>
               </div>
             </Card>
           </div>
@@ -347,22 +347,22 @@ export default function DashboardPage() {
               <div className="space-y-4 font-mono text-[9px] text-primary/60 max-h-[120px] overflow-y-auto scrollbar-hide">
                 <div className="flex items-center gap-3 border-b border-primary/5 pb-2">
                   <Terminal className="h-3 w-3" />
-                  <span className="text-white/30">02:04:01</span>
-                  <span className="text-white/80">KERNEL_READY: PRODUCTION_DEPLOYMENT_VERIFIED</span>
+                  <span className="text-white/60">02:04:01</span>
+                  <span className="text-white/90">KERNEL_READY: PRODUCTION_DEPLOYMENT_VERIFIED</span>
                 </div>
                 <div className="flex items-center gap-3 border-b border-primary/5 pb-2">
                   <Terminal className="h-3 w-3" />
-                  <span className="text-white/30">02:03:45</span>
+                  <span className="text-white/60">02:03:45</span>
                   <span className="text-primary/70">SYNC_COMPLETE: DATABASE_MIGRATION_V12_SUCCESS</span>
                 </div>
                 <div className="flex items-center gap-3 border-b border-primary/5 pb-2">
                   <Terminal className="h-3 w-3" />
-                  <span className="text-white/30">02:00:22</span>
-                  <span className="text-white/80">SESSION_INIT: {sessionData.user.email} {"->"} MAC_AUTH</span>
+                  <span className="text-white/60">02:00:22</span>
+                  <span className="text-white/90">SESSION_INIT: {sessionData.user.email} {"->"} MAC_AUTH</span>
                 </div>
                 <div className="flex items-center gap-3 border-b border-primary/5 pb-2">
                   <Terminal className="h-3 w-3" />
-                  <span className="text-white/30">01:55:01</span>
+                  <span className="text-white/60">01:55:01</span>
                   <span className="text-primary/70">LLM_GATEWAY: GOOGLE_GEMINI_STABLE_UPLINK</span>
                 </div>
               </div>
