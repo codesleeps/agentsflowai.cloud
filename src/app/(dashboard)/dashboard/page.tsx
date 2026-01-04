@@ -131,7 +131,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-premium-dashboard bg-hud-grid text-white p-4 lg:p-8 animate-fadeIn overflow-x-hidden">
+    <div className="flex min-h-screen flex-col bg-hud-grid text-white p-4 lg:p-8 animate-fadeIn overflow-x-hidden">
       {/* Premium HUD Header */}
       <div className="flex flex-col items-start justify-between border-b border-primary/10 pb-8 mb-10 gap-8 md:flex-row md:items-center relative">
         <div className="absolute top-0 left-0 w-32 h-[1px] bg-gradient-to-r from-primary to-transparent" />

@@ -184,7 +184,7 @@ Provide a helpful, concise response as the AI assistant:`;
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden bg-premium-chat">
+      <div className="flex flex-1 overflow-hidden bg-transparent">
         <div className="flex-1 flex flex-col">
           <ChatArea
             messages={messages.map(m => ({

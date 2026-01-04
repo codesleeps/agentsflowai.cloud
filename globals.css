@@ -62,18 +62,17 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background:
+      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%),
+      linear-gradient(to bottom, #09090b, #11111a);
+    background-attachment: fixed;
   }
 }
 
-.bg-premium-dashboard {
-  background:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%),
-    linear-gradient(to bottom, #09090b, #11111a);
-  background-attachment: fixed;
-}
+
 
 /* Futuristic HUD Grid */
 .bg-hud-grid {
