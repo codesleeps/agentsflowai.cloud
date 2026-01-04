@@ -21,7 +21,7 @@ const TEST_AGENT: AIAgent = {
   provider: "ollama",
   supportedProviders: [
     { provider: "ollama", model: "mistral:latest", priority: 1 },
-    { provider: "google", model: "gemini-2.0-flash", priority: 2 },
+    { provider: "google", model: "gemini-1.5-flash", priority: 2 },
     { provider: "anthropic", model: "claude-3-5-sonnet-20241022", priority: 3 },
     { provider: "openai", model: "gpt-4-turbo", priority: 4 },
     { provider: "openrouter", model: "anthropic/claude-3.5-sonnet", priority: 5 },
@@ -189,7 +189,7 @@ async function getOllamaModels(): Promise<string[]> {
 async function testAllProviders(specificProvider?: string): Promise<TestResult[]> {
   const providers = [
     { name: "ollama", model: "mistral:latest", envCheck: () => true },
-    { name: "google", model: "gemini-2.0-flash", envCheck: () => !!process.env.GOOGLE_API_KEY },
+    { name: "google", model: "gemini-1.5-flash", envCheck: () => !!process.env.GOOGLE_API_KEY },
     { name: "anthropic", model: "claude-3-5-sonnet-20241022", envCheck: () => !!process.env.ANTHROPIC_API_KEY },
     { name: "openai", model: "gpt-4-turbo", envCheck: () => !!process.env.OPENAI_API_KEY },
     { name: "openrouter", model: "anthropic/claude-3.5-sonnet", envCheck: () => !!process.env.OPENROUTER_API_KEY },

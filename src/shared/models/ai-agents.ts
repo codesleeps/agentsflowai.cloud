@@ -194,7 +194,7 @@ export const AI_AGENTS: AIAgent[] = [
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.0-flash",
+        model: "gemini-1.5-flash",
         priority: 1,
       },
       {
@@ -224,7 +224,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -240,7 +240,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.0-flash",
+        model: "gemini-1.5-flash",
         priority: 1,
       },
       {

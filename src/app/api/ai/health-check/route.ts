@@ -16,7 +16,7 @@ const TEST_AGENT: AIAgent = {
   provider: "ollama",
   supportedProviders: [
     { provider: "ollama", model: "mistral:latest", priority: 1 },
-    { provider: "google", model: "gemini-2.0-flash", priority: 2 },
+    { provider: "google", model: "gemini-1.5-flash", priority: 2 },
   ],
   defaultProvider: "ollama",
   costTier: "free",
@@ -173,7 +173,7 @@ export async function GET() {
   // Test all providers concurrently
   const [ollamaResult, googleResult] = await Promise.all([
     testProviderWithTimeout("ollama", "mistral:latest"),
-    environment.google_key_configured ? testProviderWithTimeout("google", "gemini-2.0-flash") : Promise.resolve({ status: "unhealthy" as const, model: "gemini-2.0-flash", error: "GOOGLE_API_KEY not configured" }),
+    environment.google_key_configured ? testProviderWithTimeout("google", "gemini-1.5-flash") : Promise.resolve({ status: "unhealthy" as const, model: "gemini-1.5-flash", error: "GOOGLE_API_KEY not configured" }),
   ]);
 
   // Get Ollama models
