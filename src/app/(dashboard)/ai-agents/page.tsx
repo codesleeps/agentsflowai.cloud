@@ -256,119 +256,64 @@ export default function AIAgentsPage() {
         </div>
       </div>
 
-      {/* Quick Links to Specialized Agents */}
-      <Card>
-        <CardContent className="flex flex-wrap gap-2 py-3">
-          <span className="mr-2 text-xs font-medium text-muted-foreground">
-            Jump to specialized agents:
-          </span>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/ai-agents/seo">
-              <Search className="mr-1 h-3 w-3" /> SEO Agent
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/ai-agents/content">
-              <PenTool className="mr-1 h-3 w-3" /> Content Agent
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/ai-agents/social">
-              <Share2 className="mr-1 h-3 w-3" /> Social Media Agent
-            </Link>
-          </Button>
+      {/* Agent Selection Bar */}
+      <Card className="bg-white/5 border-white/10 shadow-none">
+        <CardContent className="flex flex-wrap items-center gap-3 py-4">
+          <div className="flex items-center gap-2 mr-4 border-r border-white/10 pr-4">
+            <Bot className="h-5 w-5 text-primary" />
+            <span className="text-sm font-semibold whitespace-nowrap">Select Agent:</span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {agents?.map((agent) => (
+              <Button
+                key={agent.id}
+                variant={selectedAgent?.id === agent.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSelectAgent(agent)}
+                className={cn(
+                  "h-9 px-4 rounded-full transition-all border-white/10",
+                  selectedAgent?.id === agent.id
+                    ? "shadow-lg shadow-primary/20 scale-105"
+                    : "hover:bg-white/5"
+                )}
+              >
+                <span className="mr-2 text-base">{agent.icon}</span>
+                <span className="text-xs font-medium">{agent.name}</span>
+              </Button>
+            ))}
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Badge variant="outline" className="bg-white/5 border-white/10 text-[10px] uppercase tracking-tighter opacity-50">
+              {agents?.length || 0} Agents Online
+            </Badge>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Available Models */}
+      {/* Available Local Models (Mini Bar) */}
       {ollamaStatus?.status === "connected" &&
         ollamaStatus.models &&
         ollamaStatus.models.length > 0 && (
-          <Card>
-            <CardContent className="py-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Cpu className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Available Models:
-                </span>
-                {ollamaStatus.models.map((model) => (
-                  <Badge key={model.name} variant="secondary">
-                    {model.name}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-2 px-1">
+            <Cpu className="h-3 w-3 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Local:</span>
+            <div className="flex flex-wrap gap-1">
+              {ollamaStatus.models.slice(0, 5).map((model) => (
+                <Badge key={model.name} variant="secondary" className="text-[9px] py-0 px-1.5 h-4 bg-white/5 border-white/5">
+                  {model.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
         )}
 
       {/* Main Content */}
-      <div className="grid flex-1 gap-6 lg:grid-cols-3">
-        {/* Agent Selection */}
-        <Card className="lg:col-span-1 bg-white/5 border-white/10 shadow-none">
-          <Tabs defaultValue="browse" className="w-full">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-primary" />
-                  AI Agents
-                </CardTitle>
-              </div>
-              <TabsList className="grid w-full grid-cols-2 mt-2">
-                <TabsTrigger value="browse">Browse Agents</TabsTrigger>
-                <TabsTrigger value="my-agents">My Agents</TabsTrigger>
-              </TabsList>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="browse" className="mt-0">
-                <div className="space-y-3">
-                  <div className="relative mb-3">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="search"
-                      placeholder="Search agents..."
-                      className="pl-9"
-                    />
-                  </div>
-                  {agents?.map((agent) => (
-                    <button
-                      key={agent.id}
-                      onClick={() => handleSelectAgent(agent)}
-                      className={`w-full rounded-lg border p-4 text-left transition-all ${selectedAgent?.id === agent.id
-                        ? `${agentColors[agent.id]} border-2`
-                        : "hover:bg-muted/50"
-                        }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`rounded-lg p-2 ${agentColors[agent.id]}`}>
-                          {agentIcons[agent.id]}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="flex items-center gap-2 font-medium">
-                            {agent.name}
-                            <span>{agent.icon}</span>
-                          </h3>
-                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                            {agent.description}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </TabsContent>
-              <TabsContent value="my-agents" className="mt-0">
-                <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-                  <Bot className="h-10 w-10 mb-3 opacity-20" />
-                  <p className="text-sm font-medium">No active agents</p>
-                  <p className="text-xs">Agents you configure will appear here</p>
-                </div>
-              </TabsContent>
-            </CardContent>
-          </Tabs>
-        </Card>
+      <div className="flex flex-1 flex-col gap-6 min-h-0">
 
         {/* Chat Interface */}
-        <Card className="flex flex-col lg:col-span-2 bg-transparent border-white/10 shadow-none">
+        <Card className="flex flex-1 flex-col bg-transparent border-white/10 shadow-none">
           <CardHeader className="border-b">
             {selectedAgent ? (
               <div className="flex items-center justify-between">
