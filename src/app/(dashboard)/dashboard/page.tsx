@@ -131,7 +131,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-hud-grid text-white p-4 lg:p-8 animate-fadeIn overflow-x-hidden">
+    <div className="flex min-h-screen flex-col text-white p-4 lg:p-8 animate-fadeIn overflow-x-hidden">
       {/* Premium HUD Header */}
       <div className="flex flex-col items-start justify-between border-b border-primary/10 pb-8 mb-10 gap-8 md:flex-row md:items-center relative">
         <div className="absolute top-0 left-0 w-32 h-[1px] bg-gradient-to-r from-primary to-transparent" />
@@ -318,7 +318,7 @@ export default function DashboardPage() {
               <div className="hud-header">[TRAFFIC_SCAN]</div>
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <Activity className="h-12 w-12 text-primary mb-6 opacity-30" />
-                <h3 className="font-black text-sm uppercase tracking-[0.3em] opacity-30">Shielding</h3>
+                <h3 className="font-black text-sm uppercase tracking-[0.3em] text-primary">Shielding</h3>
                 <p className="text-[9px] font-mono text-white/60 mt-2 uppercase">Firewall: Tier 3</p>
               </div>
             </Card>
@@ -326,7 +326,7 @@ export default function DashboardPage() {
               <div className="hud-header">[ACCESS_LAYER]</div>
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <Fingerprint className="h-12 w-12 text-primary mb-6 opacity-80" />
-                <h3 className="font-black text-sm uppercase tracking-[0.3em]">Encrypted</h3>
+                <h3 className="font-black text-sm uppercase tracking-[0.3em] text-primary">Encrypted</h3>
                 <p className="text-[9px] font-mono text-white/60 mt-2 uppercase">ID: ADMIN_ACTIVE</p>
               </div>
             </Card>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-6 text-center relative">
                 <div className="absolute inset-0 bg-primary/5 rounded-full animate-ping h-24 w-24 mx-auto my-auto blur-xl" />
                 <Radar className="h-12 w-12 text-primary mb-6 animate-pulse z-10" />
-                <h3 className="font-black text-sm uppercase tracking-[0.3em] z-10">Searching</h3>
+                <h3 className="font-black text-sm uppercase tracking-[0.3em] z-10 text-primary">Searching</h3>
                 <p className="text-[9px] font-mono text-white/60 mt-2 uppercase z-10">Threats: 0.00%</p>
               </div>
             </Card>
@@ -372,7 +372,7 @@ export default function DashboardPage() {
               <div className="absolute top-0 right-0 p-2 text-primary/10">
                 <Activity className="h-24 w-24" />
               </div>
-              <div className="hud-header text-primary">[SUMMARY_REPORT]</div>
+              <div className="hud-header">[SUMMARY_REPORT]</div>
               <div className="flex flex-col gap-6 h-full justify-center relative z-10">
                 <div className="flex items-center gap-3">
                   <Sparkles className="h-5 w-5 text-primary" />

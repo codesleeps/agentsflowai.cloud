@@ -114,11 +114,11 @@
 
 /* HUD Header */
 .hud-header {
-  @apply font-mono text-[9px] uppercase tracking-[0.3em] text-primary/90 mb-2 flex items-center gap-2;
+  @apply font-mono text-[9px] uppercase tracking-[0.3em] text-white mb-2 flex items-center gap-2;
 }
 
 .hud-header-cyan {
-  @apply text-secondary/90;
+  @apply text-white;
 }
 
 /* Pulsing Status Dot */
