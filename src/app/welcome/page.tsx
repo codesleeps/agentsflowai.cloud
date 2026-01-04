@@ -116,7 +116,7 @@ const testimonials = [
 const pricingPlans = [
   {
     name: "Starter",
-    price: 999,
+    price: 49,
     description: "Perfect for small businesses getting started",
     features: [
       "AI Chat Agent",
@@ -129,7 +129,7 @@ const pricingPlans = [
   },
   {
     name: "Growth",
-    price: 2499,
+    price: 149,
     description: "Scale your business with advanced automation",
     features: [
       "Everything in Starter",
@@ -144,7 +144,7 @@ const pricingPlans = [
   },
   {
     name: "Enterprise",
-    price: 4999,
+    price: 299,
     description: "Complete digital transformation solution",
     features: [
       "Everything in Growth",
@@ -817,7 +817,7 @@ export default function WelcomePage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium">+1 (555) 123-4567</p>
+                    <p className="font-medium">+44 77777777</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -826,7 +826,7 @@ export default function WelcomePage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Location</p>
-                    <p className="font-medium">San Francisco, CA</p>
+                    <p className="font-medium">London, UK</p>
                   </div>
                 </div>
               </div>
@@ -1001,7 +1001,7 @@ export default function WelcomePage() {
 
           <div className="flex flex-col items-center justify-between border-t pt-8 md:flex-row">
             <p className="text-sm text-muted-foreground">
-              © 2024 AgentsFlowAI. All rights reserved.
+              © 2026 AgentsFlowAI. All rights reserved.
             </p>
             <div className="mt-4 flex gap-4 md:mt-0">
               <a href="#" className="text-muted-foreground hover:text-primary">

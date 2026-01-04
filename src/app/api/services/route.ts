@@ -10,7 +10,7 @@ export async function GET() {
     const services = await queryInternalDatabase(
       'SELECT * FROM services WHERE is_active = true ORDER BY price ASC'
     ) as unknown as Service[];
-    
+
     // Parse features from JSON string to array
     const parsedServices = services.map(service => ({
       ...service,
@@ -18,7 +18,7 @@ export async function GET() {
         ? JSON.parse(service.features)
         : service.features
     }));
-    
+
     return NextResponse.json(parsedServices);
   } catch (error) {
     return handleApiError(error);
@@ -31,13 +31,13 @@ export async function POST(request: NextRequest) {
     await requireAuth(request);
 
     const body = await request.json();
-    
+
     // Validate input using Zod schema
     const validatedData = validateAndSanitize(ServiceCreateSchema, body);
-    
+
     const result = await queryInternalDatabase(
       `INSERT INTO services (name, description, tier, price, features)
-       VALUES ($1, $2, $3, $4, $5)
+       VALUES (£1, £2, £3, £4, £5)
        RETURNING *`,
       [
         validatedData.name,
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         JSON.stringify(validatedData.features || [])
       ]
     ) as unknown as Service[];
-    
+
     return NextResponse.json(result[0], { status: 201 });
   } catch (error) {
     return handleApiError(error);
