@@ -111,7 +111,7 @@ export default function DashboardPage() {
       <div className="flex h-screen w-full items-center justify-center bg-[#070708]">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
-            <Zap className="h-12 w-12 animate-pulse text-primary drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]" />
+            <Zap className="h-12 w-12 animate-pulse text-primary drop-shadow-[0_0_15px_rgba(255,0,255,0.5)]" />
             <div className="absolute inset-0 h-12 w-12 animate-ping bg-primary/20 rounded-full" />
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -147,7 +147,7 @@ export default function DashboardPage() {
             </h1>
           </div>
           <div className="flex items-center gap-3 mt-1">
-            <div className="px-2 py-0.5 border border-primary/20 bg-primary/5 rounded-none font-mono text-[8px] uppercase tracking-widest text-primary shadow-[0_0_10px_rgba(34,197,94,0.1)]">
+            <div className="px-2 py-0.5 border border-primary/20 bg-primary/5 rounded-none font-mono text-[8px] uppercase tracking-widest text-primary shadow-[0_0_10px_rgba(255,0,255,0.1)]">
               Node: Stable
             </div>
             <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-white/70">
@@ -273,7 +273,7 @@ export default function DashboardPage() {
             <div className="space-y-8">
               <AIUsageWidget stats={stats} />
               <Card className="hud-card p-8 border-secondary/20 bg-secondary/[0.03]">
-                <div className="hud-header-turquoise hud-header">[NEURAL_CORE_X]</div>
+                <div className="hud-header-cyan hud-header">[NEURAL_CORE_X]</div>
                 <div className="flex items-center gap-5 mb-8 mt-2">
                   <div className="p-4 bg-secondary/10 border border-secondary/20 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
                     <Cpu className="h-6 w-6 text-secondary" />
@@ -309,7 +309,7 @@ export default function DashboardPage() {
             <Card className="hud-card p-8 border-primary/20 bg-primary/[0.03]">
               <div className="hud-header">[SOC2_READY]</div>
               <div className="flex flex-col items-center justify-center py-6 text-center">
-                <Shield className="h-12 w-12 text-primary mb-6 drop-shadow-[0_0_10px_rgba(34,197,94,0.4)]" />
+                <Shield className="h-12 w-12 text-primary mb-6 drop-shadow-[0_0_10px_rgba(255,0,255,0.4)]" />
                 <h3 className="font-black text-sm uppercase tracking-[0.3em] text-primary">Certified</h3>
                 <p className="text-[9px] font-mono text-white/60 mt-2 uppercase">Protocol: AES_X256</p>
               </div>

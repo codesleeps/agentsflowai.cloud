@@ -10,27 +10,27 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 150 100% 45%;
-    /* Neon Lime slightly darkened */
-    --primary-foreground: 0 0% 0%;
-    --secondary: 180 100% 45%;
-    /* Neon Turquoise slightly darkened */
+    --primary: 300 100% 55%;
+    /* Neon Magenta */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 190 100% 50%;
+    /* Neon Cyan */
     --secondary-foreground: 0 0% 0%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 150 100% 50%;
+    --accent: 300 100% 60%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 150 100% 50%;
+    --ring: 300 100% 60%;
     --radius: 0.75rem;
 
     /* HUD Themes */
-    --hud-lime: 150 100% 45%;
-    --hud-turquoise: 180 100% 45%;
-    --hud-sec: 0 100% 60%;
+    --hud-magenta: 300 100% 55%;
+    --hud-cyan: 190 100% 50%;
+    --hud-sec: 320 100% 60%;
   }
 
   .dark {
@@ -40,19 +40,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 150 100% 45%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 180 100% 45%;
+    --primary: 300 100% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 190 100% 50%;
     --secondary-foreground: 0 0% 0%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 150 100% 50%;
+    --accent: 300 100% 60%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 150 100% 50%;
+    --ring: 300 100% 60%;
   }
 }
 
@@ -64,10 +64,11 @@
   body {
     @apply text-foreground;
     background:
-      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-      radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%),
-      linear-gradient(to bottom, #09090b, #11111a);
+      radial-gradient(at 0% 0%, hsla(270, 100%, 30%, 0.4) 0, transparent 70%),
+      radial-gradient(at 50% 0%, hsla(300, 100%, 35%, 0.3) 0, transparent 70%),
+      radial-gradient(at 100% 0%, hsla(190, 100%, 30%, 0.4) 0, transparent 70%),
+      radial-gradient(at 50% 50%, hsla(270, 60%, 15%, 1) 0, transparent 85%),
+      linear-gradient(to bottom, #09031a, #0c051a);
     background-attachment: fixed;
   }
 }
@@ -77,8 +78,8 @@
 /* Futuristic HUD Grid */
 .bg-hud-grid {
   background-image:
-    linear-gradient(to right, rgba(150, 255, 150, 0.015) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(150, 255, 150, 0.015) 1px, transparent 1px);
+    linear-gradient(to right, rgba(168, 85, 247, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(168, 85, 247, 0.04) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -116,7 +117,7 @@
   @apply font-mono text-[9px] uppercase tracking-[0.3em] text-primary/90 mb-2 flex items-center gap-2;
 }
 
-.hud-header-turquoise {
+.hud-header-cyan {
   @apply text-secondary/90;
 }
 
@@ -139,7 +140,7 @@
   50% {
     transform: scale(1.4);
     opacity: 0.4;
-    box-shadow: 0 0 20px var(--primary);
+    box-shadow: 0 0 20px hsla(300, 100%, 50%, 0.8);
   }
 
   100% {
@@ -150,7 +151,7 @@
 
 /* Glitch Effect */
 .hud-glitch-text {
-  text-shadow: 2px 0 10px hsla(150, 100%, 50%, 0.3), -2px 0 10px hsla(180, 100%, 50%, 0.3);
+  text-shadow: 2px 0 10px hsla(300, 100%, 50%, 0.4), -2px 0 10px hsla(190, 100%, 50%, 0.4);
 }
 
 @keyframes fadeIn {
