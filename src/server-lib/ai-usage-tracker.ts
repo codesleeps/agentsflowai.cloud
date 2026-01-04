@@ -148,25 +148,18 @@ export async function logIntegrationError(
   error: Error,
   prompt: string,
 ) {
-  try {
-    await db.aIModelUsage.create({
-      data: {
-        user: { connect: { id: userId } },
-        agent_id: "integration-endpoint",
-        provider: "integration",
-        model: endpoint,
-        prompt_tokens: 0,
-        completion_tokens: 0,
-        cost_usd: 0,
-        latency_ms: 0,
-        status: "failed",
-        error_message: error.message,
-        total_tokens: 0,
-      },
-    });
-  } catch (logError) {
-    console.error("Failed to log integration error:", logError);
-  }
+  return logModelUsage({
+    user_id: userId,
+    agent_id: "integration-endpoint",
+    provider: "integration",
+    model: endpoint,
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    cost_usd: 0,
+    latency_ms: 0,
+    status: "failed",
+    error_message: error.message,
+  });
 }
 
 export async function logDiagnosticTest(params: {
