@@ -68,11 +68,10 @@
 
 .bg-premium-dashboard {
   background:
-    radial-gradient(at 0% 0%, hsla(150, 100%, 50%, 0.03) 0%, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(180, 100%, 50%, 0.03) 0%, transparent 50%),
-    radial-gradient(at 100% 100%, hsla(150, 100%, 50%, 0.02) 0%, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(180, 100%, 50%, 0.02) 0%, transparent 50%),
-    linear-gradient(135deg, #040405 0%, #09090b 100%);
+    radial-gradient(at 0% 0%, hsla(253, 16%, 15%, 0.4) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 0.4) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(150, 100%, 15%, 0.2) 0, transparent 50%),
+    linear-gradient(to bottom, #040408, #070714);
   background-attachment: fixed;
 }
 
