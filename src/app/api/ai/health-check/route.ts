@@ -12,10 +12,10 @@ const TEST_AGENT: AIAgent = {
   category: "fast-chat",
   systemPrompt: "You are a test agent. Respond with 'OK' to any message.",
   capabilities: ["Test responses"],
-  model: "mistral:latest",
+  model: "mistral:7b",
   provider: "ollama",
   supportedProviders: [
-    { provider: "ollama", model: "mistral:latest", priority: 1 },
+    { provider: "ollama", model: "mistral:7b", priority: 1 },
     { provider: "google", model: "gemini-1.5-flash", priority: 2 },
   ],
   defaultProvider: "ollama",
@@ -132,7 +132,7 @@ async function getOllamaModels(): Promise<string[]> {
     const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
     const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
       method: "GET",
-      signal: AbortSignal.timeout(5000), // 5 second timeout
+      signal: AbortSignal.timeout(10000), // 10 second timeout
     });
 
     if (response.ok) {
@@ -152,8 +152,8 @@ async function testProviderWithTimeout(providerName: string, model: string): Pro
       setTimeout(() => resolve({
         status: "unhealthy",
         model,
-        error: "Request timeout (5 seconds)",
-      }), 5000)
+        error: "Request timeout (30 seconds)",
+      }), 30000)
     ),
   ]);
 }
@@ -172,7 +172,7 @@ export async function GET() {
 
   // Test all providers concurrently
   const [ollamaResult, googleResult] = await Promise.all([
-    testProviderWithTimeout("ollama", "mistral:latest"),
+    testProviderWithTimeout("ollama", "mistral:7b"),
     environment.google_key_configured ? testProviderWithTimeout("google", "gemini-1.5-flash") : Promise.resolve({ status: "unhealthy" as const, model: "gemini-1.5-flash", error: "GOOGLE_API_KEY not configured" }),
   ]);
 

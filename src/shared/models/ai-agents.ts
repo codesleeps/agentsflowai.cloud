@@ -204,7 +204,7 @@ export const AI_AGENTS: AIAgent[] = [
       },
       {
         provider: "ollama",
-        model: "mistral:latest",
+        model: "mistral:7b",
         priority: 3,
       },
     ],
@@ -328,7 +328,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       },
       {
         provider: "ollama",
-        model: "mistral:latest",
+        model: "mistral:7b",
         priority: 2,
       },
     ],
@@ -369,7 +369,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
       },
       {
         provider: "ollama",
-        model: "ministral-3:3b",
+        model: "llama3.1:8b",
         priority: 2,
       },
     ],
@@ -411,7 +411,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       },
       {
         provider: "ollama",
-        model: "mistral:latest",
+        model: "mistral:7b",
         priority: 2,
       },
     ],
@@ -432,7 +432,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "High-speed responses using local Ollama for quick answers and chat",
     icon: "⚡",
     category: "fast-chat",
-    model: "mistral:latest",
+    model: "mistral:7b",
     provider: "ollama",
     defaultProvider: "ollama",
     costTier: "free",
@@ -447,7 +447,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "ollama",
-        model: "mistral:latest",
+        model: "mistral:7b",
         priority: 1
       },
       {

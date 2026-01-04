@@ -149,50 +149,66 @@ export async function handleGoogleProvider(
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
 
-  // Try different model names if the specified one fails
-  const modelNames = [agent.model, "gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"];
-  let model;
+  const modelNames = [
+    agent.model,
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-latest",
+    "gemini-2.0-flash-exp",
+    "gemini-1.5-pro",
+    "gemini-1.5-pro-latest",
+    "gemini-pro",
+    "models/gemini-1.5-flash",
+    "models/gemini-pro"
+  ];
+
   let lastError;
 
   for (const modelName of modelNames) {
     try {
-      model = genAI.getGenerativeModel({ model: modelName });
-      break; // Use this model, we'll catch errors during actual usage
+      console.log(`[Google AI] Attempting generation with model: ${modelName}`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+
+      // Build segments for generateContent
+      const contents = (conversationHistory || []).map((msg: any) => ({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }],
+      }));
+
+      // Google Generative AI requires the first message to be from 'user'
+      while (contents.length > 0 && contents[0].role === 'model') {
+        contents.shift();
+      }
+
+      // Add the current system prompt + message
+      const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${message}` : message;
+      contents.push({
+        role: "user",
+        parts: [{ text: fullPrompt }]
+      });
+
+      const result = await model.generateContent({
+        contents,
+        generationConfig: { maxOutputTokens: 2048 },
+      });
+
+      const response = result.response;
+      const responseText = response.text();
+
+      if (!responseText) throw new Error("Empty response text");
+
+      return {
+        response: responseText,
+        tokensUsed: 0,
+        modelUsed: modelName
+      };
     } catch (error) {
       lastError = error;
+      console.warn(`[Google AI] Model ${modelName} failed: ${error instanceof Error ? error.message : String(error)}`);
       continue;
     }
   }
 
-  if (!model) {
-    throw new Error(`No Google model could be initialized. Last error: ${lastError?.message}`);
-  }
-
-  const history = (conversationHistory || []).map((msg: any) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
-
-  // Google Generative AI requires the first message to be from 'user'
-  while (history.length > 0 && history[0].role === 'model') {
-    history.shift();
-  }
-
-  // Prepend system prompt to the message
-  const fullMessage = `${systemPrompt}\n\n${message}`;
-
-  const chat = model.startChat({
-    history,
-    generationConfig: { maxOutputTokens: 2048 },
-  });
-
-  const result = await chat.sendMessage(fullMessage);
-  const responseText = result.response.text();
-
-  return {
-    response: responseText,
-    tokensUsed: 0, // Not easily available
-  };
+  throw new Error(`Google AI failed after trying all models. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
 }
 
 export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
@@ -212,8 +228,12 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
       signal: AbortSignal.timeout(30000), // 30 second timeout for local Ollama
     });
 
-    if (!ollamaResponse.ok)
+    if (!ollamaResponse.ok) {
+      if (ollamaResponse.status === 404) {
+        throw new Error(`Ollama model "${agent.model}" not found. Please pull it using 'ollama pull ${agent.model}'`);
+      }
       throw new Error(`Ollama API returned ${ollamaResponse.status}`);
+    }
     const data = await ollamaResponse.json();
 
     return {
