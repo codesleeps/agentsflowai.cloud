@@ -8,28 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { generateText } from "@/client-lib/built-in-integrations/ai";
-import { useAIAgents } from "@/client-lib/ai-agents-client";
+import { generateAgentResponse } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { cn } from "@/client-lib/utils";
 import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "@/shared/models/types";
 
-const SYSTEM_PROMPT = `You are an AI assistant for AgentsFlowAI, an AI-powered business automation platform. You help potential customers:
-
-1. Understand our services (Starter $999, Growth $2499, Enterprise $4999)
-2. Get recommendations based on their business needs
-3. Answer questions about digital marketing, automation, and AI solutions
-4. Qualify leads by understanding their budget, timeline, and goals
-5. Schedule consultations and demos
-
-Be helpful, professional, and concise. When appropriate, recommend specific service packages based on the customer's needs.
-
-Services:
-- Basic ($99): Perfect for getting started - includes up to 1,000 leads/month, basic lead scoring, email notifications
-- Growth ($299): For growing businesses - includes up to 10,000 leads, AI scoring, priority support, custom workflows
-- Enterprise ($999): Complete solution - includes unlimited leads, dedicated account manager, custom integrations, white-label solutions`;
 
 const SERVICES = [
   {
@@ -59,7 +44,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "Hello! 👋 I'm your AI assistant at AgentsFlowAI. I can help you find the perfect automation solution for your business.\n\nI can help you with:\n• Understanding our service packages\n• Getting personalized recommendations\n• Answering questions about digital marketing & AI automation\n• Scheduling a consultation\n\nWhat brings you here today?",
+      content: "Hello! 👋 I'm your AI assistant. I'm here to help with any questions or tasks you have. What can I assist you with today?",
       timestamp: new Date(),
     },
   ]);
@@ -91,24 +76,21 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const conversationHistory = messages
-        .map((m) => `${m.role === "user" ? "Customer" : "Assistant"}: ${m.content}`)
-        .join("\n");
+      // Format conversation history for the agent API
+      const conversationHistory = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-      const prompt = `${SYSTEM_PROMPT}
-
-Previous conversation:
-${conversationHistory}
-
-Customer: ${userMessage.content}
-
-Provide a helpful, concise response as the AI assistant:`;
-
-      const response = await generateText(prompt);
+      const response = await generateAgentResponse(
+        "fast-chat-agent", // Use the fast chat agent for general chat
+        userMessage.content,
+        conversationHistory
+      );
 
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        content: response,
+        content: response.response,
         timestamp: new Date(),
       };
 
@@ -137,7 +119,7 @@ Provide a helpful, concise response as the AI assistant:`;
     setMessages([
       {
         role: "assistant",
-        content: "Hello! 👋 I'm your AI assistant at AgentsFlowAI. I can help you find the perfect automation solution for your business.\n\nI can help you with:\n• Understanding our service packages\n• Getting personalized recommendations\n• Answering questions about digital marketing & AI automation\n• Scheduling a consultation\n\nWhat brings you here today?",
+        content: "Hello! 👋 I'm your AI assistant. I'm here to help with any questions or tasks you have. What can I assist you with today?",
         timestamp: new Date(),
       },
     ]);

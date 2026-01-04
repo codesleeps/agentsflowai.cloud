@@ -238,9 +238,9 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-hud-grid text-white">
       {/* Navigation */}
-      <nav className="fixed top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+      <nav className="fixed top-0 z-50 w-full border-b border-white/[0.05] bg-black/60 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
@@ -324,7 +324,7 @@ export default function WelcomePage() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="border-b bg-background md:hidden">
+          <div className="border-b border-white/[0.05] bg-black/60 md:hidden">
             <div className="space-y-4 px-4 py-4">
               <a
                 href="#features"
@@ -639,7 +639,7 @@ export default function WelcomePage() {
       {/* Testimonials Section */}
       <section
         id="testimonials"
-        className="bg-muted/30 px-4 py-20 sm:px-6 lg:px-8"
+        className="bg-black/20 px-4 py-20 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
@@ -757,7 +757,7 @@ export default function WelcomePage() {
       {/* CTA Section */}
       <section className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="rounded-3xl bg-primary p-12 text-primary-foreground">
+          <div className="rounded-none bg-primary/10 backdrop-blur-2xl border border-primary/30 p-12 text-primary shadow-[0_0_20px_rgba(255,0,255,0.1)]">
             <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
               Ready to Transform Your Business?
             </h2>
@@ -786,7 +786,7 @@ export default function WelcomePage() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="bg-muted/30 px-4 py-20 sm:px-6 lg:px-8">
+      <section id="contact" className="bg-black/20 px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 md:grid-cols-2">
             <div>
@@ -914,7 +914,7 @@ export default function WelcomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t px-4 py-12 sm:px-6 lg:px-8">
+      <footer className="border-t border-white/[0.05] bg-black/40 backdrop-blur-md px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 grid gap-8 md:grid-cols-4">
             <div>
