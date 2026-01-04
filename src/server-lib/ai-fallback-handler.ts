@@ -188,7 +188,7 @@ async function handleOllamaProvider(
 ): Promise<{ text: string; provider: string }> {
   try {
     const response = await fetch(
-      `${process.env.OLLAMA_API_BASE_URL}/api/generate`,
+      `${process.env.OLLAMA_BASE_URL || "http://localhost:11434"}/api/generate`,
       {
         method: "POST",
         headers: {
