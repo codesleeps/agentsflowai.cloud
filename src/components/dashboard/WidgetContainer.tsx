@@ -78,100 +78,65 @@ export function WidgetContainer({
   }
 
   return (
-    <Card className={`group relative ${getSizeClasses()} ${className || ""}`}>
-      {/* Widget Header */}
-      <CardHeader className="pb-3">
+    <Card className={`hud-card group ${getSizeClasses()} ${className || ""}`}>
+      {/* HUD Background elements could be added here */}
+
+      <CardHeader className="pb-3 border-b border-white/5 bg-white/[0.02]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <widget.icon className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle className="text-base">{widget.title}</CardTitle>
-              {widget.description && (
-                <CardDescription className="text-xs">
-                  {widget.description}
-                </CardDescription>
-              )}
+          <div className="flex flex-col">
+            <div className="hud-header">[{widget.id.toUpperCase()}]</div>
+            <div className="flex items-center gap-2">
+              <widget.icon className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-bold uppercase tracking-tighter text-white/90">
+                {widget.title}
+              </CardTitle>
             </div>
+            {widget.description && (
+              <CardDescription className="text-[9px] font-mono mt-0.5 text-white/40 uppercase tracking-widest">
+                {widget.description}
+              </CardDescription>
+            )}
           </div>
 
-          {/* Widget Controls */}
-          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          {/* Simplified HUD Controls */}
+          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 scale-75 origin-right">
+            {widget.configurable && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 border border-primary/20 hover:bg-primary/20">
+                    <Settings className="h-3 w-3 text-primary" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="hud-card border-primary/20 bg-black/90">
+                  <DropdownMenuItem onClick={() => handleSizeChange("small")} className="text-[10px] font-mono uppercase tracking-widest hover:bg-primary/20">Small</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSizeChange("medium")} className="text-[10px] font-mono uppercase tracking-widest hover:bg-primary/20">Medium</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSizeChange("large")} className="text-[10px] font-mono uppercase tracking-widest hover:bg-primary/20">Large</DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-primary/20" />
+                  <DropdownMenuItem onClick={() => handleToggleVisibility()} className="text-[10px] font-mono uppercase tracking-widest text-red-400 hover:bg-red-400/20">Disable</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="h-8 w-8 p-0"
+              className="h-6 w-6 p-0 border border-primary/20 hover:bg-primary/20"
             >
               {isCollapsed ? (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-3 w-3 text-primary" />
               ) : (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-3 w-3 text-primary" />
               )}
             </Button>
-
-            {widget.configurable && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleToggleVisibility()}>
-                    {config.enabled ? (
-                      <>
-                        <EyeOff className="mr-2 h-4 w-4" />
-                        Hide Widget
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Show Widget
-                      </>
-                    )}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem onClick={() => handleSizeChange("small")}>
-                    <GripVertical className="mr-2 h-4 w-4" />
-                    Small Size
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSizeChange("medium")}>
-                    <GripVertical className="mr-2 h-4 w-4" />
-                    Medium Size
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleSizeChange("large")}>
-                    <GripVertical className="mr-2 h-4 w-4" />
-                    Large Size
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    onClick={() =>
-                      onUpdateConfig({ ...config, enabled: false })
-                    }
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Remove Widget
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
-        </div>
-
-        {/* Category Badge */}
-        <div className="flex justify-end">
-          <Badge variant="secondary" className="text-xs">
-            {widget.category}
-          </Badge>
         </div>
       </CardHeader>
 
-      {/* Widget Content */}
-      {!isCollapsed && <CardContent className="pt-0">{children}</CardContent>}
+      {!isCollapsed && (
+        <CardContent className="pt-4 animate-fadeIn">
+          {children}
+        </CardContent>
+      )}
     </Card>
   );
 }

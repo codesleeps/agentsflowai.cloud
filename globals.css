@@ -2,12 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Existing CSS ends at line 78 */
-/* --------------------------------------------------- */
-/* Glass‑morphism utilities */
-/* --------------------------------------------------- */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 253 88% 59%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 253 88% 59%;
+    --radius: 0.75rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* HUD Themes */
+    --hud-ops: 45 100% 50%;
+    /* Yellow */
+    --hud-ai: 280 100% 65%;
+    /* Purple */
+    --hud-sec: 0 100% 60%;
+    /* Red */
+    --hud-growth: 150 100% 50%;
+    /* Green */
+  }
+
+  .dark {
+    --background: 240 10% 2%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 4%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 253 88% 59%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 253 88% 59%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
 .bg-glass {
   @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl;
+}
+
+/* Futuristic HUD Grid */
+.bg-hud-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-attachment: fixed;
+}
+
+/* HUD Card Styling */
+.hud-card {
+  @apply relative overflow-hidden bg-black/40 backdrop-blur-xl border border-white/5 hover:border-primary/40 transition-all duration-500 rounded-none;
+  box-shadow: 0 0 20px -10px rgba(0, 0, 0, 0.5);
+  clip-path: polygon(0 0,
+      calc(100% - 10px) 0, 100% 10px,
+      100% 100%,
+      10px 100%, 0 calc(100% - 10px));
+}
+
+.hud-card::after {
+  content: '';
+  @apply absolute top-0 right-0 w-[10px] h-[10px] bg-primary/20 transition-all duration-300;
+}
+
+.hud-card:hover::after {
+  @apply bg-primary;
+}
+
+/* HUD Header (Small Monospaced Label) */
+.hud-header {
+  @apply font-mono text-[10px] uppercase tracking-[0.2em] text-primary/70 mb-2 flex items-center gap-2;
+}
+
+/* Pulsing Status Dot */
+.hud-status-dot {
+  @apply w-1.5 h-1.5 rounded-full bg-green-500 relative;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.hud-status-dot.pulse {
+  animation: hud-pulse 2s infinite;
+}
+
+@keyframes hud-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 0.6;
+    box-shadow: 0 0 12px #22c55e;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.bg-premium-chat {
+  background:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%),
+    linear-gradient(to bottom, #070708, #0a0a14);
+  background-attachment: fixed;
 }
 
 /* --------------------------------------------------- */
@@ -27,96 +170,4 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out forwards;
-}
-
-.bg-premium-chat {
-  background:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%),
-    linear-gradient(to bottom, #09090b, #11111a);
-  background-attachment: fixed;
-}
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 253 88% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 92%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 240 5% 92%;
-    --muted-foreground: 241 7% 30%;
-    --accent: 240 5% 92%;
-    --accent-foreground: 253 88% 59%;
-    --destructive: 345.32 100% 56%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 85%;
-    --input: 240 4% 81%;
-    --ring: 253 88% 59%;
-    --radius: 0.75rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 253 88% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 92%;
-    --sidebar-accent-foreground: 253 88% 59%;
-    --sidebar-border: 0 0% 85%;
-    --sidebar-ring: 253 88% 59%;
-  }
-
-  .dark {
-    --background: 0 0% 0%;
-    --foreground: 240 5% 92%;
-    --card: 0 0% 6%;
-    --card-foreground: 240 5% 92%;
-    --popover: 0 0% 6%;
-    --popover-foreground: 240 5% 92%;
-    --primary: 253 88% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 240 5% 92%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 240 4% 81%;
-    --accent: 0 0% 12%;
-    --accent-foreground: 253 88% 59%;
-    --destructive: 338.93 90% 29%;
-    --destructive-foreground: 240 5% 92%;
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
-    --ring: 253 88% 59%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 0 0% 0%;
-    --sidebar-foreground: 240 5% 92%;
-    --sidebar-primary: 253 88% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 253 88% 59%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 253 88% 59%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
 }
