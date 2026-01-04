@@ -8,8 +8,6 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { handleApiError } from "@/lib/api-errors";
 import * as cheerio from "cheerio";
 import axios from "axios";
-import Anthropic from "@anthropic-ai/sdk";
-import OpenAI from "openai";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIMessage } from "@/shared/models/types";
 import { AIAgent } from "../../../../shared/models/ai-agents";
@@ -139,37 +137,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function handleAnthropicProvider(
-  agent: AIAgent,
-  messages: AIMessage[],
-  systemPrompt: string,
-) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not defined");
-
-  const anthropic = new Anthropic({ apiKey });
-
-  const response = await anthropic.messages.create({
-    model: agent.model,
-    system: systemPrompt,
-    messages: messages
-      .filter((msg) => msg.role !== "system")
-      .map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-      })),
-    max_tokens: 2048,
-  });
-
-  const textContent =
-    response.content[0].type === "text" ? response.content[0].text : "";
-
-  return {
-    response: textContent,
-    tokensUsed: response.usage.input_tokens + response.usage.output_tokens,
-  };
-}
-
 export async function handleGoogleProvider(
   agent: AIAgent,
   message: string,
@@ -241,93 +208,6 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
   }
 }
 
-export async function handleOpenRouterProvider(
-  agent: AIAgent,
-  messages: AIMessage[],
-  systemPrompt: string,
-) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error("OPENROUTER_API_KEY is not defined");
-
-  // Map messages to OpenRouter format
-  const formattedMessages = [
-    { role: "system", content: systemPrompt },
-    ...messages
-      .filter((msg) => msg.role !== "system")
-      .map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-      })),
-  ];
-
-  const response = await fetch(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer":
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        "X-Title": "AgentsFlowAI",
-      },
-      body: JSON.stringify({
-        model: agent.model,
-        messages: formattedMessages,
-        max_tokens: 2048,
-        temperature: 0.7,
-      }),
-    },
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      `OpenRouter API error: ${response.status} - ${errorData.error?.message || response.statusText}`,
-    );
-  }
-
-  const data = await response.json();
-  const textContent = data.choices?.[0]?.message?.content || "";
-
-  return {
-    response: textContent,
-    tokensUsed: data.usage?.total_tokens || 0,
-  };
-}
-
-export async function handleOpenAIProvider(
-  agent: AIAgent,
-  messages: AIMessage[],
-  systemPrompt: string,
-) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not defined");
-
-  const openai = new OpenAI({ apiKey });
-
-  const response = await openai.chat.completions.create({
-    model: agent.model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      ...messages
-        .filter((msg) => msg.role !== "system")
-        .map((msg) => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        })),
-    ],
-    max_tokens: 2048,
-  });
-
-  const textContent = response.choices[0]?.message?.content || "";
-
-  return {
-    response: textContent,
-    tokensUsed: response.usage?.total_tokens || 0,
-  };
-}
-
 async function executeWithFallback(
   agent: AIAgent,
   message: string,
@@ -357,13 +237,7 @@ async function executeWithFallback(
       let result;
       const systemPrompt = agent.systemPrompt;
 
-      if (provider === "anthropic") {
-        result = await handleAnthropicProvider(
-          { ...agent, model },
-          messages,
-          systemPrompt,
-        );
-      } else if (provider === "google") {
+      if (provider === "google") {
         result = await handleGoogleProvider(
           { ...agent, model },
           message,
@@ -372,18 +246,6 @@ async function executeWithFallback(
         );
       } else if (provider === "ollama") {
         result = await handleOllamaProvider({ ...agent, model }, messages);
-      } else if (provider === "openrouter") {
-        result = await handleOpenRouterProvider(
-          { ...agent, model },
-          messages,
-          systemPrompt,
-        );
-      } else if (provider === "openai") {
-        result = await handleOpenAIProvider(
-          { ...agent, model },
-          messages,
-          systemPrompt,
-        );
       } else {
         continue; // Skip unsupported providers
       }
@@ -466,7 +328,7 @@ function generateFallbackResponse(agentId: string, message: string): string {
       ) {
         return `# Web Development Insight (Standard Mode)
 
-The AI providers (Google, OpenAI, Anthropic, Ollama) are currently unavailable or hit their rate limits.
+The AI providers (Google, Ollama) are currently unavailable or hit their rate limits.
 
 **Quick Component Blueprint:**
 \`\`\`tsx
@@ -479,7 +341,7 @@ export function Component() {
       }
       return `I'm currently in **Limited Resource Mode**. 
 
-The connection to our AI providers (Anthropic, Google, and OpenAI) or your local Ollama instance is not responding. 
+The connection to Google's Gemini or your local Ollama instance is not responding. 
 
 **What you can do:**
 1. Check your \`.env\` file for valid API keys.
@@ -501,7 +363,7 @@ Our advanced analytical models are currently unreachable.
     default:
       return `# AI Capability Note
 
-I'm currently running in a limited offline mode because I cannot reach the AI providers (OpenAI, Anthropic, Google, or Ollama).
+I'm currently running in a limited offline mode because I cannot reach the AI providers (Google or Ollama).
 
 **Troubleshooting:**
 - **External APIs**: Verify your API keys in the environment settings.
