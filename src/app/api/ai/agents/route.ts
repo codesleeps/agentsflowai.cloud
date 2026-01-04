@@ -148,7 +148,25 @@ export async function handleGoogleProvider(
 
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: agent.model });
+
+  // Try different model names if the specified one fails
+  const modelNames = [agent.model, "gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"];
+  let model;
+  let lastError;
+
+  for (const modelName of modelNames) {
+    try {
+      model = genAI.getGenerativeModel({ model: modelName });
+      break; // Use this model, we'll catch errors during actual usage
+    } catch (error) {
+      lastError = error;
+      continue;
+    }
+  }
+
+  if (!model) {
+    throw new Error(`No Google model could be initialized. Last error: ${lastError?.message}`);
+  }
 
   const history = (conversationHistory || []).map((msg: any) => ({
     role: msg.role === "assistant" ? "model" : "user",
@@ -160,13 +178,15 @@ export async function handleGoogleProvider(
     history.shift();
   }
 
+  // Prepend system prompt to the message
+  const fullMessage = `${systemPrompt}\n\n${message}`;
+
   const chat = model.startChat({
     history,
     generationConfig: { maxOutputTokens: 2048 },
-    systemInstruction: { role: "system", parts: [{ text: systemPrompt }] },
   });
 
-  const result = await chat.sendMessage(message);
+  const result = await chat.sendMessage(fullMessage);
   const responseText = result.response.text();
 
   return {
