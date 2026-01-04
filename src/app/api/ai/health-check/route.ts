@@ -17,9 +17,6 @@ const TEST_AGENT: AIAgent = {
   supportedProviders: [
     { provider: "ollama", model: "mistral:latest", priority: 1 },
     { provider: "google", model: "gemini-2.0-flash", priority: 2 },
-    { provider: "anthropic", model: "claude-3-5-sonnet-20241022", priority: 3 },
-    { provider: "openai", model: "gpt-4o", priority: 4 },
-    { provider: "openrouter", model: "anthropic/claude-3.5-sonnet", priority: 5 },
   ],
   defaultProvider: "ollama",
   costTier: "free",
