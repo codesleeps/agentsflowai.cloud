@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 
 import { config } from "dotenv";
-import { handleAnthropicProvider, handleGoogleProvider, handleOllamaProvider, handleOpenRouterProvider, handleOpenAIProvider } from "../src/app/api/ai/agents/route";
+import { handleGoogleProvider as agentRouteHandleGoogle, handleOpenRouter as agentRouteHandleOpenRouter, handleOpenAI as agentRouteHandleOpenAI, handleOllamaProvider as agentRouteHandleOllama } from "../src/app/api/ai/agents/route";
+import { handleAnthropicProvider, handleGoogleProvider, handleOllamaProvider } from "../src/server-lib/ai-fallback-handler";
 import { logDiagnosticTest } from "../src/server-lib/ai-usage-tracker";
 import { AIAgent } from "../src/shared/models/ai-agents";
 
@@ -77,10 +78,22 @@ async function testProvider(providerName: string, model: string, retries: number
 
       switch (providerName) {
         case "ollama":
-          result = await handleOllamaProvider({ ...TEST_AGENT, model }, testMessages);
+          result = await handleOllamaProvider(
+            testMessage,
+            false, // enableWebSearch
+            false, // enableDeepResearch
+            "low", // reasoningEffort
+            { 
+              agentId: TEST_AGENT.id,
+              primaryProvider: "ollama",
+              primaryModel: model,
+              fallbackChain: []
+            },
+            "test-user"
+          );
           break;
         case "google":
-          result = await handleGoogleProvider(
+          result = await agentRouteHandleGoogle(
             { ...TEST_AGENT, model },
             testMessage,
             [],
@@ -89,22 +102,32 @@ async function testProvider(providerName: string, model: string, retries: number
           break;
         case "anthropic":
           result = await handleAnthropicProvider(
-            { ...TEST_AGENT, model },
-            testMessages,
-            TEST_AGENT.systemPrompt
+            testMessage,
+            false, // enableWebSearch
+            false, // enableDeepResearch
+            "low", // reasoningEffort
+            { 
+              agentId: TEST_AGENT.id,
+              primaryProvider: "anthropic",
+              primaryModel: model,
+              fallbackChain: []
+            },
+            "test-user"
           );
           break;
         case "openai":
-          result = await handleOpenAIProvider(
+          result = await agentRouteHandleOpenAI(
             { ...TEST_AGENT, model },
-            testMessages,
+            testMessage,
+            [],
             TEST_AGENT.systemPrompt
           );
           break;
         case "openrouter":
-          result = await handleOpenRouterProvider(
+          result = await agentRouteHandleOpenRouter(
             { ...TEST_AGENT, model },
-            testMessages,
+            testMessage,
+            [],
             TEST_AGENT.systemPrompt
           );
           break;
@@ -189,7 +212,7 @@ async function getOllamaModels(): Promise<string[]> {
 async function testAllProviders(specificProvider?: string): Promise<TestResult[]> {
   const providers = [
     { name: "ollama", model: "mistral:latest", envCheck: () => true },
-    { name: "google", model: "gemini-1.5-flash", envCheck: () => !!process.env.GOOGLE_API_KEY },
+    { name: "google", model: "gemini-2.0-flash", envCheck: () => !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY) },
     { name: "anthropic", model: "claude-3-5-sonnet-20241022", envCheck: () => !!process.env.ANTHROPIC_API_KEY },
     { name: "openai", model: "gpt-4-turbo", envCheck: () => !!process.env.OPENAI_API_KEY },
     { name: "openrouter", model: "anthropic/claude-3.5-sonnet", envCheck: () => !!process.env.OPENROUTER_API_KEY },

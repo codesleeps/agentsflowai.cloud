@@ -180,7 +180,7 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -197,7 +197,7 @@ export const AI_AGENTS: AIAgent[] = [
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
         priority: 1,
       },
       {
@@ -232,7 +232,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -248,7 +248,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
         priority: 1,
       },
       {
@@ -278,7 +278,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -294,7 +294,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
         priority: 1,
       },
       {
@@ -325,7 +325,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -341,7 +341,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
         priority: 1,
       },
       {
@@ -371,7 +371,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -387,7 +387,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
         priority: 1,
       },
       {
@@ -418,7 +418,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       "Search engine optimization, keywords, meta tags, and rankings",
     icon: "🔍",
     category: "seo",
-    model: "gemini-2.5-flash",
+    model: "gemini-2.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -434,7 +434,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-pro",
         priority: 1,
       },
       {

@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-const MODEL = 'gemini-1.5-flash';
+const MODEL = 'gemini-2.5-flash';
 
 async function testV1() {
     console.log(`--- Testing Google Gemini (v1) ---`);

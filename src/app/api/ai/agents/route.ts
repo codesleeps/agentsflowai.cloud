@@ -156,6 +156,7 @@ export async function handleGoogleProvider(
   const modelNames = [
     agent.model,
     "gemini-2.5-flash",
+    "gemini-2.0-flash",
     "gemini-2.5-pro"
   ];
 

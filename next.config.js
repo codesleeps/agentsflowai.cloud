@@ -9,6 +9,7 @@ const config = {
     ignoreDuringBuilds: true,
   },
   devIndicators: false,
+  outputFileTracingRoot: process.cwd(),
   webpack: (webpackConfig, { dev }) => {
     if (!dev) {
       webpackConfig.cache = Object.freeze({

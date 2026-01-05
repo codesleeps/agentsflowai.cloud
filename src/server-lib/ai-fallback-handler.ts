@@ -29,7 +29,7 @@ interface AgentConfig {
 }
 
 // Extracted from agents route - handle Anthropic provider
-async function handleAnthropicProvider(
+export async function handleAnthropicProvider(
   prompt: string,
   enableWebSearch: boolean,
   enableDeepResearch: boolean,
@@ -95,7 +95,7 @@ async function handleAnthropicProvider(
 }
 
 // Extracted from agents route - handle Google provider
-async function handleGoogleProvider(
+export async function handleGoogleProvider(
   prompt: string,
   enableWebSearch: boolean,
   enableDeepResearch: boolean,
@@ -178,7 +178,7 @@ async function handleGoogleProvider(
 }
 
 // Extracted from agents route - handle Ollama provider
-async function handleOllamaProvider(
+export async function handleOllamaProvider(
   prompt: string,
   enableWebSearch: boolean,
   enableDeepResearch: boolean,

@@ -56,8 +56,10 @@ const modelOptions = {
     { value: "codellama:7b", label: "CodeLlama 7B" },
   ],
   google: [
-    { value: "gemini-pro", label: "Gemini Pro" },
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
     { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+    { value: "gemini-pro", label: "Gemini Pro" },
   ],
   anthropic: [
     { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet" },
