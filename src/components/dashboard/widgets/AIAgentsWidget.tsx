@@ -35,7 +35,7 @@ export function AIAgentsWidget({ stats }: AIAgentsWidgetProps) {
             </div>
             <div>
               <h3 className="text-sm font-black uppercase italic tracking-tighter">{agent.name}</h3>
-              <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest">{agent.provider}</p>
+              <p className="text-[9px] font-mono text-muted-foreground/70 uppercase tracking-widest">{agent.provider}</p>
             </div>
           </div>
 
@@ -49,7 +49,7 @@ export function AIAgentsWidget({ stats }: AIAgentsWidgetProps) {
             </div>
 
             <div className="flex justify-between items-center text-[9px] font-mono">
-              <div className="flex items-center gap-1 text-white/40">
+              <div className="flex items-center gap-1 text-muted-foreground/70">
                 <Cpu className="h-3 w-3" />
                 <span>UPTIME: {agent.uptime}</span>
               </div>

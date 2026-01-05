@@ -75,7 +75,7 @@ export function WidgetContainer({
               </CardTitle>
             </div>
             {widget.description && (
-              <CardDescription className="text-[8px] font-mono mt-0.5 text-white/40 uppercase tracking-[0.2em]">
+              <CardDescription className="text-[8px] font-mono mt-0.5 text-muted-foreground/70 uppercase tracking-[0.2em]">
                 {widget.description}
               </CardDescription>
             )}

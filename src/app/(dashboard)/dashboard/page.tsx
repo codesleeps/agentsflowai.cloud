@@ -165,7 +165,7 @@ export default function DashboardPage() {
               onChange={(e) => handleCustomDateChange("start", e.target.value)}
               className="bg-transparent border-none text-[10px] font-mono text-white/80 p-0 focus:ring-0 w-24 hover:text-primary transition-colors"
             />
-            <span className="text-[10px] text-white/40 font-mono">{" > "}</span>
+            <span className="text-[10px] text-muted-foreground/70 font-mono">{" > "}</span>
             <input
               type="date"
               value={dateRange.end}
@@ -193,19 +193,19 @@ export default function DashboardPage() {
       <Tabs defaultValue="overview" className="flex-1 space-y-10">
         <TabsList className="bg-transparent border-b border-white/5 w-full justify-start rounded-none h-12 p-0 gap-10 overflow-x-auto scrollbar-hide">
           <TabsTrigger value="overview" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-primary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/40">01</span> COMMAND
+            <span className="text-muted-foreground/80">01</span> COMMAND
           </TabsTrigger>
           <TabsTrigger value="growth" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-secondary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/40">02</span> GROWTH
+            <span className="text-muted-foreground/80">02</span> GROWTH
           </TabsTrigger>
           <TabsTrigger value="ops" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-primary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/40">03</span> OPS
+            <span className="text-muted-foreground/80">03</span> OPS
           </TabsTrigger>
           <TabsTrigger value="ai" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-secondary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/40">04</span> NEURA
+            <span className="text-muted-foreground/80">04</span> NEURA
           </TabsTrigger>
           <TabsTrigger value="security" className="tabs-trigger-hud rounded-none border-b-2 border-transparent data-[state=active]:border-primary text-[10px] uppercase font-mono tracking-[0.4em] px-0 h-full flex gap-3 items-center">
-            <span className="text-white/40">05</span> SECURITY
+            <span className="text-muted-foreground/80">05</span> SECURITY
           </TabsTrigger>
         </TabsList>
 

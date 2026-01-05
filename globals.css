@@ -172,7 +172,7 @@
 
 /* Glass Tabs */
 .tabs-trigger-hud {
-  @apply opacity-40 transition-all duration-300 hover:opacity-100 data-[state=active]:opacity-100 data-[state=active]:text-primary;
+  @apply opacity-60 transition-all duration-300 hover:opacity-100 data-[state=active]:opacity-100 data-[state=active]:text-primary;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
