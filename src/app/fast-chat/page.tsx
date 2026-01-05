@@ -223,7 +223,7 @@ export default function FastChatPage() {
             onSend={(val) => handleSend(val)}
             isLoading={isTyping}
             models={[
-              { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true, priority: 1 },
+              { id: "gemini-1.5-flash", name: "Gemini Flash", provider: "Google", isNew: true, priority: 1 },
               { id: "gemini-2.5-flash-image", name: "Nano Banana", provider: "Google", isNew: true },
               { id: "llama-3.1-405b", name: "Llama 3.1 405B", provider: "OpenRouter" },
               { id: "mistral:7b", name: "Mistral 7B (Local)", provider: "Ollama" },

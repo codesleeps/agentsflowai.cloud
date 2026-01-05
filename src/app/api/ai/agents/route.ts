@@ -155,10 +155,10 @@ export async function handleGoogleProvider(
 
   const modelNames = [
     agent.model,
-    "gemini-3-flash",
-    "gemini-3-pro",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash-exp",
+    "gemini-1.0-pro",
   ];
 
   let lastError;

@@ -203,11 +203,11 @@ export default function ChatPage() {
               onSend={(val) => handleSend(val)}
               isLoading={isLoading}
               models={[
-                { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true },
+                { id: "gemini-1.5-flash", name: "Gemini Flash", provider: "Google", isNew: true },
                 { id: "gemini-2.5-flash-image", name: "Nano Banana", provider: "Google", isNew: true },
                 { id: "claude-sonnet", name: "Claude Sonnet", provider: "Anthropic" }
               ]}
-              selectedModelId="gemini-3-flash"
+              selectedModelId="gemini-1.5-flash"
             />
           </div>
         </div>
