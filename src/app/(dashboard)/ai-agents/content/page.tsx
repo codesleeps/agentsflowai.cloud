@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getAgentResponseWithFallback } from "@/server-lib/agent-response-handler";
+import { getAgentResponseWithFallback } from "@/client-lib/ai-agents-client";
 import { toast } from "sonner";
 
 const contentTypes = [

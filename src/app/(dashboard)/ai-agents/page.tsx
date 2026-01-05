@@ -153,15 +153,16 @@ export default function AIAgentsPage() {
         content: agentResp.content,
         timestamp: new Date(),
         agentId: selectedAgent.id,
-        model: response.model,
+        model: agentResp.metadata?.model as string,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      if (response.note) {
+      const note = agentResp.metadata?.note;
+      if (typeof note === "string") {
         // Only show if it's not the generic fallback note we already handled in the UI
-        if (!response.note.includes("offline fallback mode")) {
-          toast.info(response.note);
+        if (!note.includes("offline fallback mode")) {
+          toast.info(note);
         }
       }
     } catch (error) {

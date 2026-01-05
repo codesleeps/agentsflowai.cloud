@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { getAgentResponseWithFallback } from "@/server-lib/agent-response-handler";
+import { getAgentResponseWithFallback } from "@/client-lib/ai-agents-client";
 import { toast } from "sonner";
 
 export default function SEOAgentPage() {

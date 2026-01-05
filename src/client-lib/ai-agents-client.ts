@@ -1,6 +1,7 @@
 import { apiClient } from './api-client';
 import useSWR from 'swr';
 import type { AIAgent, OllamaModel } from '@/shared/models/ai-agents';
+import { AgentResponseSchema, type AgentResponse } from '@/shared/models/types';
 
 const fetcher = <T>(url: string) => apiClient.get<T>(url).then((res) => res.data);
 
@@ -35,13 +36,15 @@ export async function generateAgentResponse(
     agentName: string;
     tokensUsed?: number;
     generationTime?: number;
+    usedProvider?: string;
+    fallbackUsed?: boolean;
     note?: string;
   }>('/ai/agents', {
     agentId,
     message,
     conversationHistory,
   });
-  
+
   return response.data;
 }
 
@@ -63,7 +66,7 @@ export async function generateWithOllama(
       temperature: options?.temperature || 0.7,
     },
   });
-  
+
   return response.data;
 }
 
@@ -83,7 +86,7 @@ export async function chatWithOllama(
       temperature: options?.temperature || 0.7,
     },
   });
-  
+
   return response.data;
 }
 
@@ -92,7 +95,7 @@ export async function listOllamaModels() {
   const response = await apiClient.post('/ai/ollama', {
     action: 'models',
   });
-  
+
   return response.data;
 }
 
@@ -102,7 +105,7 @@ export async function pullOllamaModel(modelName: string) {
     action: 'pull',
     name: modelName,
   });
-  
+
   return response.data;
 }
 
@@ -224,4 +227,38 @@ Provide:
 5. Visualization suggestions`;
 
   return generateAgentResponse('analytics-agent', prompt);
+}
+
+/**
+ * Calls the agent API, validates the response against the schema, and provides a safe fallback.
+ */
+export async function getAgentResponseWithFallback(
+  agentId: string,
+  message: string,
+  conversationHistory: { role: string; content: string }[] = []
+): Promise<AgentResponse> {
+  try {
+    const raw = await generateAgentResponse(agentId, message, conversationHistory);
+    // raw is expected to contain a `response` field with the assistant's reply
+    const candidate: AgentResponse = {
+      content: raw.response,
+      role: "assistant",
+      metadata: {
+        model: raw.model,
+        usedProvider: raw.usedProvider,
+        fallbackUsed: raw.fallbackUsed,
+        note: raw.note,
+      }
+    };
+    // Validate using Zod schema; will throw if invalid
+    AgentResponseSchema.parse(candidate);
+    return candidate;
+  } catch (e) {
+    console.error("Agent response validation failed or API error:", e);
+    // Return a generic fallback message
+    return {
+      content: "I’m having trouble generating a response right now. Please try again later.",
+      role: "assistant",
+    };
+  }
 }
