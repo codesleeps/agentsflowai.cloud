@@ -19,11 +19,12 @@ async function listModels() {
 
     try {
         const response = await fetch(url);
+        /** @type {any} */
         const data = await response.json();
 
-        if (data && typeof data === 'object' && 'models' in data) {
+        if (data && data.models && Array.isArray(data.models)) {
             console.log('Available Models:');
-            (data.models).forEach(m => console.log(` - ${m.name} (${m.displayName})`));
+            data.models.forEach(m => console.log(` - ${m.name} (${m.displayName})`));
         } else {
             console.log('Error or No Models:', JSON.stringify(data, null, 2));
         }
