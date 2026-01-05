@@ -98,7 +98,11 @@ export async function POST(request: NextRequest) {
 
       if (scrapedContent) {
         console.log(`Successfully scraped ${scrapedContent.length} chars.`);
-        enrichedMessage = `${message}\n\n[System Context: The user provided a URL. Here is the scraped content of ${urlToScrape} for your analysis:]\n\n${scrapedContent}`;
+        enrichedMessage = `${message}
+
+[System Context: The user provided a URL. Here is the scraped content of ${urlToScrape} for your analysis:]
+
+${scrapedContent}`;
       } else {
         enrichedMessage = `${message}\n\n[System Context: The user provided a URL (${urlToScrape}), but the system failed to scrape its content. Please ask the user to provide text directly or check the URL.]`;
       }
@@ -152,10 +156,7 @@ export async function handleGoogleProvider(
   const modelNames = [
     agent.model,
     "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-pro"
+    "gemini-2.5-pro"
   ];
 
   let lastError;
