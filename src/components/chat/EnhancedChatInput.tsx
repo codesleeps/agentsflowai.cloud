@@ -105,13 +105,13 @@ export function EnhancedChatInput({
         <div className="relative mx-auto w-full max-w-4xl px-4 py-4">
             <div
                 className={cn(
-                    "relative flex flex-col rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-3xl transition-all duration-300",
-                    "focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/10",
-                    isLoading && "opacity-80 shadow-none border-white/5"
+                    "relative flex flex-col rounded-3xl bg-white/5 shadow-lg backdrop-blur-3xl transition-all duration-300",
+                    "focus-within:ring-2 focus-within:ring-primary/20",
+                    isLoading && "opacity-80 shadow-none"
                 )}
             >
                 {/* Input Area */}
-                <div className="flex px-4 pt-4">
+                <div className="flex px-6 pt-5">
                     <Textarea
                         ref={textareaRef}
                         rows={1}
@@ -119,25 +119,25 @@ export function EnhancedChatInput({
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={placeholder}
-                        className="min-h-[44px] w-full resize-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40 leading-relaxed"
+                        className="min-h-[48px] w-full resize-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40 leading-relaxed"
                         disabled={isLoading}
                     />
                 </div>
 
                 {/* Toolbar */}
-                <div className="flex items-center justify-between p-2 pb-3">
-                    <div className="flex items-center gap-1.5 ml-1">
+                <div className="flex items-center justify-between px-4 py-3 pb-4">
+                    <div className="flex items-center gap-2 ml-1">
                         {/* Plus Button */}
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-all active:scale-90"
+                            className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-all active:scale-90"
                             disabled={isLoading}
                         >
                             <Plus className="h-5 w-5" />
                         </Button>
 
-                        <div className="h-4 w-[1px] bg-muted-foreground/10 mx-1" />
+                        <div className="h-4 w-[1px] bg-muted-foreground/5 mx-2" />
 
                         {/* Mode Selector */}
                         <DropdownMenu>
@@ -145,7 +145,7 @@ export function EnhancedChatInput({
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-9 gap-1.5 rounded-xl px-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/40 hover:text-foreground data-[state=open]:bg-accent/40 transition-all active:scale-95"
+                                    className="h-10 gap-2 rounded-xl px-3 text-sm font-medium text-muted-foreground hover:bg-accent/40 hover:text-foreground data-[state=open]:bg-accent/40 transition-all active:scale-95"
                                     disabled={isLoading}
                                 >
                                     {selectedMode?.icon}
@@ -178,7 +178,7 @@ export function EnhancedChatInput({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-9 gap-1.5 rounded-xl bg-accent/30 px-3 text-sm font-semibold hover:bg-accent/50 hover:text-foreground data-[state=open]:bg-accent/50 transition-all active:scale-95"
+                                        className="h-10 gap-2 rounded-xl bg-accent/30 px-4 text-sm font-semibold hover:bg-accent/50 hover:text-foreground data-[state=open]:bg-accent/50 transition-all active:scale-95"
                                         disabled={isLoading}
                                     >
                                         <span className="text-muted-foreground/60 font-normal hidden xs:inline">Model</span>
@@ -229,7 +229,7 @@ export function EnhancedChatInput({
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 rounded-xl text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-all active:scale-90"
+                            className="h-10 w-10 rounded-xl text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-all active:scale-90"
                             disabled={isLoading}
                         >
                             <Mic className="h-5 w-5" />
@@ -239,7 +239,7 @@ export function EnhancedChatInput({
                         <Button
                             size="icon"
                             className={cn(
-                                "h-9 w-9 rounded-full transition-all duration-300",
+                                "h-10 w-10 rounded-full transition-all duration-300",
                                 !input.trim() || isLoading
                                     ? "bg-white/5 text-muted-foreground/30 cursor-not-allowed"
                                     : "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-105 active:scale-90"
