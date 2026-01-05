@@ -119,7 +119,7 @@ export function EnhancedChatInput({
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={placeholder}
-                        className="min-h-[48px] w-full resize-none border-0 bg-transparent p-0 text-base shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40 leading-relaxed"
+                        className="min-h-[48px] w-full resize-none rounded-2xl border border-white/10 bg-white/5 p-4 text-base shadow-none focus-visible:ring-1 focus-visible:ring-primary/30 placeholder:text-muted-foreground/40 leading-relaxed transition-all"
                         disabled={isLoading}
                     />
                 </div>
