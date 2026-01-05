@@ -151,14 +151,11 @@ export async function handleGoogleProvider(
 
   const modelNames = [
     agent.model,
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+    "gemini-2.0-flash",
     "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-2.0-flash-exp",
-    "gemini-1.5-pro",
-    "gemini-1.5-pro-latest",
-    "gemini-pro",
-    "models/gemini-1.5-flash",
-    "models/gemini-pro"
+    "gemini-pro"
   ];
 
   let lastError;
@@ -211,6 +208,82 @@ export async function handleGoogleProvider(
   throw new Error(`Google AI failed after trying all models. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
 }
 
+export async function handleOpenRouter(
+  agent: AIAgent,
+  message: string,
+  conversationHistory: AIMessage[],
+  systemPrompt: string
+) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY is not defined");
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://agentsflowai.cloud",
+      "X-Title": "AgentsFlowAI",
+    },
+    body: JSON.stringify({
+      model: agent.model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...conversationHistory.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user", content: message },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`OpenRouter API error: ${errorData.error?.message || response.statusText}`);
+  }
+
+  const data = await response.json();
+  return {
+    response: data.choices[0]?.message?.content || "",
+    tokensUsed: data.usage?.total_tokens || 0,
+  };
+}
+
+export async function handleOpenAI(
+  agent: AIAgent,
+  message: string,
+  conversationHistory: AIMessage[],
+  systemPrompt: string
+) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not defined");
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: agent.model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...conversationHistory.map((m) => ({ role: m.role, content: m.content })),
+        { role: "user", content: message },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+  }
+
+  const data = await response.json();
+  return {
+    response: data.choices[0]?.message?.content || "",
+    tokensUsed: data.usage?.total_tokens || 0,
+  };
+}
+
 export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
   const OLLAMA_BASE_URL =
     process.env.OLLAMA_BASE_URL || "http://localhost:11434";
@@ -225,7 +298,7 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
         stream: false,
         options: { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
       }),
-      signal: AbortSignal.timeout(30000), // 30 second timeout for local Ollama
+      signal: AbortSignal.timeout(5000), // 5 second timeout for local Ollama - fail fast to cloud
     });
 
     if (!ollamaResponse.ok) {
@@ -286,8 +359,22 @@ async function executeWithFallback(
         );
       } else if (provider === "ollama") {
         result = await handleOllamaProvider({ ...agent, model }, messages);
+      } else if (provider === "openrouter") {
+        result = await handleOpenRouter(
+          { ...agent, model },
+          message,
+          conversationHistory,
+          systemPrompt,
+        );
+      } else if (provider === "openai") {
+        result = await handleOpenAI(
+          { ...agent, model },
+          message,
+          conversationHistory,
+          systemPrompt,
+        );
       } else {
-        continue; // Skip unsupported providers
+        continue;
       }
 
       const latency = Date.now() - startTime;

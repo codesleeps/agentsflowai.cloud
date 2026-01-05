@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
+
 import {
   ExternalLink,
   Home,
@@ -70,6 +72,11 @@ export function Sidebar() {
   const { data: activeOrganization } = getAuthActiveOrganization();
   const { state, isMobile } = useSidebar();
   const pathname = usePathname();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -85,14 +92,14 @@ export function Sidebar() {
         <div className="flex items-center justify-between gap-2 px-[2px] py-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <SidebarTrigger className="shrink-0" />
-            {(state === "expanded" || isMobile) && (
+            {hasMounted && (state === "expanded" || isMobile) && (
               <span className="flex items-center gap-2 truncate font-semibold text-sidebar-foreground">
                 <Bot className="h-5 w-5 text-primary" />
                 AgentsFlowAI
               </span>
             )}
           </div>
-          {(state === "expanded" || isMobile) && <ThemeToggle />}
+          {hasMounted && (state === "expanded" || isMobile) && <ThemeToggle />}
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -131,7 +138,7 @@ export function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      {session && (
+      {hasMounted && session && (
         <SidebarFooter className="border-t border-sidebar-border">
           <SidebarMenu>
             <SidebarMenuItem>

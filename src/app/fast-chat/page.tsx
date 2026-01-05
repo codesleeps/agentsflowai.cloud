@@ -21,12 +21,13 @@ interface Message {
 }
 
 export default function FastChatPage() {
+  const [selectedModelId, setSelectedModelId] = useState("gemini-2.5-flash");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
       content:
-        "Hello! I'm your Fast Chat assistant powered by local Ollama. I can help you with general questions, brainstorming, and quick tasks. How can I assist you today?",
+        "Hello! I'm your Fast Chat assistant. I can help you with general questions, brainstorming, and quick tasks. How can I assist you today?",
       timestamp: new Date(),
     },
   ]);
@@ -66,7 +67,7 @@ export default function FastChatPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          agentId: "fast-chat-agent",
+          agentId: selectedModelId === "mistral:7b" ? "fast-chat-agent" : "gemini-agent",
           message: messageContent.trim(),
           conversationHistory: messages.map((m) => ({
             role: m.role,
@@ -133,10 +134,16 @@ export default function FastChatPage() {
             </div>
             <div>
               <h1 className="text-xl font-semibold">Fast Chat</h1>
-              <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-400 mt-0.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1 animate-pulse" />
-                Online
-              </Badge>
+              <div className="flex items-center gap-2 mt-0.5">
+                <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1 animate-pulse" />
+                  Online
+                </Badge>
+                <Link href="/ai-agents/diagnostics" className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                  <Activity className="h-3 w-3" />
+                  System Status
+                </Link>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -208,16 +215,17 @@ export default function FastChatPage() {
           </div>
         )}
 
-        {/* Input Area */}
         <div className="border-t bg-background/50 backdrop-blur-xl">
           <EnhancedChatInput
             onSend={(val) => handleSend(val)}
             isLoading={isTyping}
             models={[
-              { id: "ollama", name: "Ollama (Local)", provider: "Local", priority: 1 },
-              { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true },
+              { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", isNew: true, priority: 1 },
+              { id: "llama-3.1-405b", name: "Llama 3.1 405B", provider: "OpenRouter" },
+              { id: "mistral:7b", name: "Mistral 7B (Local)", provider: "Ollama" },
             ]}
-            selectedModelId="ollama"
+            selectedModelId={selectedModelId}
+            onModelChange={(id) => setSelectedModelId(id)}
           />
         </div>
       </main>

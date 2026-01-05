@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleGoogleProvider, handleOllamaProvider } from "../agents/route";
+import { handleGoogleProvider, handleOllamaProvider, handleOpenRouter, handleOpenAI } from "../agents/route";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIAgent } from "@/shared/models/ai-agents";
 
@@ -16,7 +16,8 @@ const TEST_AGENT: AIAgent = {
   provider: "ollama",
   supportedProviders: [
     { provider: "ollama", model: "mistral:7b", priority: 1 },
-    { provider: "google", model: "gemini-1.5-flash", priority: 2 },
+    { provider: "google", model: "gemini-2.5-flash", priority: 2 },
+    { provider: "openrouter", model: "meta-llama/llama-3.1-405b-instruct:free", priority: 3 },
   ],
   defaultProvider: "ollama",
   costTier: "free",
@@ -37,6 +38,8 @@ interface HealthCheckResponse {
   providers: {
     ollama: ProviderStatus;
     google: ProviderStatus;
+    openrouter: ProviderStatus;
+    openai: ProviderStatus;
   };
   environment: {
     ollama_configured: boolean;
@@ -70,6 +73,22 @@ async function testProvider(providerName: string, model: string): Promise<Provid
         break;
       case "google":
         result = await handleGoogleProvider(
+          { ...TEST_AGENT, model },
+          testMessage,
+          [],
+          TEST_AGENT.systemPrompt
+        );
+        break;
+      case "openrouter":
+        result = await handleOpenRouter(
+          { ...TEST_AGENT, model },
+          testMessage,
+          [],
+          TEST_AGENT.systemPrompt
+        );
+        break;
+      case "openai":
+        result = await handleOpenAI(
           { ...TEST_AGENT, model },
           testMessage,
           [],
@@ -171,9 +190,17 @@ export async function GET() {
   };
 
   // Test all providers concurrently
-  const [ollamaResult, googleResult] = await Promise.all([
+  const [ollamaResult, googleResult, openrouterResult, openaiResult] = await Promise.all([
     testProviderWithTimeout("ollama", "mistral:7b"),
-    environment.google_key_configured ? testProviderWithTimeout("google", "gemini-1.5-flash") : Promise.resolve({ status: "unhealthy" as const, model: "gemini-1.5-flash", error: "GOOGLE_API_KEY not configured" }),
+    environment.google_key_configured
+      ? testProviderWithTimeout("google", "gemini-2.5-flash")
+      : Promise.resolve({ status: "unhealthy" as const, model: "gemini-2.5-flash", error: "GOOGLE_API_KEY not configured" }),
+    environment.openrouter_key_configured
+      ? testProviderWithTimeout("openrouter", "meta-llama/llama-3.1-405b-instruct:free")
+      : Promise.resolve({ status: "unhealthy" as const, model: "meta-llama/llama-3.1-405b-instruct:free", error: "OPENROUTER_API_KEY not configured" }),
+    environment.openai_key_configured
+      ? testProviderWithTimeout("openai", "gpt-4o-mini")
+      : Promise.resolve({ status: "unhealthy" as const, model: "gpt-4o-mini", error: "OPENAI_API_KEY not configured" }),
   ]);
 
   // Get Ollama models
@@ -185,6 +212,8 @@ export async function GET() {
   const providers = {
     ollama: ollamaResult,
     google: googleResult,
+    openrouter: openrouterResult,
+    openai: openaiResult,
   };
 
   // Determine overall status

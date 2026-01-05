@@ -3,6 +3,9 @@
 export type AIProvider =
   | "ollama"
   | "google"
+  | "openai"
+  | "anthropic"
+  | "openrouter";
 
 export interface ModelFallbackConfig {
   provider: AIProvider;
@@ -177,7 +180,7 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -194,18 +197,23 @@ export const AI_AGENTS: AIAgent[] = [
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "codellama:7b",
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
         priority: 2,
       },
       {
         provider: "ollama",
-        model: "mistral:7b",
+        model: "codellama:7b",
         priority: 3,
+      },
+      {
+        provider: "ollama",
+        model: "mistral:7b",
+        priority: 4,
       },
     ],
     systemPrompt: `You are an expert web developer specializing in modern technologies including React, Next.js, Python, TypeScript, Node.js, and Tailwind CSS. You help users:
@@ -224,7 +232,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -240,13 +248,18 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         priority: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
+        priority: 2,
       },
       {
         provider: "ollama",
         model: "llama3.1:8b",
-        priority: 2,
+        priority: 3,
       },
     ],
     systemPrompt: `You are a data analytics expert specializing in business intelligence and data-driven decision making. You help users:
@@ -265,7 +278,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -281,13 +294,18 @@ Always provide specific, actionable recommendations. Use data to support your in
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         priority: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
+        priority: 2,
       },
       {
         provider: "ollama",
         model: "gemma2:9b",
-        priority: 2,
+        priority: 3,
       },
     ],
     systemPrompt: `You are an expert content creator and copywriter with years of experience in digital marketing. You help users:
@@ -307,7 +325,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -323,13 +341,18 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         priority: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
+        priority: 2,
       },
       {
         provider: "ollama",
         model: "mistral:7b",
-        priority: 2,
+        priority: 3,
       },
     ],
     systemPrompt: `You are a marketing strategist with expertise in digital marketing, growth hacking, and conversion optimization. You help users:
@@ -348,7 +371,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "gemini-1.5-flash",
+    model: "gemini-2.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -364,13 +387,18 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         priority: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
+        priority: 2,
       },
       {
         provider: "ollama",
         model: "llama3.1:8b",
-        priority: 2,
+        priority: 3,
       },
     ],
     systemPrompt: `You are a social media expert with deep knowledge of all major platforms including Twitter/X, LinkedIn, Instagram, Facebook, and TikTok. You help users:
@@ -390,7 +418,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       "Search engine optimization, keywords, meta tags, and rankings",
     icon: "🔍",
     category: "seo",
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -406,13 +434,18 @@ Always consider platform-specific best practices. Focus on engagement and commun
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         priority: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
+        priority: 2,
       },
       {
         provider: "ollama",
         model: "mistral:7b",
-        priority: 2,
+        priority: 3,
       },
     ],
     systemPrompt: `You are an SEO expert with comprehensive knowledge of search engine algorithms, keyword research, and content optimization. You help users:
@@ -451,9 +484,14 @@ Always follow current SEO best practices. Focus on user intent and search qualit
         priority: 1
       },
       {
-        provider: "google",
-        model: "gemini-2.0-flash",
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
         priority: 2
+      },
+      {
+        provider: "google",
+        model: "gemini-2.5-flash",
+        priority: 3
       },
     ],
     systemPrompt: `You are a helpful, fast, and efficient AI assistant powered by Ollama's Mistral model.
@@ -469,7 +507,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Powered by Google Gemini Flash for advanced reasoning and speed",
     icon: "✨",
     category: "fast-chat",
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "low",
@@ -484,13 +522,18 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-flash",
         priority: 1
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.1-405b-instruct:free",
+        priority: 2
       },
       {
         provider: "ollama",
         model: "gemma2:9b",
-        priority: 2
+        priority: 3
       },
     ],
     systemPrompt: `You are an advanced AI assistant powered by Google's Gemini Flash model.
