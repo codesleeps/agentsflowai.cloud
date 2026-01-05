@@ -180,7 +180,7 @@ export default function ChatPage() {
           />
 
           {messages.length <= 2 && (
-            <div className="p-4 border-t bg-muted/30">
+            <div className="p-4 border-t bg-muted/30 pt-2">
               <p className="text-sm text-muted-foreground mb-3">Quick questions:</p>
               <div className="flex flex-wrap gap-2">
                 {quickQuestions.map((question) => (
@@ -198,7 +198,7 @@ export default function ChatPage() {
             </div>
           )}
 
-          <div className="border-t bg-background/50 backdrop-blur-sm">
+          <div className="border-t bg-background/50 backdrop-blur-sm pt-2">
             <EnhancedChatInput
               onSend={(val) => handleSend(val)}
               isLoading={isLoading}

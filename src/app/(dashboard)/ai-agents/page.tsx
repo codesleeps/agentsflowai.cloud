@@ -365,7 +365,7 @@ export default function AIAgentsPage() {
                 agentName={selectedAgent.name}
               />
 
-              <div className="border-t bg-background/50 backdrop-blur-sm">
+              <div className="border-t bg-background/50 backdrop-blur-sm pt-2">
                 <EnhancedChatInput
                   onSend={(val) => handleSend(val)}
                   isLoading={isLoading}

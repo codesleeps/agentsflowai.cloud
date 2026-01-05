@@ -215,7 +215,7 @@ export default function FastChatPage() {
           </div>
         )}
 
-        <div className="border-t bg-background/50 backdrop-blur-xl">
+        <div className="border-t bg-background/50 backdrop-blur-xl pt-2">
           <EnhancedChatInput
             onSend={(val) => handleSend(val)}
             isLoading={isTyping}
