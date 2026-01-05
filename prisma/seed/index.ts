@@ -9,7 +9,7 @@ async function main() {
       name: "AI Agent Basic",
       description: "Basic AI Chatbot for your website",
       tier: "basic",
-      price: 299,
+      price: 199,
       features: ["24/7 Availability", "Basic FAQs", "Lead Capture"],
       is_active: true,
     },
