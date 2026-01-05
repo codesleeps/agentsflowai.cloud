@@ -371,20 +371,19 @@ export default function AIAgentsPage() {
                   isLoading={isLoading}
                   placeholder={`Ask ${selectedAgent.name} anything...`}
                   models={selectedAgent.supportedProviders?.map((p: any) => ({
-                    id: p.provider,
+                    id: p.model,
                     name: `${p.provider} (${p.model})`,
                     provider: p.provider,
                     priority: p.priority,
                     model: p.model
                   })) || []}
-                  selectedModelId={currentModel?.provider}
-                  onModelChange={(provider, model) => {
-                    if (model) {
-                      handleModelChange(provider as AIProvider, model);
-                    } else {
-                      const m = selectedAgent.supportedProviders?.find((p: any) => p.provider === provider)?.model;
-                      handleModelChange(provider as AIProvider, m || selectedAgent.model);
-                    }
+                  selectedModelId={currentModel?.model}
+                  onModelChange={(model, provider) => {
+                    // Note: EnhancedChatInput onModelChange passes (modelId, provider)
+                    // but the usage here was swapped
+                    const actualModel = model;
+                    const actualProvider = provider || selectedAgent.supportedProviders?.find((p: any) => p.model === model)?.provider;
+                    handleModelChange(actualProvider as AIProvider, actualModel);
                   }}
                 />
               </div>

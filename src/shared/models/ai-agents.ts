@@ -180,7 +180,7 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "gemini-2.5-pro",
+    model: "gemini-3-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -197,7 +197,7 @@ export const AI_AGENTS: AIAgent[] = [
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-3-pro",
         priority: 1,
       },
       {
@@ -211,9 +211,9 @@ export const AI_AGENTS: AIAgent[] = [
         priority: 3,
       },
       {
-        provider: "ollama",
-        model: "mistral:7b",
-        priority: 4,
+        provider: "google",
+        model: "gemini-2.5-flash-image",
+        priority: 5,
       },
     ],
     systemPrompt: `You are an expert web developer specializing in modern technologies including React, Next.js, Python, TypeScript, Node.js, and Tailwind CSS. You help users:
@@ -232,7 +232,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "gemini-2.5-pro",
+    model: "gemini-3-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -248,7 +248,7 @@ Always provide code examples when relevant. Use TypeScript for type safety. Foll
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-3-pro",
         priority: 1,
       },
       {
@@ -278,7 +278,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "gemini-2.5-pro",
+    model: "gemini-3-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -294,7 +294,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-3-pro",
         priority: 1,
       },
       {
@@ -306,6 +306,11 @@ Always provide specific, actionable recommendations. Use data to support your in
         provider: "ollama",
         model: "gemma2:9b",
         priority: 3,
+      },
+      {
+        provider: "google",
+        model: "gemini-2.5-flash-image",
+        priority: 4,
       },
     ],
     systemPrompt: `You are an expert content creator and copywriter with years of experience in digital marketing. You help users:
@@ -325,7 +330,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "gemini-2.5-pro",
+    model: "gemini-3-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -341,7 +346,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-3-pro",
         priority: 1,
       },
       {
@@ -371,7 +376,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "gemini-2.5-pro",
+    model: "gemini-3-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -387,7 +392,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-3-pro",
         priority: 1,
       },
       {
@@ -418,7 +423,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       "Search engine optimization, keywords, meta tags, and rankings",
     icon: "🔍",
     category: "seo",
-    model: "gemini-2.5-pro",
+    model: "gemini-3-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -434,7 +439,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-3-pro",
         priority: 1,
       },
       {
@@ -490,7 +495,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       },
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash",
         priority: 3
       },
     ],
@@ -507,7 +512,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Powered by Google Gemini Flash for advanced reasoning and speed",
     icon: "✨",
     category: "fast-chat",
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "low",
@@ -522,7 +527,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash",
         priority: 1
       },
       {
@@ -541,6 +546,44 @@ Always follow current SEO best practices. Focus on user intent and search qualit
 - Provide detailed, high-quality responses.
 - You have a large context window, so feel free to reference previous parts of the conversation in detail.
 - Be helpful, harmless, and honest.`,
+  },
+  {
+    id: "nano-banana-agent",
+    name: "Nano Banana Agent",
+    description: "Creative image generation and editing powered by Gemini 2.5 Flash Image",
+    icon: "🍌",
+    category: "content-creation",
+    model: "gemini-2.5-flash-image",
+    provider: "google",
+    defaultProvider: "google",
+    costTier: "medium",
+    isActive: true,
+    capabilities: [
+      "Text-to-image generation",
+      "Consistent subject editing",
+      "Image merging and transformation",
+      "Context-aware image changes",
+      "Rapid creative iteration",
+    ],
+    supportedProviders: [
+      {
+        provider: "google",
+        model: "gemini-2.5-flash-image",
+        priority: 1,
+      },
+      {
+        provider: "google",
+        model: "gemini-3-pro-image-preview",
+        priority: 2,
+      },
+    ],
+    systemPrompt: `You are the Nano Banana Agent, specializing in cutting-edge image generation and editing using Google's generative models. You help users:
+- Generate high-quality images from text descriptions
+- Perform consistent edits across multiple images
+- Transform and merge existing images with natural language
+- Provide creative inspiration and technical guidance for image creation
+
+Always aim for photorealism and artistic excellence. If a user asks for an image, describe how you would generate it and provide the prompt you'll use.`,
   },
 ];
 

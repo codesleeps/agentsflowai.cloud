@@ -330,21 +330,17 @@ export default function AgentPlaygroundPage() {
                   isLoading={isLoading}
                   placeholder={`Test ${selectedAgent.name} with any prompt...`}
                   models={selectedAgent.supportedProviders?.map((p: any) => ({
-                    id: p.provider,
+                    id: p.model,
                     name: `${p.provider} (${p.model})`,
                     provider: p.provider,
                     priority: p.priority,
                     model: p.model
                   })) || []}
-                  selectedModelId={currentModel?.provider}
-                  onModelChange={(provider, model) => {
-                    if (model) {
-                      handleModelChange(provider, model);
-                    } else {
-                      // Find the model for this provider in agent config
-                      const m = selectedAgent.supportedProviders?.find((p: any) => p.provider === provider)?.model;
-                      handleModelChange(provider, m || selectedAgent.model);
-                    }
+                  selectedModelId={currentModel?.model}
+                  onModelChange={(model, provider) => {
+                    const actualModel = model;
+                    const actualProvider = provider || selectedAgent.supportedProviders?.find((p: any) => p.model === model)?.provider;
+                    handleModelChange(actualProvider, actualModel);
                   }}
                 />
               </div>

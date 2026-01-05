@@ -204,6 +204,7 @@ export default function ChatPage() {
               isLoading={isLoading}
               models={[
                 { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", isNew: true },
+                { id: "gemini-2.5-flash-image", name: "Nano Banana", provider: "Google", isNew: true },
                 { id: "claude-sonnet", name: "Claude Sonnet", provider: "Anthropic" }
               ]}
               selectedModelId="gemini-3-flash"
