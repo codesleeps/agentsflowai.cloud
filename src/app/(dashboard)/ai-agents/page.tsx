@@ -37,7 +37,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   useOllamaStatus,
   useAIAgents,
-  generateAgentResponse,
+  getAgentResponseWithFallback,
 } from "@/client-lib/ai-agents-client";
 import { toast } from "sonner";
 import type { AIAgent, AIProvider } from "@/shared/models/ai-agents";
@@ -142,7 +142,7 @@ export default function AIAgentsPage() {
         .slice(-10) // Keep last 10 messages for context
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const response = await generateAgentResponse(
+      const agentResp = await getAgentResponseWithFallback(
         selectedAgent.id,
         userMessage.content,
         conversationHistory,
@@ -150,7 +150,7 @@ export default function AIAgentsPage() {
 
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        content: response.response,
+        content: agentResp.content,
         timestamp: new Date(),
         agentId: selectedAgent.id,
         model: response.model,

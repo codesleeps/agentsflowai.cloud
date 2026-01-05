@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { generateAgentResponse } from "@/client-lib/ai-agents-client";
+import { getAgentResponseWithFallback } from "@/server-lib/agent-response-handler";
 import { toast } from "sonner";
 
 const contentTypes = [
@@ -59,8 +59,8 @@ export default function ContentCreationPage() {
 
     try {
       const prompt = buildPrompt();
-      const response = await generateAgentResponse("content-agent", prompt);
-      setGeneratedContent(response.response);
+      const agentResp = await getAgentResponseWithFallback("content-agent", prompt);
+      setGeneratedContent(agentResp.content);
       toast.success("Content generated successfully!");
     } catch (error) {
       console.error("Error generating content:", error);
@@ -72,7 +72,7 @@ export default function ContentCreationPage() {
 
   const buildPrompt = () => {
     const keywordList = keywords.split(",").map((k) => k.trim()).filter(Boolean);
-    
+
     const prompts: Record<string, string> = {
       "blog-post": `Write a ${length} blog post about "${topic}".
 
@@ -168,11 +168,10 @@ Generate:
                 <button
                   key={type.id}
                   onClick={() => setContentType(type.id)}
-                  className={`p-4 rounded-lg border text-left transition-all ${
-                    contentType === type.id
-                      ? "border-primary bg-primary/5"
-                      : "hover:bg-muted/50"
-                  }`}
+                  className={`p-4 rounded-lg border text-left transition-all ${contentType === type.id
+                    ? "border-primary bg-primary/5"
+                    : "hover:bg-muted/50"
+                    }`}
                 >
                   <type.icon className={`h-5 w-5 mb-2 ${contentType === type.id ? "text-primary" : "text-muted-foreground"}`} />
                   <p className="font-medium text-sm">{type.label}</p>

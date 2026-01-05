@@ -24,22 +24,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { generateAgentResponse } from "@/client-lib/ai-agents-client";
+import { getAgentResponseWithFallback } from "@/server-lib/agent-response-handler";
 import { toast } from "sonner";
 
 export default function SEOAgentPage() {
   const [activeTab, setActiveTab] = useState("keywords");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState("");
-  
+
   // Keywords state
   const [seedKeyword, setSeedKeyword] = useState("");
   const [industry, setIndustry] = useState("");
-  
+
   // Meta tags state
   const [pageTitle, setPageTitle] = useState("");
   const [pageDescription, setPageDescription] = useState("");
-  
+
   // Content audit state
   const [contentToAudit, setContentToAudit] = useState("");
   const [targetKeywords, setTargetKeywords] = useState("");
@@ -79,8 +79,8 @@ Provide:
 
 Format with clear sections and bullet points.`;
 
-      const response = await generateAgentResponse("seo-agent", prompt);
-      setResults(response.response);
+      const agentResp = await getAgentResponseWithFallback("seo-agent", prompt);
+      setResults(agentResp.content);
       toast.success("Keyword research complete!");
     } catch (error) {
       console.error("Error:", error);
@@ -155,7 +155,7 @@ Format as ready-to-use HTML snippets where applicable.`;
 
     try {
       const keywordList = targetKeywords.split(",").map((k) => k.trim()).filter(Boolean);
-      
+
       const prompt = `Perform an SEO audit on this content:
 
 """

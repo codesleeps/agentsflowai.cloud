@@ -35,13 +35,13 @@ export interface Conversation {
   lead_id: string | null;
   status: "active" | "closed" | "transferred";
   channel:
-    | "chat"
-    | "email"
-    | "phone"
-    | "whatsapp"
-    | "sms"
-    | "messenger"
-    | "instagram";
+  | "chat"
+  | "email"
+  | "phone"
+  | "whatsapp"
+  | "sms"
+  | "messenger"
+  | "instagram";
   started_at: string;
   ended_at: string | null;
   summary: string | null;
@@ -257,6 +257,21 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+// New interface for agent responses
+export interface AgentResponse {
+  content: string;
+  role: "assistant" | "system";
+  metadata?: Record<string, unknown>;
+}
+
+// Zod schema for validating AgentResponse
+import { z } from "zod";
+export const AgentResponseSchema = z.object({
+  content: z.string(),
+  role: z.enum(["assistant", "system"]),
+  metadata: z.record(z.any()).optional(),
+});
+
 export interface AIMessage {
   id: string;
   agentId: string;
@@ -315,12 +330,12 @@ export interface IntentSignal {
   id: string;
   lead_id: string;
   signal_type:
-    | "website_visit"
-    | "email_open"
-    | "email_click"
-    | "form_submit"
-    | "chat_message"
-    | "social_interaction";
+  | "website_visit"
+  | "email_open"
+  | "email_click"
+  | "form_submit"
+  | "chat_message"
+  | "social_interaction";
   signal_data: Record<string, unknown>;
   score_impact: number;
   created_at: string;
@@ -383,13 +398,13 @@ export interface EmailSent {
   subject: string;
   body: string;
   status:
-    | "queued"
-    | "sent"
-    | "delivered"
-    | "opened"
-    | "clicked"
-    | "bounced"
-    | "failed";
+  | "queued"
+  | "sent"
+  | "delivered"
+  | "opened"
+  | "clicked"
+  | "bounced"
+  | "failed";
   sent_at?: string;
   opened_at?: string;
   clicked_at?: string;
@@ -424,14 +439,14 @@ export interface WorkflowTrigger {
   id: string;
   workflow_id: string;
   trigger_type:
-    | "lead_created"
-    | "lead_status_changed"
-    | "email_opened"
-    | "email_clicked"
-    | "form_submitted"
-    | "appointment_scheduled"
-    | "time_based"
-    | "webhook";
+  | "lead_created"
+  | "lead_status_changed"
+  | "email_opened"
+  | "email_clicked"
+  | "form_submitted"
+  | "appointment_scheduled"
+  | "time_based"
+  | "webhook";
   trigger_config: Record<string, unknown>;
   is_active: boolean;
   created_at: string;
@@ -442,13 +457,13 @@ export interface WorkflowAction {
   id: string;
   workflow_id: string;
   action_type:
-    | "send_email"
-    | "update_lead"
-    | "create_task"
-    | "call_webhook"
-    | "run_ai_agent"
-    | "wait"
-    | "condition";
+  | "send_email"
+  | "update_lead"
+  | "create_task"
+  | "call_webhook"
+  | "run_ai_agent"
+  | "wait"
+  | "condition";
   action_config: Record<string, unknown>;
   order: number;
   parent_action_id?: string;

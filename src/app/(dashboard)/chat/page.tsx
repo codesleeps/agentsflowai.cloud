@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateAgentResponse } from "@/client-lib/ai-agents-client";
+import { getAgentResponseWithFallback } from "@/server-lib/agent-response-handler";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { cn } from "@/client-lib/utils";
@@ -82,15 +83,16 @@ export default function ChatPage() {
         content: m.content,
       }));
 
-      const response = await generateAgentResponse(
-        "fast-chat-agent", // Use the fast chat agent for general chat
+      // Use fallback handler to get a validated response
+      const agentResp = await getAgentResponseWithFallback(
+        "fast-chat-agent",
         userMessage.content,
         conversationHistory
       );
 
       const assistantMessage: ChatMessage = {
         role: "assistant",
-        content: response.response,
+        content: agentResp.content,
         timestamp: new Date(),
       };
 

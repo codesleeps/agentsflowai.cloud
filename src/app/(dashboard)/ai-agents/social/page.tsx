@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { generateAgentResponse } from "@/client-lib/ai-agents-client";
+import { getAgentResponseWithFallback } from "@/server-lib/agent-response-handler";
 import { toast } from "sonner";
 
 const PLATFORMS = [
@@ -148,8 +148,8 @@ Keep everything organized with clear labels so it can be pasted directly into ad
         agentId = "marketing-agent";
       }
 
-      const response = await generateAgentResponse(agentId, prompt);
-      setResults(response.response);
+      const agentResp = await getAgentResponseWithFallback(agentId, prompt);
+      setResults(agentResp.content);
       toast.success("Content generated successfully!");
     } catch (error) {
       // eslint-disable-next-line no-console

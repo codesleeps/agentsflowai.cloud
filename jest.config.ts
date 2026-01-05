@@ -57,7 +57,8 @@ const config: Config = {
   testTimeout: 10000,
 
   // Transform ES modules
-  transformIgnorePatterns: ["node_modules/(?!(jose|@better-auth)/)"],
+  transformIgnorePatterns: ["node_modules/(?!(jose|@better-auth|better-auth)/)"],
+  extensionsToTreatAsEsm: [".ts", ".tsx"],
 };
 
 const createJestConfig = nextJest({
