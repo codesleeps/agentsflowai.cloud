@@ -32,6 +32,7 @@ async function testGoogle() {
             }),
         });
 
+        /** @type {any} */
         const data = await response.json();
         console.log('\n--- Raw Response ---');
         console.log(JSON.stringify(data, null, 2));
@@ -41,7 +42,7 @@ async function testGoogle() {
         if (responseData && typeof responseData === 'object') {
             const candidates = responseData['candidates'];
             const error = responseData['error'];
-            
+
             if (candidates && Array.isArray(candidates) && candidates.length > 0) {
                 const firstCandidate = candidates[0];
                 if (firstCandidate && typeof firstCandidate === 'object') {
@@ -58,7 +59,7 @@ async function testGoogle() {
                     }
                 }
             }
-            
+
             if (error) {
                 console.log('\n❌ API Error:', typeof error === 'object' && error['message'] ? error['message'] : error);
             } else {

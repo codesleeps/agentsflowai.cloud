@@ -29,8 +29,13 @@ async function testOpenRouter() {
         return;
     }
 
+    /** @type {any} */
     const data = await response.json();
-    console.log('Response:', data.choices[0].message.content);
+    if (data && data.choices && data.choices[0]) {
+        console.log('Response:', data.choices[0].message?.content);
+    } else {
+        console.log('Error or Unexpected Response:', JSON.stringify(data, null, 2));
+    }
 }
 
 testOpenRouter();

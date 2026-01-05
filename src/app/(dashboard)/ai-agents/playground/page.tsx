@@ -34,8 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUserAIAgents } from "@/client-lib/user-ai-agents-client";
-import { useAIAgents } from "@/client-lib/ai-agents-client";
-import { getAgentResponseWithFallback } from "@/client-lib/ai-agents-client";
+import { useAIAgents, generateAgentResponse, getAgentResponseWithFallback } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { cn } from "@/client-lib/utils";

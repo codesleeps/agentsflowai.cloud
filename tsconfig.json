@@ -9,28 +9,38 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "types": ["jest", "@testing-library/jest-dom"],
-
+    "types": [
+      "jest",
+      "@testing-library/jest-dom"
+    ],
     /* Strictness */
     "strict": false, // Turn off general strictness
     "strictNullChecks": false, // TODO: decide if we keep
     "noUncheckedIndexedAccess": false, // TODO: decide if we keep
     "checkJs": true, // Keep JS checks
     "noImplicitAny": false, // Turn off implicit any
-
     /* Bundled projects */
-    "lib": ["dom", "dom.iterable", "ES2022"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "incremental": true,
-
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
   "include": [
@@ -44,5 +54,11 @@
     "**/*.js",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "sandbox",
+    "test-*.js",
+    "quick-test.js",
+    "direct-api-test.js"
+  ]
 }

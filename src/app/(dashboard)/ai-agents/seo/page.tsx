@@ -133,8 +133,8 @@ Provide:
 
 Format as ready-to-use HTML snippets where applicable.`;
 
-      const response = await generateAgentResponse("seo-agent", prompt);
-      setResults(response.response);
+      const agentResp = await getAgentResponseWithFallback("seo-agent", prompt);
+      setResults(agentResp.content);
       toast.success("Meta tags generated!");
     } catch (error) {
       console.error("Error:", error);
@@ -201,8 +201,8 @@ Analyze and provide:
 7. **Priority Actions**
    - Top 5 things to fix first`;
 
-      const response = await generateAgentResponse("seo-agent", prompt);
-      setResults(response.response);
+      const agentResp = await getAgentResponseWithFallback("seo-agent", prompt);
+      setResults(agentResp.content);
       toast.success("Content audit complete!");
     } catch (error) {
       console.error("Error:", error);

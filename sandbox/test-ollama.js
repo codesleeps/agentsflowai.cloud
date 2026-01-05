@@ -24,11 +24,12 @@ async function testOllama() {
             }),
         });
 
+        /** @type {any} */
         const data = await response.json();
         console.log('\n--- Raw Response ---');
         console.log(JSON.stringify(data, null, 2));
 
-        if (data.response) {
+        if (data && data.response) {
             console.log('\n✅ Success! Answer:', data.response);
         } else {
             console.log('\n❌ Failed: No response field found.');

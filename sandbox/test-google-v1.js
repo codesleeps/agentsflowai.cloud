@@ -19,6 +19,7 @@ async function testV1() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: 'Say "v1 is working!"' }] }] })
         });
+        /** @type {any} */
         const data = await response.json();
         console.log(JSON.stringify(data, null, 2));
     } catch (error) {
