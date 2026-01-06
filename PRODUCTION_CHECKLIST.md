@@ -225,7 +225,17 @@ This checklist ensures the AgentsFlowAI application meets industry standards for
 
 ### 13. Deployment Configuration 🚀
 
-#### PM2
+#### Docker (Recommended)
+- [ ] docker-compose.prod.yml exists and is valid
+- [ ] Resource limits configured (CPU, memory)
+- [ ] Health checks configured for all services
+- [ ] Security options enabled (no-new-privileges, read-only)
+- [ ] Logging configured (max-size, max-file)
+- [ ] Environment variables set in .env file
+- [ ] Docker and Docker Compose installed on server
+- [ ] Deploy user added to docker group
+
+#### PM2 (Legacy)
 - [ ] ecosystem.config.mjs exists and is valid
 - [ ] Cluster mode configured
 - [ ] Auto-restart enabled
@@ -330,6 +340,16 @@ Recommended:
 5. [ ] Test rollback procedure
 
 ### Deployment
+
+#### Docker Deployment (Recommended)
+1. [ ] Pull latest code from main branch
+2. [ ] Configure environment: `cp .env.production.template .env && nano .env`
+3. [ ] Run Docker deployment: `./deploy/docker-deploy.sh`
+4. [ ] Verify container status: `docker-compose -f docker-compose.prod.yml ps`
+5. [ ] Check logs: `docker-compose -f docker-compose.prod.yml logs --tail=50`
+6. [ ] Test health endpoint: `curl https://yourdomain.com/api/health`
+
+#### PM2 Deployment (Legacy)
 1. [ ] Pull latest code from main branch
 2. [ ] Run `npm ci` to install dependencies
 3. [ ] Run database migrations: `npm run db:migrate`
@@ -348,6 +368,16 @@ Recommended:
 7. [ ] Check performance metrics
 
 ### If Issues Occur
+
+#### Docker Issues
+1. [ ] Check container status: `docker-compose -f docker-compose.prod.yml ps`
+2. [ ] Check container logs: `docker-compose -f docker-compose.prod.yml logs -f`
+3. [ ] Check Nginx logs: `sudo tail -f /var/log/nginx/error.log`
+4. [ ] Verify environment variables: `docker-compose -f docker-compose.prod.yml exec app env`
+5. [ ] Check database connectivity: `docker-compose -f docker-compose.prod.yml exec app npx prisma db push`
+6. [ ] If critical: Rollback containers: `docker-compose -f docker-compose.prod.yml down && docker-compose -f docker-compose.prod.yml up -d`
+
+#### PM2 Issues
 1. [ ] Check PM2 logs: `pm2 logs agentsflow-ai`
 2. [ ] Check Nginx logs: `sudo tail -f /var/log/nginx/error.log`
 3. [ ] Verify environment variables

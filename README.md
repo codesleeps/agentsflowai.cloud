@@ -466,3 +466,191 @@ NEXT_PUBLIC_APP_URL=https://yourdomain.com
 OPENAI_API_KEY=sk-your-key
 SESSION_SECRET=generate-with-openssl-rand-base64-32
 ```
+
+---
+
+## Docker Deployment (Recommended)
+
+For production deployment, we recommend using Docker containers for better isolation, scalability, and maintainability.
+
+### Docker Prerequisites
+
+- **Server**: Ubuntu 22.04+ with Docker and Docker Compose installed
+- **Domain**: A domain name pointed to your server's IP address
+- **SSH Access**: Root or sudo access to the server
+
+### Docker Quick Start
+
+```bash
+# 1. SSH into your server as root
+ssh root@your-server-ip
+
+# 2. Clone this repository
+git clone https://github.com/your-repo/agentsflow-ai.git /tmp/agentsflow-setup
+cd /tmp/agentsflow-setup
+
+# 3. Run the server setup script (includes Docker installation)
+chmod +x deploy/setup-server.sh
+./deploy/setup-server.sh
+
+# 4. Follow the post-setup instructions
+```
+
+### Docker Deployment Steps
+
+#### Step 1: Server Setup with Docker
+
+The `deploy/setup-server.sh` script now includes Docker installation. It will:
+- Install Docker and Docker Compose
+- Add deploy user to docker group
+- Set up all necessary services (Nginx, SSL, firewall, etc.)
+
+#### Step 2: Configure Environment
+
+```bash
+# As deploy user
+su - deploy
+cd /home/deploy/agentsflow-ai
+
+# Create environment file
+cp .env.production.template .env
+nano .env  # Edit with your production values
+```
+
+#### Step 3: Deploy with Docker
+
+```bash
+# Run the Docker deployment script
+./deploy/docker-deploy.sh
+```
+
+This script will:
+- Build the Docker image locally
+- Transfer it to the server
+- Run database migrations
+- Start containers with docker-compose
+
+#### Step 4: Verify Deployment
+
+```bash
+# Check container status
+docker-compose -f docker-compose.prod.yml ps
+
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Test health endpoint
+curl https://yourdomain.com/api/health
+```
+
+### Docker Architecture
+
+AgentsFlowAI uses a multi-container setup:
+
+- **app**: Next.js application (port 3000)
+- **ollama**: Local AI models (port 11434)
+- **nginx**: Reverse proxy and SSL termination
+- **postgres** (optional): PostgreSQL database
+
+### Docker Commands
+
+```bash
+# View running containers
+docker-compose -f docker-compose.prod.yml ps
+
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f app
+docker-compose -f docker-compose.prod.yml logs -f ollama
+
+# Restart services
+docker-compose -f docker-compose.prod.yml restart
+
+# Update deployment
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
+
+# Stop all services
+docker-compose -f docker-compose.prod.yml down
+```
+
+### Docker Environment Variables
+
+Create `.env` with:
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@host:5432/db
+
+# Application
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+PORT=3000
+
+# AI Providers
+OPENAI_API_KEY=sk-your-key
+OLLAMA_BASE_URL=http://ollama:11434
+
+# Security
+SESSION_SECRET=your-session-secret
+BETTER_AUTH_SECRET=your-auth-secret
+```
+
+### Docker Migration from PM2
+
+If migrating from PM2 to Docker:
+
+1. **Backup current deployment**
+2. **Stop PM2 services**: `pm2 stop all && pm2 delete all`
+3. **Deploy with Docker**: `./deploy/docker-deploy.sh`
+4. **Update Nginx upstream** to point to Docker container (port 3000)
+5. **Test thoroughly** before removing PM2
+
+See `deploy/DOCKER-MIGRATION.md` for detailed migration guide.
+
+### Docker Security Features
+
+- **Non-root containers**: Application runs as unprivileged user
+- **Resource limits**: CPU and memory constraints prevent abuse
+- **Read-only filesystems**: Enhanced security with tmpfs mounts
+- **Security options**: `no-new-privileges` and capability restrictions
+- **Isolated networks**: Services communicate through defined networks
+
+### Docker Monitoring
+
+```bash
+# Container resource usage
+docker stats
+
+# Health checks
+docker-compose -f docker-compose.prod.yml ps
+curl https://yourdomain.com/api/health
+
+# Log aggregation
+docker-compose -f docker-compose.prod.yml logs --tail=100 -f
+```
+
+### Docker Troubleshooting
+
+**Container won't start:**
+```bash
+docker-compose -f docker-compose.prod.yml logs app
+```
+
+**Database connection issues:**
+```bash
+docker-compose -f docker-compose.prod.yml exec app npx prisma db push
+```
+
+**Permission issues:**
+```bash
+sudo usermod -aG docker deploy
+newgrp docker
+```
+
+**Port conflicts:**
+```bash
+sudo netstat -tulpn | grep :3000
+docker-compose -f docker-compose.prod.yml down
+```
+
+For detailed Docker setup and troubleshooting, see `docs/DOCKER_SETUP.md`.

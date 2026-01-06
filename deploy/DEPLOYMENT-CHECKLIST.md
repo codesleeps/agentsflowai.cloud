@@ -129,7 +129,58 @@ sudo systemctl restart sshd
 
 ## Deployment
 
-### Manual Deployment
+### Docker Deployment (Recommended)
+
+#### Automated Docker Deployment
+```bash
+# From your local machine
+cd /path/to/agentsflow-ai
+./deploy/docker-deploy.sh
+```
+
+This script automatically:
+- Builds Docker image locally
+- Transfers image to production server
+- Runs database migrations
+- Starts containers with production configuration
+- Verifies deployment health
+
+#### Manual Docker Deployment
+```bash
+# SSH as deploy user
+ssh deploy@72.61.16.111
+cd /home/deploy/agentsflow-ai
+
+# Pull latest code
+git pull origin main
+
+# Configure environment (first time only)
+cp .env.production.template .env
+nano .env  # Add production values
+
+# Deploy with Docker
+./deploy/docker-deploy.sh
+
+# Or deploy manually
+docker build -t agentsflowai:latest .
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### Docker Status Checks
+```bash
+# Check container status
+docker-compose -f docker-compose.prod.yml ps
+
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Check health
+curl https://agentsflowai.cloud/api/health
+```
+
+### PM2 Deployment (Legacy)
+
+#### Manual PM2 Deployment
 ```bash
 # SSH as deploy user
 ssh deploy@72.61.16.111
@@ -169,7 +220,9 @@ pm2 reload ecosystem.config.cjs --env production
 - [ ] Homepage loads correctly
 - [ ] Dashboard displays data
 - [ ] Lead creation works
+- [ ] AI chat functionality works
 - [ ] All navigation links work
+- [ ] API endpoints respond correctly
 
 ### Security Checks
 - [ ] HTTPS working (no mixed content warnings)
@@ -217,6 +270,26 @@ pm2 restart all     # Restart all processes
 ```
 
 ### System Monitoring
+
+#### Docker Monitoring
+```bash
+# Container resource usage
+docker stats
+
+# Container status
+docker-compose -f docker-compose.prod.yml ps
+
+# Application logs
+docker-compose -f docker-compose.prod.yml logs -f app
+
+# Ollama logs
+docker-compose -f docker-compose.prod.yml logs -f ollama
+
+# Health checks
+curl https://agentsflowai.cloud/api/health
+```
+
+#### PM2 Monitoring
 ```bash
 # Run the monitoring script
 ./deploy/monitor.sh
@@ -244,6 +317,25 @@ psql "postgres://user:pass@host:5432/db" -c "SELECT 1"
 
 # Check environment file
 cat /var/www/agentsflow-ai/.env.production.local
+```
+
+### Docker Issues
+```bash
+# Check container status
+docker-compose -f docker-compose.prod.yml ps
+
+# View container logs
+docker-compose -f docker-compose.prod.yml logs -f
+
+# Check resource usage
+docker stats
+
+# Restart containers
+docker-compose -f docker-compose.prod.yml restart
+
+# Rebuild and redeploy
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### Nginx Issues

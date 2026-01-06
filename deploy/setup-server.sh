@@ -33,11 +33,12 @@ echo "This script will:"
 echo "  1. Create a deploy user"
 echo "  2. Install Node.js ${NODE_VERSION}"
 echo "  3. Install PM2"
-echo "  4. Install and configure Nginx"
-echo "  5. Set up SSL with Let's Encrypt"
-echo "  6. Configure firewall (UFW)"
-echo "  7. Set up Fail2ban"
-echo "  8. Harden SSH"
+echo "  4. Install Docker and Docker Compose"
+echo "  5. Install and configure Nginx"
+echo "  6. Set up SSL with Let's Encrypt"
+echo "  7. Configure firewall (UFW)"
+echo "  8. Set up Fail2ban"
+echo "  9. Harden SSH"
 echo ""
 echo "Domain: ${APP_DOMAIN}"
 echo "App Directory: ${APP_DIR}"
@@ -87,7 +88,33 @@ pm2 startup systemd -u $APP_USER --hp /home/$APP_USER
 log_info "PM2 installed and configured for startup"
 
 # ===========================================
-# 5. Install Nginx
+# 5. Install Docker and Docker Compose
+# ===========================================
+log_info "Installing Docker..."
+# Install Docker using the official installation script
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+rm get-docker.sh
+
+# Start and enable Docker service
+systemctl enable docker
+systemctl start docker
+
+# Add deploy user to docker group
+usermod -aG docker $APP_USER
+
+# Install Docker Compose v2 (plugin)
+log_info "Installing Docker Compose..."
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+# Verify installations
+log_info "Docker version: $(docker --version)"
+log_info "Docker Compose version: $(docker-compose --version)"
+log_info "Docker and Docker Compose installed successfully"
+
+# ===========================================
+# 6. Install Nginx
 # ===========================================
 log_info "Installing Nginx..."
 apt install -y nginx
@@ -96,14 +123,14 @@ systemctl start nginx
 log_info "Nginx installed and started"
 
 # ===========================================
-# 6. Install Certbot (Let's Encrypt)
+# 7. Install Certbot (Let's Encrypt)
 # ===========================================
 log_info "Installing Certbot..."
 apt install -y certbot python3-certbot-nginx
 log_info "Certbot installed"
 
 # ===========================================
-# 7. Configure Firewall (UFW)
+# 8. Configure Firewall (UFW)
 # ===========================================
 log_info "Configuring firewall..."
 ufw default deny incoming
@@ -114,7 +141,7 @@ ufw --force enable
 log_info "Firewall configured and enabled"
 
 # ===========================================
-# 8. Install Fail2ban
+# 9. Install Fail2ban
 # ===========================================
 log_info "Installing Fail2ban..."
 apt install -y fail2ban
@@ -123,7 +150,7 @@ systemctl start fail2ban
 log_info "Fail2ban installed and started"
 
 # ===========================================
-# 9. Create Application Directory
+# 10. Create Application Directory
 # ===========================================
 log_info "Creating application directory..."
 mkdir -p $APP_DIR
@@ -134,7 +161,7 @@ chown -R $APP_USER:$APP_USER /var/log/pm2
 log_info "Application directory created: $APP_DIR"
 
 # ===========================================
-# 10. SSH Hardening
+# 11. SSH Hardening
 # ===========================================
 log_info "Hardening SSH configuration..."
 cat > /etc/ssh/sshd_config.d/hardening.conf << EOF
@@ -155,7 +182,7 @@ log_warn "SSH hardening applied. Make sure you have SSH key access before discon
 log_warn "Add your SSH key to /home/$APP_USER/.ssh/authorized_keys"
 
 # ===========================================
-# 11. Create Log Rotation
+# 12. Create Log Rotation
 # ===========================================
 log_info "Setting up log rotation..."
 cat > /etc/logrotate.d/agentsflow-ai << EOF
@@ -201,7 +228,11 @@ echo "   chown -R $APP_USER:$APP_USER /home/$APP_USER/.ssh"
 echo "   chmod 700 /home/$APP_USER/.ssh"
 echo "   chmod 600 /home/$APP_USER/.ssh/authorized_keys"
 echo ""
-echo "2. Deploy your application to $APP_DIR"
+echo "2. Deploy your application:"
+echo "   Option A (PM2 - traditional):"
+echo "     cp deploy/deploy.sh to $APP_DIR and run ./deploy.sh"
+echo "   Option B (Docker - recommended):"
+echo "     cp deploy/docker-deploy.sh to $APP_DIR and run ./docker-deploy.sh"
 echo ""
 echo "3. Copy Nginx config:"
 echo "   cp deploy/nginx.conf /etc/nginx/sites-available/agentsflow-ai"
@@ -218,5 +249,9 @@ echo "   systemctl restart fail2ban"
 echo ""
 echo "6. Restart SSH (IMPORTANT: ensure SSH key access first!):"
 echo "   systemctl restart sshd"
+echo ""
+echo "7. For Docker deployments, ensure Docker is running:"
+echo "   systemctl status docker"
+echo "   sudo usermod -aG docker $APP_USER  # Add user to docker group"
 echo ""
 log_info "Server setup complete!"
