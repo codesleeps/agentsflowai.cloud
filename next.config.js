@@ -1,5 +1,8 @@
 /** @type {import("next").NextConfig} */
 const config = {
+  // Enable standalone output for Docker deployment
+  // This creates a minimal production bundle in .next/standalone with only necessary dependencies
+  output: "standalone",
   images: {
     domains: ["vybe.build", "i.ibb.co", "cdn.brandfetch.io"],
   },

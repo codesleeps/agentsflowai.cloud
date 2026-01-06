@@ -30,7 +30,16 @@
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
-    "disk-usage": "used=$(du -sm / | cut -f1); total=$(stat -f -c \"%b %S\" / | awk '{print $1*$2/1048576}'); echo \"Total: ${total%.*} MB, Used: ${used} MB, Free: $(( ${total%.*} - used )) MB\""
+    "disk-usage": "used=$(du -sm / | cut -f1); total=$(stat -f -c \"%b %S\" / | awk '{print $1*$2/1048576}'); echo \"Total: ${total%.*} MB, Used: ${used} MB, Free: $(( ${total%.*} - used )) MB\"",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
+    "docker:dev:build": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml build",
+    "docker:dev:down": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml down",
+    "docker:clean": "docker-compose down -v",
+    "docker:ollama:pull": "docker-compose exec ollama ollama pull mistral:7b && docker-compose exec ollama ollama pull llama3.1:8b && docker-compose exec ollama ollama pull gemma2:9b"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.22.0",

@@ -1,0 +1,133 @@
+# ==============================================================================
+# .dockerignore
+# Purpose: Exclude unnecessary files from Docker build context for faster builds
+# and smaller images
+# ==============================================================================
+
+# Build artifacts and caches
+.next/
+node_modules/
+out/
+build/
+dist/
+.cache/
+.parcel-cache/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# Environment and secrets
+# IMPORTANT: Never copy .env files into Docker images
+# Environment variables should be passed at runtime
+.env
+.env.*
+*.local
+
+# Development files
+.git/
+.gitignore
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.editorconfig
+
+# Documentation (not needed at runtime)
+README.md
+TESTING.md
+LICENSE
+*.md
+!README.md
+
+# Test and development
+__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+**/*.test.jsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.spec.js
+**/*.spec.jsx
+jest.config.ts
+jest.setup.ts
+coverage/
+.nyc_output/
+
+# Sandbox and test files
+sandbox/
+test-*.js
+quick-test.js
+direct-api-test.js
+test-ai-fallback.js
+test-google-on-server.js
+test-keys-on-server.js
+test-ollama-axios.js
+test-ollama-simple.js
+test-ollama.js
+test-or-on-server.js
+
+# Deployment and CI/CD
+deploy/
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# PM2 configuration files (not needed in Docker)
+ecosystem.config.js
+ecosystem.config.cjs
+ecosystem.config.mjs
+edit-ecosystem-config-instructions.md
+
+# Logs and runtime
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+tmp/
+temp/
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+._*
+.Spotlight-V100
+.Trashes
+
+# Plans and documentation directories
+plans/
+.agent/
+docs/
+
+# Linting configuration
+.prettierrc
+.prettierrc.js
+prettier.config.js
+.eslintrc
+.eslintrc.js
+.eslintrc.json
+.eslintignore
+
+# Production templates (use runtime env vars instead)
+.env.production.template
+.env.tmp
+
+# PDF documentation
+*.pdf
+Feature Enhancement Recommendations for AgentsFlowAI.pdf
+
+# Other config files that aren't needed in production
+lint_errors.txt
+PRODUCTION_CHECKLIST.md
+
+# Git files
+.gitattributes
+.gitmodules
