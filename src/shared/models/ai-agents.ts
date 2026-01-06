@@ -181,10 +181,10 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "gemini-1.5-pro",
-    provider: "google",
-    defaultProvider: "google",
-    costTier: "medium",
+    model: "codellama:7b",
+    provider: "ollama",
+    defaultProvider: "ollama",
+    costTier: "free",
     isActive: true,
     ollamaModelSize: 'medium',
     capabilities: [
@@ -198,19 +198,29 @@ export const AI_AGENTS: AIAgent[] = [
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "ollama",
+        model: "codellama:7b",
         priority: 1,
       },
       {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        provider: "ollama",
+        model: "mistral:7b",
         priority: 2,
       },
       {
         provider: "ollama",
-        model: "llama3.1:8b",
+        model: "gemma2:9b",
         priority: 3,
+      },
+      {
+        provider: "google",
+        model: "gemini-1.5-pro",
+        priority: 4,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
+        priority: 5,
       },
     ],
     systemPrompt: `You are an expert web development assistant specializing in modern web technologies. You help users:
@@ -230,10 +240,10 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "gemini-1.5-pro",
-    provider: "google",
-    defaultProvider: "google",
-    costTier: "medium",
+    model: "mistral:7b",
+    provider: "ollama",
+    defaultProvider: "ollama",
+    costTier: "free",
     isActive: true,
     ollamaModelSize: 'medium',
     capabilities: [
@@ -246,19 +256,29 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "ollama",
+        model: "mistral:7b",
         priority: 1,
       },
       {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        provider: "ollama",
+        model: "gemma2:9b",
         priority: 2,
       },
       {
         provider: "ollama",
-        model: "llama3.1:8b",
+        model: "codellama:7b",
         priority: 3,
+      },
+      {
+        provider: "google",
+        model: "gemini-1.5-pro",
+        priority: 4,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
+        priority: 5,
       },
     ],
     systemPrompt: `You are a data analytics expert specializing in business intelligence and data-driven decision making. You help users:
@@ -376,10 +396,10 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "gemini-1.5-pro",
-    provider: "google",
-    defaultProvider: "google",
-    costTier: "medium",
+    model: "mistral:7b",
+    provider: "ollama",
+    defaultProvider: "ollama",
+    costTier: "free",
     isActive: true,
     ollamaModelSize: 'medium',
     capabilities: [
@@ -392,19 +412,29 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "ollama",
+        model: "mistral:7b",
         priority: 1,
       },
       {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        provider: "ollama",
+        model: "gemma2:9b",
         priority: 2,
       },
       {
         provider: "ollama",
-        model: "llama3.1:8b",
+        model: "codellama:7b",
         priority: 3,
+      },
+      {
+        provider: "google",
+        model: "gemini-1.5-pro",
+        priority: 4,
+      },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
+        priority: 5,
       },
     ],
     systemPrompt: `You are a social media expert with deep knowledge of all major platforms including Twitter/X, LinkedIn, Instagram, Facebook, and TikTok. You help users:
