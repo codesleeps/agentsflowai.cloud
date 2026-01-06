@@ -12,6 +12,30 @@ import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIMessage } from "@/shared/models/types";
 import { AIAgent } from "../../../../shared/models/ai-agents";
 
+// Module-level environment check (runs once on load)
+function verifyEnvironmentVariables() {
+  const providers = {
+    google: !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY),
+    openrouter: !!process.env.OPENROUTER_API_KEY,
+    ollama: !!process.env.OLLAMA_BASE_URL,
+  };
+
+  console.log('[AI Agents API] Environment initialized:', providers);
+
+  const availableProviders = Object.entries(providers)
+    .filter(([_, available]) => available)
+    .map(([name]) => name);
+
+  if (availableProviders.length === 0) {
+    console.warn('[AI Agents API] WARNING: No AI providers configured!');
+  } else {
+    console.log('[AI Agents API] Available providers:', availableProviders.join(', '));
+  }
+}
+
+// Run verification on module load
+verifyEnvironmentVariables();
+
 // Helper to extract text from URL
 async function fetchUrlContent(url: string): Promise<string | null> {
   try {
@@ -65,6 +89,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Log environment variable status
+    console.log(`[AI Agents] Environment check: GOOGLE_API_KEY=${!!process.env.GOOGLE_API_KEY}, GOOGLE_GENERATIVE_AI_API_KEY=${!!process.env.GOOGLE_GENERATIVE_AI_API_KEY}, OPENROUTER_API_KEY=${!!process.env.OPENROUTER_API_KEY}, OLLAMA_BASE_URL=${process.env.OLLAMA_BASE_URL || 'not set'}`);
 
     const body = await request.json();
 
@@ -147,8 +174,13 @@ export async function handleGoogleProvider(
   conversationHistory: AIMessage[],
   systemPrompt: string,
 ) {
+  console.log('[Google Provider] Checking API keys...');
   const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!apiKey) throw new Error("GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is not defined");
+  console.log('[Google Provider] API key found:', !!apiKey);
+  if (!apiKey) {
+    console.error('[Google Provider] Missing API key. Checked: GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY');
+    throw new Error("GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is not defined");
+  }
 
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -218,7 +250,11 @@ export async function handleOpenRouter(
   systemPrompt: string
 ) {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error("OPENROUTER_API_KEY is not defined");
+  console.log('[OpenRouter] API key found:', !!apiKey);
+  if (!apiKey) {
+    console.error('[OpenRouter] OPENROUTER_API_KEY not found in environment');
+    throw new Error("OPENROUTER_API_KEY is not defined");
+  }
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -290,6 +326,8 @@ export async function handleOpenAI(
 export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
   const OLLAMA_BASE_URL =
     process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+
+  console.log('[Ollama] Base URL:', OLLAMA_BASE_URL);
 
   try {
     const ollamaResponse = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
