@@ -350,7 +350,7 @@ export async function executeSimpleGeneration(
           primaryModel: "glm4:9b",
           fallbackChain: [
             { provider: "ollama", model: "mistral", priority: 1 },
-            { provider: "google", model: "gemini-1.5-flash", priority: 2 },
+            { provider: "google", model: "gemini-2.5-flash", priority: 2 },
           ],
         };
 

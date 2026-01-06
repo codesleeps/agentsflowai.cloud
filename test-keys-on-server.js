@@ -14,6 +14,6 @@ async function testGoogle(modelName) {
   }
 }
 
-await testGoogle('gemini-1.5-flash');
-await testGoogle('gemini-1.5-flash-latest');
-await testGoogle('gemini-1.0-pro');
+await testGoogle('gemini-2.5-flash');
+await testGoogle('gemini-2.5-flash');
+await testGoogle('gemini-2.5-pro');
