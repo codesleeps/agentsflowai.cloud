@@ -16,12 +16,22 @@ import {
   Clock,
   Server,
   Download,
+  Copy,
+  CheckCheck,
+  Terminal,
 } from "lucide-react";
+
+interface MissingModel {
+  name: string;
+  pullCommand: string;
+  size: string;
+}
 
 interface ProviderStatus {
   status: "healthy" | "degraded" | "unhealthy";
   latency_ms?: number;
   available_models?: string[];
+  missing_models?: MissingModel[];
   model?: string;
   error?: string;
 }
@@ -103,74 +113,126 @@ const ProviderCard = ({
   status: ProviderStatus;
   onTest: () => void;
   isTesting: boolean;
-}) => (
-  <Card>
-    <CardHeader className="pb-3">
-      <div className="flex items-center justify-between">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          {getStatusIcon(status.status)}
-          {name}
-        </CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onTest}
-          disabled={isTesting}
-        >
-          {isTesting ? (
-            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <Activity className="h-4 w-4 mr-2" />
+}) => {
+  const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, modelName: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedCommand(modelName);
+      toast.success(`Copied: ${text}`);
+      setTimeout(() => setCopiedCommand(null), 2000);
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            {getStatusIcon(status.status)}
+            {name}
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onTest}
+            disabled={isTesting}
+          >
+            {isTesting ? (
+              <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Activity className="h-4 w-4 mr-2" />
+            )}
+            Test Now
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Badge className={getStatusColor(status.status)}>
+            {status.status}
+          </Badge>
+          {status.latency_ms && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              {status.latency_ms}ms
+            </div>
           )}
-          Test Now
-        </Button>
-      </div>
-    </CardHeader>
-    <CardContent className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Badge className={getStatusColor(status.status)}>
-          {status.status}
-        </Badge>
-        {status.latency_ms && (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            {status.latency_ms}ms
+        </div>
+
+        {status.model && (
+          <div className="text-sm">
+            <span className="font-medium">Model:</span> {status.model}
           </div>
         )}
-      </div>
 
-      {status.model && (
-        <div className="text-sm">
-          <span className="font-medium">Model:</span> {status.model}
-        </div>
-      )}
-
-      {status.available_models && status.available_models.length > 0 && (
-        <div className="text-sm">
-          <span className="font-medium">Available Models:</span>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {status.available_models.slice(0, 5).map((model) => (
-              <Badge key={model} variant="secondary" className="text-xs">
-                {model}
-              </Badge>
-            ))}
-            {status.available_models.length > 5 && (
-              <Badge variant="secondary" className="text-xs">
-                +{status.available_models.length - 5} more
-              </Badge>
-            )}
+        {status.available_models && status.available_models.length > 0 && (
+          <div className="text-sm">
+            <span className="font-medium">Available Models ({status.available_models.length}):</span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {status.available_models.slice(0, 5).map((model) => (
+                <Badge key={model} variant="secondary" className="text-xs">
+                  {model}
+                </Badge>
+              ))}
+              {status.available_models.length > 5 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{status.available_models.length - 5} more
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {status.error && (
-        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded">
-          <span className="font-medium">Error:</span> {status.error}
-        </div>
-      )}
-    </CardContent>
-  </Card>
-);
+        {status.missing_models && status.missing_models.length > 0 && (
+          <div className="text-sm border-t pt-3 mt-3">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <span className="font-medium text-yellow-700 dark:text-yellow-400">
+                Missing Models ({status.missing_models.length})
+              </span>
+            </div>
+            <div className="space-y-2">
+              {status.missing_models.map((model) => (
+                <div key={model.name} className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-sm">{model.name}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {model.size}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-black/10 dark:bg-white/10 px-2 py-1 rounded font-mono">
+                      {model.pullCommand}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={() => copyToClipboard(model.pullCommand, model.name)}
+                    >
+                      {copiedCommand === model.name ? (
+                        <CheckCheck className="h-3.5 w-3.5 text-green-600" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {status.error && (
+          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded border border-red-200 dark:border-red-800">
+            <span className="font-medium">Error:</span> {status.error}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export default function DiagnosticsPage() {
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
