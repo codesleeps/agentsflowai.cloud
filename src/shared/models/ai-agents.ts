@@ -200,6 +200,16 @@ export const AI_AGENTS: AIAgent[] = [
         model: "gemini-2.5-pro",
         priority: 1,
       },
+      {
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
+        priority: 2,
+      },
+      {
+        provider: "ollama",
+        model: "llama3.1:8b",
+        priority: 3,
+      },
     ],
     systemPrompt: `You are an expert web development assistant specializing in modern web technologies. You help users:
 - Generate high-quality React/Next.js components
@@ -239,7 +249,7 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.1-405b-instruct:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
       {
@@ -285,7 +295,7 @@ Always provide specific, actionable recommendations. Use data to support your in
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.1-405b-instruct:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
       {
@@ -337,7 +347,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.1-405b-instruct:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
       {
@@ -383,7 +393,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.1-405b-instruct:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
       {
@@ -430,7 +440,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.1-405b-instruct:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
       {
@@ -476,12 +486,12 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.1-405b-instruct:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2
       },
       {
         provider: "google",
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         priority: 3
       },
     ],
@@ -518,7 +528,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.1-405b-instruct:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2
       },
       {

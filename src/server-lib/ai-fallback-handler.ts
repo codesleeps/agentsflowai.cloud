@@ -103,14 +103,24 @@ export async function handleGoogleProvider(
   agentConfig: AgentConfig,
   userId: string,
 ): Promise<{ text: string; provider: string }> {
+  const functionStartTime = Date.now();
+  console.log(`[Google Provider] Starting request - Provider: Google, API key configured: ${!!process.env.GOOGLE_API_KEY}`);
+
   try {
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      console.error('[Google Provider] Missing API key. Checked: GOOGLE_API_KEY');
+      throw new Error("GOOGLE_API_KEY is not defined");
+    }
+
+    const requestStartTime = Date.now();
     const response = await fetch(
       `${process.env.GOOGLE_AI_API_BASE_URL}/v1/models/${agentConfig.primaryModel}:generateContent`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": process.env.GOOGLE_API_KEY!,
+          "x-api-key": apiKey,
         },
         body: JSON.stringify({
           contents: [
@@ -145,17 +155,39 @@ export async function handleGoogleProvider(
             },
           ],
         }),
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       },
     );
 
+    const requestDuration = Date.now() - requestStartTime;
+
     if (!response.ok) {
-      throw new Error(
-        `Google API error: ${response.status} ${response.statusText}`,
-      );
+      let errorType = 'unknown';
+      let errorDetails = `${response.status} ${response.statusText}`;
+
+      if (response.status === 401) {
+        errorType = 'auth_error';
+        errorDetails = 'Authentication failed - invalid API key';
+      } else if (response.status === 403) {
+        errorType = 'auth_error';
+        errorDetails = 'Forbidden - API key lacks permissions';
+      } else if (response.status === 429) {
+        errorType = 'rate_limit';
+        errorDetails = 'Rate limit exceeded - too many requests';
+      } else if (response.status >= 500) {
+        errorType = 'api_error';
+        errorDetails = `Google server error: ${response.status}`;
+      }
+
+      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed (${response.status}) after ${requestDuration}ms: ${errorType} - ${errorDetails}`);
+      throw new Error(`Google API error (${response.status}): ${errorDetails}`);
     }
 
     const data = await response.json();
     const text = data.candidates[0]?.content?.parts[0]?.text || "";
+    const totalDuration = Date.now() - functionStartTime;
+
+    console.log(`[Google Provider] Model ${agentConfig.primaryModel} succeeded after ${totalDuration}ms: ${text.length} chars`);
 
     await logModelUsage({
       user_id: userId,
@@ -164,7 +196,7 @@ export async function handleGoogleProvider(
       prompt_tokens: data.usageMetadata?.promptTokenCount || 0,
       completion_tokens: data.usageMetadata?.candidatesTokenCount || 0,
       cost_usd: 0, // Will be calculated by logModelUsage
-      latency_ms: 0, // Not available in this context
+      latency_ms: totalDuration,
       status: "success",
       agent_id: agentConfig.agentId,
       error_message: undefined,
@@ -172,8 +204,38 @@ export async function handleGoogleProvider(
 
     return { text, provider: "google" };
   } catch (error) {
-    console.error("Google provider failed:", error);
-    throw error;
+    const totalDuration = Date.now() - functionStartTime;
+    const errorInstance = error instanceof Error ? error : new Error(String(error));
+
+    let errorType = 'unknown';
+    let errorMessage = errorInstance.message;
+
+    if (errorInstance.name === 'TimeoutError' || errorMessage.includes('timeout')) {
+      errorType = 'timeout';
+      errorMessage = 'Request timed out after 30s';
+      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+    } else if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+      errorType = 'auth_error';
+      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+    } else {
+      errorType = 'api_error';
+      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+    }
+
+    await logModelUsage({
+      user_id: userId,
+      model: agentConfig.primaryModel,
+      provider: "google",
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      cost_usd: 0,
+      latency_ms: totalDuration,
+      status: "failed",
+      agent_id: agentConfig.agentId,
+      error_message: errorInstance.message,
+    });
+
+    throw errorInstance;
   }
 }
 
@@ -186,36 +248,52 @@ export async function handleOllamaProvider(
   agentConfig: AgentConfig,
   userId: string,
 ): Promise<{ text: string; provider: string }> {
+  const functionStartTime = Date.now();
+  const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+
+  console.log(`[Ollama Provider] Attempting model: ${agentConfig.primaryModel} at ${OLLAMA_BASE_URL}`);
+
+  const requestPayload = {
+    model: agentConfig.primaryModel,
+    prompt,
+    stream: false,
+    options: {
+      temperature: 0.7,
+      top_k: 40,
+      top_p: 0.95,
+      num_ctx: 4096,
+    },
+  };
+  console.log(`[Ollama Provider] Request payload: model=${requestPayload.model}, promptLength=${requestPayload.prompt.length}`);
+
   try {
-    const response = await fetch(
-      `${process.env.OLLAMA_BASE_URL || "http://localhost:11434"}/api/generate`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: agentConfig.primaryModel,
-          prompt,
-          stream: false,
-          options: {
-            temperature: 0.7,
-            top_k: 40,
-            top_p: 0.95,
-            num_ctx: 4096,
-          },
-        }),
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(requestPayload),
+      signal: AbortSignal.timeout(30000), // Increased timeout from default to 30s for local Ollama
+    });
 
     if (!response.ok) {
-      throw new Error(
-        `Ollama API error: ${response.status} ${response.statusText}`,
-      );
+      if (response.status === 404) {
+        console.error(`[Ollama Provider] Model ${agentConfig.primaryModel} failed: model_not_found - Model "${agentConfig.primaryModel}" not found. Available models can be listed with 'ollama list'`);
+        throw new Error(`Ollama model "${agentConfig.primaryModel}" not found. Please pull it using 'ollama pull ${agentConfig.primaryModel}' or list available models with 'ollama list'`);
+      }
+
+      const errorType = response.status >= 500 ? 'api_error' : 'unknown';
+      const errorMessage = `Ollama API returned ${response.status}`;
+      console.error(`[Ollama Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     const text = data.response || "";
+    const totalDuration = Date.now() - functionStartTime;
+    const responseLength = text.length;
+
+    console.log(`[Ollama Provider] Model ${agentConfig.primaryModel} succeeded after ${totalDuration}ms: ${responseLength} chars, ${data.eval_count || 0} tokens`);
 
     await logModelUsage({
       user_id: userId,
@@ -224,7 +302,7 @@ export async function handleOllamaProvider(
       prompt_tokens: data.prompt_eval_count || 0,
       completion_tokens: data.eval_count || 0,
       cost_usd: 0, // Will be calculated by logModelUsage
-      latency_ms: 0, // Not available in this context
+      latency_ms: totalDuration,
       status: "success",
       agent_id: agentConfig.agentId,
       error_message: undefined,
@@ -232,8 +310,42 @@ export async function handleOllamaProvider(
 
     return { text, provider: "ollama" };
   } catch (error) {
-    console.error("Ollama provider failed:", error);
-    throw error;
+    const totalDuration = Date.now() - functionStartTime;
+    const errorInstance = error instanceof Error ? error : new Error(String(error));
+
+    let errorType = 'unknown';
+    let errorMessage = errorInstance.message;
+
+    if (errorInstance.name === 'TimeoutError' || errorMessage.includes('timeout')) {
+      errorType = 'timeout';
+      errorMessage = `Request timed out after 30s - model may be loading for first time`;
+      console.error(`[Ollama Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+    } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Connection refused')) {
+      errorType = 'network_error';
+      errorMessage = `Connection refused - is Ollama running at ${OLLAMA_BASE_URL}?`;
+      console.error(`[Ollama Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+    } else if (errorMessage.includes('model') && errorMessage.includes('not found')) {
+      errorType = 'model_not_found';
+      console.error(`[Ollama Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+    } else {
+      errorType = 'api_error';
+      console.error(`[Ollama Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
+    }
+
+    await logModelUsage({
+      user_id: userId,
+      model: agentConfig.primaryModel,
+      provider: "ollama",
+      prompt_tokens: 0,
+      completion_tokens: 0,
+      cost_usd: 0,
+      latency_ms: totalDuration,
+      status: "failed",
+      agent_id: agentConfig.agentId,
+      error_message: errorInstance.message,
+    });
+
+    throw errorInstance;
   }
 }
 

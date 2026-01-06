@@ -17,7 +17,7 @@ const TEST_AGENT: AIAgent = {
   supportedProviders: [
     { provider: "ollama", model: "mistral:7b", priority: 1 },
     { provider: "google", model: "gemini-2.5-flash", priority: 2 },
-    { provider: "openrouter", model: "meta-llama/llama-3.1-405b-instruct:free", priority: 3 },
+    { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", priority: 3 },
   ],
   defaultProvider: "ollama",
   costTier: "free",
@@ -196,8 +196,8 @@ export async function GET() {
       ? testProviderWithTimeout("google", "gemini-2.5-flash")
       : Promise.resolve({ status: "unhealthy" as const, model: "gemini-2.5-flash", error: "GOOGLE_API_KEY not configured" }),
     environment.openrouter_key_configured
-      ? testProviderWithTimeout("openrouter", "meta-llama/llama-3.1-405b-instruct:free")
-      : Promise.resolve({ status: "unhealthy" as const, model: "meta-llama/llama-3.1-405b-instruct:free", error: "OPENROUTER_API_KEY not configured" }),
+      ? testProviderWithTimeout("openrouter", "meta-llama/llama-3.3-70b-instruct:free")
+      : Promise.resolve({ status: "unhealthy" as const, model: "meta-llama/llama-3.3-70b-instruct:free", error: "OPENROUTER_API_KEY not configured" }),
     environment.openai_key_configured
       ? testProviderWithTimeout("openai", "gpt-4o-mini")
       : Promise.resolve({ status: "unhealthy" as const, model: "gpt-4o-mini", error: "OPENAI_API_KEY not configured" }),

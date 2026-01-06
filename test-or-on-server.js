@@ -1,4 +1,11 @@
-const OR_KEY = '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';
+import 'dotenv/config';
+
+const OR_KEY = process.env.OPENROUTER_API_KEY;
+
+if (!OR_KEY) {
+  console.error('❌ OPENROUTER_API_KEY environment variable is required but not set.');
+  process.exit(1);
+}
 
 async function testOR(model) {
   console.log(`Testing OpenRouter with ${model}...`);
@@ -28,7 +35,7 @@ async function testOR(model) {
 }
 
 async function run() {
-  await testOR('meta-llama/llama-3.1-8b-instruct:free');
+  await testOR('meta-llama/llama-3.3-70b-instruct:free');
   await testOR('mistralai/mistral-7b-instruct:free');
 }
 run();

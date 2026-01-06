@@ -12,6 +12,29 @@ import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIMessage } from "@/shared/models/types";
 import { AIAgent } from "../../../../shared/models/ai-agents";
 
+// Structured error response types
+interface ProviderError {
+  provider: string;
+  model: string;
+  error: string;
+  errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'unknown';
+  duration: number;
+  timestamp: Date;
+}
+
+interface AIAgentResponse {
+  response: string;
+  model: string;
+  agentId: string;
+  agentName: string;
+  tokensUsed: number;
+  generationTime: number;
+  fallbackUsed: boolean;
+  usedProvider: string;
+  note?: string;
+  errorLog?: ProviderError[];
+}
+
 // Module-level environment check (runs once on load)
 function verifyEnvironmentVariables() {
   const providers = {
@@ -174,72 +197,124 @@ export async function handleGoogleProvider(
   conversationHistory: AIMessage[],
   systemPrompt: string,
 ) {
-  console.log('[Google Provider] Checking API keys...');
-  const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  console.log('[Google Provider] API key found:', !!apiKey);
-  if (!apiKey) {
-    console.error('[Google Provider] Missing API key. Checked: GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY');
-    throw new Error("GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is not defined");
-  }
+  const functionStartTime = Date.now();
+  console.log('[Google Provider] Starting request - Provider: Google, API key configured:', !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY));
 
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
-
-  const modelNames = [
-    agent.model,
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-    "gemini-2.0-flash",
-  ];
-
-  let lastError;
-
-  for (const modelName of modelNames) {
-    try {
-      console.log(`[Google AI] Attempting generation with model: ${modelName}`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-
-      // Build segments for generateContent
-      const contents = (conversationHistory || []).map((msg: any) => ({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content }],
-      }));
-
-      // Google Generative AI requires the first message to be from 'user'
-      while (contents.length > 0 && contents[0].role === 'model') {
-        contents.shift();
-      }
-
-      // Add the current system prompt + message
-      const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${message}` : message;
-      contents.push({
-        role: "user",
-        parts: [{ text: fullPrompt }]
-      });
-
-      const result = await model.generateContent({
-        contents,
-        generationConfig: { maxOutputTokens: 2048 },
-      });
-
-      const response = result.response;
-      const responseText = response.text();
-
-      if (!responseText) throw new Error("Empty response text");
-
-      return {
-        response: responseText,
-        tokensUsed: 0,
-        modelUsed: modelName
-      };
-    } catch (error) {
-      lastError = error;
-      console.warn(`[Google AI] Model ${modelName} failed: ${error instanceof Error ? error.message : String(error)}`);
-      continue;
+  try {
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) {
+      console.error('[Google Provider] Missing API key. Checked: GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY');
+      throw new Error("GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is not defined");
     }
-  }
 
-  throw new Error(`Google AI failed after trying all models. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    const modelNames = [
+      agent.model,
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
+      "gemini-2.0-flash",
+    ];
+
+    let lastError;
+
+    for (const modelName of modelNames) {
+      const attemptStartTime = Date.now();
+      try {
+        console.log(`[Google Provider] Attempting model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+
+        // Build segments for generateContent
+        const contents = (conversationHistory || []).map((msg: any) => ({
+          role: msg.role === "assistant" ? "model" : "user",
+          parts: [{ text: msg.content }],
+        }));
+
+        // Google Generative AI requires the first message to be from 'user'
+        while (contents.length > 0 && contents[0].role === 'model') {
+          contents.shift();
+        }
+
+        // Add the current system prompt + message
+        const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${message}` : message;
+        contents.push({
+          role: "user",
+          parts: [{ text: fullPrompt }]
+        });
+
+        // Add timeout protection for Google API calls
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Google API timeout after 30s')), 30000)
+        );
+
+        const result = await Promise.race([
+          model.generateContent({
+            contents,
+            generationConfig: { maxOutputTokens: 2048 },
+          }),
+          timeoutPromise
+        ]);
+
+        const response = result.response;
+        const responseText = response.text();
+
+        if (!responseText) throw new Error("Empty response text");
+
+        const attemptDuration = Date.now() - attemptStartTime;
+        console.log(`[Google Provider] Model ${modelName} succeeded after ${attemptDuration}ms: ${responseText.length} chars`);
+
+        return {
+          response: responseText,
+          tokensUsed: 0,
+          modelUsed: modelName
+        };
+      } catch (error) {
+        const attemptDuration = Date.now() - attemptStartTime;
+        lastError = error;
+
+        // Determine error type
+        let errorType = 'unknown';
+        let errorMessage = error instanceof Error ? error.message : String(error);
+
+        if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
+          errorType = 'timeout';
+        } else if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
+          errorType = 'rate_limit';
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          errorType = 'network_error';
+        } else if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+          errorType = 'auth_error';
+        } else if (errorMessage.includes('model') && errorMessage.includes('not found')) {
+          errorType = 'model_not_found';
+        } else {
+          errorType = 'api_error';
+        }
+
+        console.warn(`[Google Provider] Model ${modelName} failed after ${attemptDuration}ms: ${errorType} - ${errorMessage}`);
+        continue;
+      }
+    }
+
+    const totalDuration = Date.now() - functionStartTime;
+    throw new Error(`Google AI failed after trying all models (${totalDuration}ms). Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+  } catch (error) {
+    const totalDuration = Date.now() - functionStartTime;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Determine error type for final error
+    let errorType = 'unknown';
+    if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
+      errorType = 'timeout';
+    } else if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
+      errorType = 'auth_error';
+    } else {
+      errorType = 'api_error';
+    }
+
+    console.error(`[Google Provider] Provider failed after ${totalDuration}ms: ${errorType} - ${errorMessage}`);
+    throw error;
+  }
 }
 
 export async function handleOpenRouter(
@@ -248,41 +323,111 @@ export async function handleOpenRouter(
   conversationHistory: AIMessage[],
   systemPrompt: string
 ) {
+  const functionStartTime = Date.now();
+  console.log(`[OpenRouter Provider] Starting request with model: ${agent.model}`);
+
   const apiKey = process.env.OPENROUTER_API_KEY;
-  console.log('[OpenRouter] API key found:', !!apiKey);
+  console.log(`[OpenRouter Provider] API key configured: ${!!apiKey}`);
   if (!apiKey) {
-    console.error('[OpenRouter] OPENROUTER_API_KEY not found in environment');
+    console.error('[OpenRouter Provider] OPENROUTER_API_KEY not found in environment');
     throw new Error("OPENROUTER_API_KEY is not defined");
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://agentsflowai.cloud",
-      "X-Title": "AgentsFlowAI",
-    },
-    body: JSON.stringify({
-      model: agent.model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...conversationHistory.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user", content: message },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`OpenRouter API error: ${errorData.error?.message || response.statusText}`);
+  // Validate model name format for OpenRouter
+  if (!agent.model.includes('/')) {
+    console.error(`[OpenRouter Provider] Invalid model format: ${agent.model}. Expected format: provider/model-name`);
+    throw new Error(`Invalid OpenRouter model format: ${agent.model}`);
   }
 
-  const data = await response.json();
-  return {
-    response: data.choices[0]?.message?.content || "",
-    tokensUsed: data.usage?.total_tokens || 0,
-  };
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...conversationHistory.map((m) => ({ role: m.role, content: m.content })),
+    { role: "user", content: message },
+  ];
+
+  console.log(`[OpenRouter Provider] Request details: model=${agent.model}, messageCount=${messages.length}`);
+
+  const requestStartTime = Date.now();
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://agentsflowai.cloud",
+        "X-Title": "AgentsFlowAI",
+      },
+      body: JSON.stringify({
+        model: agent.model,
+        messages,
+      }),
+      signal: AbortSignal.timeout(30000), // 30 second timeout
+    });
+
+    if (!response.ok) {
+      const requestDuration = Date.now() - requestStartTime;
+      const errorData = await response.json().catch(() => ({}));
+
+      // Parse specific OpenRouter error codes
+      let errorType = 'unknown';
+      let errorDetails = errorData.error?.message || response.statusText;
+
+      if (response.status === 401) {
+        errorType = 'auth_error';
+        errorDetails = 'Authentication failed - invalid API key';
+      } else if (response.status === 403) {
+        errorType = 'auth_error';
+        errorDetails = 'Forbidden - API key lacks permissions';
+      } else if (response.status === 429) {
+        errorType = 'rate_limit';
+        errorDetails = 'Rate limit exceeded - too many requests';
+      } else if (response.status === 402) {
+        errorType = 'rate_limit';
+        errorDetails = 'Insufficient credits/quota exceeded';
+      } else if (response.status === 404) {
+        errorType = 'model_not_found';
+        errorDetails = `Model ${agent.model} not found or not available`;
+      } else if (response.status >= 500) {
+        errorType = 'api_error';
+        errorDetails = `OpenRouter server error: ${response.status}`;
+      } else if (response.status === 400 && errorDetails.includes('model')) {
+        errorType = 'model_not_found';
+        errorDetails = `Model ${agent.model} is invalid or not available on your plan. Check OpenRouter's model list.`;
+      }
+
+      console.error(`[OpenRouter Provider] Model ${agent.model} failed (${response.status}) after ${requestDuration}ms: ${errorType} - ${errorDetails}`);
+      throw new Error(`OpenRouter API error (${response.status}): ${errorDetails}`);
+    }
+
+    const data = await response.json();
+    const requestDuration = Date.now() - requestStartTime;
+    const totalDuration = Date.now() - functionStartTime;
+
+    console.log(`[OpenRouter Provider] Model ${agent.model} succeeded after ${totalDuration}ms: ${data.usage?.total_tokens || 0} tokens used`);
+
+    return {
+      response: data.choices[0]?.message?.content || "",
+      tokensUsed: data.usage?.total_tokens || 0,
+    };
+  } catch (error) {
+    const requestDuration = Date.now() - requestStartTime;
+
+    // Classify AbortError/timeout and network failures
+    let errorType = 'unknown';
+    let errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (error instanceof Error && error.name === 'AbortError') {
+      errorType = 'timeout';
+      errorMessage = `Request aborted due to timeout after 30s`;
+    } else if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
+      errorType = 'timeout';
+    } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
+      errorType = 'network_error';
+    }
+
+    console.error(`[OpenRouter Provider] Model ${agent.model} failed after ${requestDuration}ms: ${errorType} - ${errorMessage}`);
+    throw error;
+  }
 }
 
 export async function handleOpenAI(
@@ -323,41 +468,74 @@ export async function handleOpenAI(
 }
 
 export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
+  const functionStartTime = Date.now();
   const OLLAMA_BASE_URL =
     process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-  console.log('[Ollama] Base URL:', OLLAMA_BASE_URL);
+  console.log(`[Ollama Provider] Attempting model: ${agent.model} at ${OLLAMA_BASE_URL}`);
+
+  const requestPayload = {
+    model: agent.model,
+    messages: messages.map(m => ({ role: m.role, content: m.content })),
+    stream: false,
+    options: { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
+  };
+  console.log(`[Ollama Provider] Request payload: model=${requestPayload.model}, messageCount=${requestPayload.messages.length}`);
 
   try {
     const ollamaResponse = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: agent.model,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
-        stream: false,
-        options: { temperature: 0.7, top_p: 0.9, num_predict: 2048 },
-      }),
-      signal: AbortSignal.timeout(5000), // 5 second timeout for local Ollama - fail fast to cloud
+      body: JSON.stringify(requestPayload),
+      signal: AbortSignal.timeout(30000), // Increased timeout from 5s to 30s for local Ollama
     });
 
     if (!ollamaResponse.ok) {
       if (ollamaResponse.status === 404) {
-        throw new Error(`Ollama model "${agent.model}" not found. Please pull it using 'ollama pull ${agent.model}'`);
+        console.error(`[Ollama Provider] Model ${agent.model} failed: model_not_found - Model "${agent.model}" not found. Available models can be listed with 'ollama list'`);
+        throw new Error(`Ollama model "${agent.model}" not found. Please pull it using 'ollama pull ${agent.model}' or list available models with 'ollama list'`);
       }
+
+      const errorType = ollamaResponse.status >= 500 ? 'api_error' : 'unknown';
+      const errorMessage = `Ollama API returned ${ollamaResponse.status}`;
+      console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
       throw new Error(`Ollama API returned ${ollamaResponse.status}`);
     }
+
     const data = await ollamaResponse.json();
+    const totalDuration = Date.now() - functionStartTime;
+    const responseLength = (data.message?.content || data.response || '').length;
+
+    console.log(`[Ollama Provider] Model ${agent.model} succeeded after ${totalDuration}ms: ${responseLength} chars, ${data.eval_count || 0} tokens`);
 
     return {
       response: data.message?.content || data.response,
       tokensUsed: data.eval_count || 0,
     };
   } catch (error) {
-    if (error instanceof Error && error.name === 'TimeoutError') {
-      throw new Error("Ollama connection timed out (30s)");
+    const totalDuration = Date.now() - functionStartTime;
+    const errorInstance = error instanceof Error ? error : new Error(String(error));
+
+    let errorType = 'unknown';
+    let errorMessage = errorInstance.message;
+
+    if (errorInstance.name === 'TimeoutError' || errorMessage.includes('timeout')) {
+      errorType = 'timeout';
+      errorMessage = `Request timed out after 30s - model may be loading for first time`;
+      console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
+    } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Connection refused')) {
+      errorType = 'network_error';
+      errorMessage = `Connection refused - is Ollama running at ${OLLAMA_BASE_URL}?`;
+      console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
+    } else if (errorMessage.includes('model') && errorMessage.includes('not found')) {
+      errorType = 'model_not_found';
+      console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
+    } else {
+      errorType = 'api_error';
+      console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
     }
-    throw error;
+
+    throw errorInstance;
   }
 }
 
@@ -373,6 +551,8 @@ async function executeWithFallback(
   let lastError: Error | null = null;
   const startTime = Date.now();
 
+  const errorLog: Array<{provider: string, model: string, error: string, duration: number, timestamp: Date}> = [];
+
   const messages: AIMessage[] = [
     ...conversationHistory,
     {
@@ -386,6 +566,8 @@ async function executeWithFallback(
 
   for (const providerConfig of providers) {
     const { provider, model } = providerConfig;
+    const providerAttemptStartTime = Date.now();
+
     try {
       let result;
       const systemPrompt = agent.systemPrompt;
@@ -441,10 +623,21 @@ async function executeWithFallback(
         usedProvider: provider,
       };
     } catch (error) {
+      const providerDuration = Date.now() - providerAttemptStartTime;
       lastError = error instanceof Error ? error : new Error(String(error));
-      console.warn(
-        `Provider ${provider} (${model}) failed: ${lastError.message}. Trying next provider.`,
-      );
+
+      // Add to error log
+      errorLog.push({
+        provider,
+        model,
+        error: lastError.message,
+        duration: providerDuration,
+        timestamp: new Date()
+      });
+
+      const nextProvider = providers[providers.indexOf(providerConfig) + 1]?.provider || 'none';
+      console.warn(`[Fallback Chain] Provider ${provider} (${model}) failed after ${providerDuration}ms: ${lastError.message}. Trying next provider (${nextProvider})`);
+
       await logModelUsage({
         user_id: userId,
         agent_id: agent.id,
@@ -462,6 +655,10 @@ async function executeWithFallback(
 
   // If all providers fail, use static fallback
   const latency = Date.now() - startTime;
+
+  console.error(`[Fallback Chain] All providers exhausted. Total attempts: ${errorLog.length}, Total time: ${latency}ms`);
+  console.error(`[Fallback Chain] Error details:`, JSON.stringify(errorLog, null, 2));
+
   await logModelUsage({
     user_id: userId,
     agent_id: agent.id,
@@ -475,17 +672,61 @@ async function executeWithFallback(
     error_message: lastError?.message || "All providers failed",
   });
 
+  const primaryError = errorLog.length > 0 ? errorLog[0].error : (lastError?.message || "Unknown error");
   return {
-    response: generateFallbackResponse(agent.id, message),
+    response: generateFallbackResponse(agent.id, message, errorLog),
     model: "fallback",
     agentId: agent.id,
     agentName: agent.name,
-    note: `All AI providers are currently unavailable. Using offline fallback mode. Last error: ${lastError?.message}`,
+    note: `All ${errorLog.length} AI providers failed after ${latency}ms. Primary error: ${primaryError}`,
+    errorLog, // Include error log in response for client-side diagnostics
   };
 }
 
-function generateFallbackResponse(agentId: string, message: string): string {
+function generateFallbackResponse(agentId: string, message: string, errorLog?: Array<{provider: string, model: string, error: string, duration: number, timestamp: Date}>): string {
   const lowercaseMessage = message.toLowerCase();
+
+  // Generate diagnostic information from error log
+  let diagnosticSection = '';
+  let troubleshootingSteps = [];
+
+  if (errorLog && errorLog.length > 0) {
+    diagnosticSection = `\n\n## Diagnostic Information\n\n**Agent ID:** ${agentId}\n**Timestamp:** ${new Date().toISOString()}\n**Total Attempts:** ${errorLog.length}\n\n### Provider Errors:\n`;
+
+    errorLog.forEach((entry, index) => {
+      const duration = Math.round(entry.duration);
+      diagnosticSection += `\n${index + 1}. **${entry.provider.toUpperCase()}** (${entry.model}) - ${duration}ms\n`;
+      diagnosticSection += `   Error: ${entry.error}\n`;
+
+      // Generate troubleshooting suggestions based on error type
+      if (entry.error.includes('API key') || entry.error.includes('authentication') || entry.error.includes('auth_error')) {
+        troubleshootingSteps.push(`🔑 **${entry.provider.toUpperCase()} API Key**: Check that \`${entry.provider.toUpperCase()}_API_KEY\` is set in your environment variables`);
+      } else if (entry.error.includes('timeout')) {
+        troubleshootingSteps.push(`⏱️ **${entry.provider.toUpperCase()} Timeout**: The ${entry.provider} service took too long to respond. Try again later or check service status`);
+      } else if (entry.error.includes('rate limit') || entry.error.includes('quota')) {
+        troubleshootingSteps.push(`🚦 **${entry.provider.toUpperCase()} Rate Limit**: You've exceeded the API quota. Wait before retrying or upgrade your plan`);
+      } else if (entry.error.includes('Connection refused') || entry.error.includes('ECONNREFUSED')) {
+        if (entry.provider === 'ollama') {
+          troubleshootingSteps.push(`🔌 **Ollama Connection**: Ensure Ollama is running with \`ollama serve\` and accessible at the configured URL`);
+        } else {
+          troubleshootingSteps.push(`🌐 **Network Issue**: Check your internet connection and firewall settings`);
+        }
+      } else if (entry.error.includes('model not found')) {
+        if (entry.provider === 'ollama') {
+          troubleshootingSteps.push(`📦 **Ollama Model**: Pull the model with \`ollama pull ${entry.model}\` or list available models with \`ollama list\``);
+        } else {
+          troubleshootingSteps.push(`🔍 **Model Availability**: The requested model may not be available. Try a different model`);
+        }
+      }
+    });
+
+    if (troubleshootingSteps.length > 0) {
+      diagnosticSection += `\n### Next Steps:\n`;
+      troubleshootingSteps.forEach(step => {
+        diagnosticSection += `\n- ${step}`;
+      });
+    }
+  }
 
   switch (agentId) {
     case "web-dev-agent":
@@ -493,50 +734,89 @@ function generateFallbackResponse(agentId: string, message: string): string {
         lowercaseMessage.includes("react") ||
         lowercaseMessage.includes("component")
       ) {
-        return `# Web Development Insight (Standard Mode)
+        return `# Web Development Insight (Fallback Mode)
 
-The AI providers (Google, Ollama) are currently unavailable or hit their rate limits.
+The AI providers are currently unavailable. Here's a basic component structure while we resolve the connectivity issues:
 
-**Quick Component Blueprint:**
 \`\`\`tsx
 export function Component() {
-  return <div className="p-4 bg-muted rounded">Base Structure</div>;
+  return (
+    <div className="p-4 bg-muted rounded-lg border">
+      <h3 className="font-semibold mb-2">Component Structure</h3>
+      <p className="text-sm text-muted-foreground">
+        Basic layout for ${message.includes('button') ? 'a button' : 'a component'}
+      </p>
+    </div>
+  );
 }
 \`\`\`
+${diagnosticSection}
 
-*Please check your API keys or ensure your local Ollama instance is running to restore full generative capabilities.*`;
+**Quick Recovery:**
+1. Check API keys in your \`.env\` file
+2. Ensure Ollama is running if using local models
+3. Try again in a few moments for rate-limited services`;
       }
-      return `I'm currently in **Limited Resource Mode**. 
+      return `I'm currently in **Fallback Mode** due to AI provider connectivity issues.
 
-The connection to Google's Gemini or your local Ollama instance is not responding. 
+**Basic Web Development Guidance:**
+- Focus on semantic HTML structure
+- Use responsive CSS frameworks
+- Implement progressive enhancement
+- Test accessibility compliance
 
-**What you can do:**
-1. Check your \`.env\` file for valid API keys.
-2. If using local models, ensure Ollama is running at \`http://localhost:11434\`.
-3. Try again in a few minutes if this is a rate-limit issue.`;
+${diagnosticSection}
+
+**Recovery Steps:**
+1. Verify API keys are configured
+2. Check Ollama service status
+3. Wait for rate limits to reset
+4. Refresh and try again`;
 
     case "analytics-agent":
-      return `# Analytics Insights (Fallback)
+      return `# Analytics Insights (Fallback Mode)
 
-Our advanced analytical models are currently unreachable.
+AI providers are currently unreachable. Here's fundamental analytics guidance:
 
-**General Optimization Framework:**
-1. **Define KPIs**: Focus on conversion rate and ROI.
-2. **Collect Data**: Ensure robust event tracking.
-3. **Analyze**: Look for anomalies in weekly trends.
+**Core Analytics Framework:**
+1. **Data Collection**: Implement robust event tracking
+2. **KPIs**: Define measurable business metrics
+3. **Analysis**: Look for patterns and anomalies
+4. **Reporting**: Create actionable dashboards
 
-*Restoring connectivity will enable deep-dive analysis of your specific metrics.*`;
+**Key Metrics to Track:**
+- Conversion rates and funnel analysis
+- User engagement and retention
+- Revenue per user and lifetime value
+- Channel performance and attribution
+
+${diagnosticSection}
+
+**Restoration Steps:**
+1. Check API key configuration
+2. Verify network connectivity
+3. Wait for service availability
+4. Retry the analysis request`;
 
     default:
-      return `# AI Capability Note
+      return `# AI Capability Unavailable
 
-I'm currently running in a limited offline mode because I cannot reach the AI providers (Google or Ollama).
+All AI providers are currently inaccessible. The system is running in offline fallback mode.
 
-**Troubleshooting:**
-- **External APIs**: Verify your API keys in the environment settings.
-- **Local Models**: Ensure Ollama is active if you're using local inference.
-- **Network**: Check if your server has outgoing internet access for cloud models.
+**Current Capabilities:**
+- Basic text processing and formatting
+- Static response generation
+- Error diagnostics and logging
 
-*As soon as a provider becomes available, I will automatically resume full intelligence services.*`;
+${diagnosticSection}
+
+**System Recovery:**
+- **API Keys**: Verify all provider API keys are configured
+- **Local Services**: Ensure Ollama is running for local inference
+- **Network**: Check internet connectivity for cloud providers
+- **Rate Limits**: Wait for quota resets on limited services
+- **Support**: Contact system administrator if issues persist
+
+**Request ID:** ${Date.now()}-${agentId}-${errorLog?.length || 0}`;
   }
 }
