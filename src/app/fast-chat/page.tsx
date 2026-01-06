@@ -18,6 +18,18 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  model?: string;
+  tokensUsed?: number;
+  responseTime?: number;
+  usedProvider?: string;
+  fallbackUsed?: boolean;
+  note?: string;
+  errorLog?: Array<{
+    provider: string;
+    model: string;
+    error: string;
+    duration: number;
+  }>;
 }
 
 export default function FastChatPage() {
@@ -87,8 +99,26 @@ export default function FastChatPage() {
           role: "assistant",
           content: data.response,
           timestamp: new Date(),
+          model: data.model,
+          tokensUsed: data.tokensUsed,
+          responseTime: data.generationTime,
+          usedProvider: data.usedProvider,
+          fallbackUsed: data.fallbackUsed,
+          note: data.note,
+          errorLog: data.errorLog,
         };
         setMessages((prev) => [...prev, assistantMessage]);
+
+        // Show warning toast if fallback was used or errors occurred
+        if (data.fallbackUsed || (data.errorLog && data.errorLog.length > 0)) {
+          toast.warning("AI Provider Issues Detected", {
+            description: "Using fallback provider. Check system status for details.",
+            action: {
+              label: "View Status",
+              onClick: () => window.location.href = "/ai-agents/diagnostics",
+            },
+          });
+        }
       } else {
         throw new Error(data.error || "Failed to get response");
       }

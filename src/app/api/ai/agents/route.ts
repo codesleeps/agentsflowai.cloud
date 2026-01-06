@@ -11,6 +11,7 @@ import axios from "axios";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIMessage } from "@/shared/models/types";
 import { AIAgent } from "../../../../shared/models/ai-agents";
+import { checkOllamaHealth, isModelAvailable, suggestModelPull, getAvailableOllamaModels } from "@/server-lib/ollama-utils";
 
 // Structured error response types
 interface ProviderError {
@@ -36,7 +37,7 @@ interface AIAgentResponse {
 }
 
 // Module-level environment check (runs once on load)
-function verifyEnvironmentVariables() {
+async function verifyEnvironmentVariables() {
   const providers = {
     google: !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY),
     openrouter: !!process.env.OPENROUTER_API_KEY,
@@ -53,6 +54,30 @@ function verifyEnvironmentVariables() {
     console.warn('[AI Agents API] WARNING: No AI providers configured!');
   } else {
     console.log('[AI Agents API] Available providers:', availableProviders.join(', '));
+  }
+
+  // Ollama-specific checks
+  const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434 (default)';
+  console.log('[AI Agents API] Ollama URL:', ollamaUrl);
+
+  // Quick non-blocking health check for Ollama
+  try {
+    const ollamaHealthCheck = await Promise.race([
+      checkOllamaHealth(),
+      new Promise<{ available: boolean; models: string[]; error?: string }>((resolve) =>
+        setTimeout(() => resolve({ available: false, models: [], error: 'timeout' }), 2000)
+      )
+    ]);
+
+    if (ollamaHealthCheck.available) {
+      console.log('[AI Agents API] Ollama status: reachable');
+    } else {
+      console.log('[AI Agents API] Ollama status: unreachable');
+      console.log('[AI Agents API] Ollama not detected. Install from https://ollama.com or set OLLAMA_BASE_URL');
+    }
+  } catch (error) {
+    console.log('[AI Agents API] Ollama status: unreachable');
+    console.log('[AI Agents API] Ollama not detected. Install from https://ollama.com or set OLLAMA_BASE_URL');
   }
 }
 
@@ -473,6 +498,29 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
     process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
   console.log(`[Ollama Provider] Attempting model: ${agent.model} at ${OLLAMA_BASE_URL}`);
+
+  // Pre-flight checks
+  console.log(`[Ollama Provider] Running pre-flight checks for model: ${agent.model}`);
+
+  // 1. Check if Ollama service is running
+  const healthCheck = await checkOllamaHealth();
+  if (!healthCheck.available) {
+    const errorMessage = `Ollama service not running at ${OLLAMA_BASE_URL}. Start with: ollama serve`;
+    console.error(`[Ollama Provider] Pre-flight failed: ${errorMessage}`);
+    throw new Error(errorMessage);
+  }
+
+  // 2. Check if model is available
+  const modelAvailable = await isModelAvailable(agent.model);
+  if (!modelAvailable) {
+    const availableModelsResponse = await getAvailableOllamaModels();
+    const availableModels = availableModelsResponse.models;
+    const errorMessage = `Model '${agent.model}' not pulled. Run: ollama pull ${agent.model}. Available models: ${availableModels.join(', ') || 'none'}`;
+    console.error(`[Ollama Provider] Pre-flight failed: ${errorMessage}`);
+    throw new Error(errorMessage);
+  }
+
+  console.log(`[Ollama Provider] Pre-flight check passed: model=${agent.model}, available=true`);
 
   const requestPayload = {
     model: agent.model,

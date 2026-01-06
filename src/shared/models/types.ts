@@ -255,6 +255,18 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  model?: string;
+  tokensUsed?: number;
+  responseTime?: number;
+  usedProvider?: string;
+  fallbackUsed?: boolean;
+  note?: string;
+  errorLog?: Array<{
+    provider: string;
+    model: string;
+    error: string;
+    duration: number;
+  }>;
 }
 
 // New interface for agent responses

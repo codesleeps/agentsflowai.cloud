@@ -33,6 +33,7 @@ export interface AIAgent {
   costTier: "free" | "low" | "medium" | "high";
   isActive: boolean;
   usage_count?: number;
+  ollamaModelSize?: 'small' | 'medium' | 'large'; // For timeout estimation
 }
 
 export type AIAgentCategory =
@@ -185,6 +186,7 @@ export const AI_AGENTS: AIAgent[] = [
     defaultProvider: "google",
     costTier: "medium",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Generate React/Next.js components",
       "Debug JavaScript/TypeScript code",
@@ -233,6 +235,7 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
     defaultProvider: "google",
     costTier: "medium",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Analyze business metrics",
       "Identify trends and patterns",
@@ -279,6 +282,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     defaultProvider: "google",
     costTier: "medium",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Write blog posts and articles",
       "Create marketing copy",
@@ -377,6 +381,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     defaultProvider: "google",
     costTier: "medium",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Create social media posts",
       "Generate hashtag strategies",
@@ -424,6 +429,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
     defaultProvider: "google",
     costTier: "medium",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Keyword research",
       "On-page SEO optimization",
@@ -471,6 +477,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     defaultProvider: "ollama",
     costTier: "free",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Rapid responses",
       "General knowledge",
@@ -513,6 +520,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     defaultProvider: "google",
     costTier: "low",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Advanced reasoning",
       "Code generation",

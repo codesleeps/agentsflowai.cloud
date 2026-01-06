@@ -75,6 +75,31 @@ AgentsFlowAI is an AI-powered business automation platform designed to transform
    - AI Lead Qualification generating scores, budget estimates, and recommendations
    - Context-aware responses with service knowledge
 
+6. **Local AI with Ollama**
+   - **Benefits**: Free, private, no API limits, offline capability
+   - **Quick Start**: Install Ollama → Pull models → Configure environment
+   - **Setup Guide**: See `docs/OLLAMA_SETUP.md` for complete instructions
+   - **Models**: `mistral:7b`, `llama3.1:8b`, `gemma2:9b` for different use cases
+
+   ### Ollama vs Cloud Providers
+
+   | Feature | Ollama | Cloud AI (OpenAI/Google) |
+   |---------|--------|---------------------------|
+   | **Cost** | Free after setup | Pay per token/request |
+   | **Privacy** | 100% local | Data sent to providers |
+   | **Speed** | Fast (local inference) | Variable (network latency) |
+   | **Availability** | Always available | Rate limits, outages |
+   | **Setup** | One-time model download | API key configuration |
+   | **Offline** | ✅ Works offline | ❌ Requires internet |
+
+   ### Recommended Models by Use Case
+
+   | Use Case | Recommended Model | Size | Why |
+   |----------|-------------------|------|-----|
+   | **Fast Chat** | `mistral:7b` | 3.8GB | Fast responses, general purpose |
+   | **Code/Web Dev** | `llama3.1:8b` | 4.7GB | Better reasoning, technical tasks |
+   | **Content Creation** | `gemma2:9b` | 5.4GB | Creative writing, analysis |
+
 6. **UI/UX**
    - Clean, modern design with consistent styling
    - Responsive layout for all screen sizes

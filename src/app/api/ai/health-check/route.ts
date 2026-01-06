@@ -28,6 +28,11 @@ interface ProviderStatus {
   status: "healthy" | "degraded" | "unhealthy";
   latency_ms?: number;
   available_models?: string[];
+  missing_models?: Array<{
+    name: string;
+    pullCommand: string;
+    size: string;
+  }>;
   model?: string;
   error?: string;
 }
@@ -203,10 +208,29 @@ export async function GET() {
       : Promise.resolve({ status: "unhealthy" as const, model: "gpt-4o-mini", error: "OPENAI_API_KEY not configured" }),
   ]);
 
-  // Get Ollama models
+  // Get Ollama models and check for missing required models
   const ollamaModels = await getOllamaModels();
   if (ollamaResult.status === "healthy") {
     ollamaResult.available_models = ollamaModels;
+
+    // Check for missing agent-required models
+    const requiredModels = [
+      { name: 'mistral:7b', size: '3.8GB' },
+      { name: 'llama3.1:8b', size: '4.7GB' },
+      { name: 'gemma2:9b', size: '5.4GB' },
+    ];
+
+    const missingModels = requiredModels.filter(model => !ollamaModels.includes(model.name));
+
+    if (missingModels.length > 0) {
+      ollamaResult.status = "degraded";
+      ollamaResult.missing_models = missingModels.map(model => ({
+        name: model.name,
+        pullCommand: `ollama pull ${model.name}`,
+        size: model.size,
+      }));
+      ollamaResult.error = `${missingModels.length} required models not available`;
+    }
   }
 
   const providers = {

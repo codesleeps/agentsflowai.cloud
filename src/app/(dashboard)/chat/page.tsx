@@ -14,6 +14,7 @@ import { ChatArea } from "@/components/chat/ChatArea";
 import { cn } from "@/client-lib/utils";
 import ReactMarkdown from "react-markdown";
 import type { ChatMessage } from "@/shared/models/types";
+import { toast } from "sonner";
 
 
 const SERVICES = [
@@ -82,20 +83,50 @@ export default function ChatPage() {
         content: m.content,
       }));
 
-      // Use fallback handler to get a validated response
-      const agentResp = await getAgentResponseWithFallback(
-        "fast-chat-agent",
-        userMessage.content,
-        conversationHistory
-      );
+      // Call the agents API directly to get full metadata
+      const response = await fetch("/api/ai/agents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agentId: "fast-chat-agent",
+          message: userMessage.content,
+          conversationHistory,
+        }),
+      });
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: agentResp.content,
-        timestamp: new Date(),
-      };
+      const data = await response.json();
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      if (response.ok) {
+        const assistantMessage: ChatMessage = {
+          role: "assistant",
+          content: data.response,
+          timestamp: new Date(),
+          model: data.model,
+          tokensUsed: data.tokensUsed,
+          responseTime: data.generationTime,
+          usedProvider: data.usedProvider,
+          fallbackUsed: data.fallbackUsed,
+          note: data.note,
+          errorLog: data.errorLog,
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        // Show warning toast if fallback was used or errors occurred
+        if (data.fallbackUsed || (data.errorLog && data.errorLog.length > 0)) {
+          toast.warning("AI Provider Issues Detected", {
+            description: "Using fallback provider. Check system status for details.",
+            action: {
+              label: "View Status",
+              onClick: () => window.location.href = "/ai-agents/diagnostics",
+            },
+          });
+        }
+      } else {
+        throw new Error(data.error || "Failed to get response");
+      }
     } catch (error) {
       console.error("Error generating response:", error);
       const errorMessage: ChatMessage = {
