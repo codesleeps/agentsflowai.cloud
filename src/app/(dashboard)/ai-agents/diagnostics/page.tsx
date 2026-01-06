@@ -42,14 +42,12 @@ interface HealthCheckResponse {
   providers: {
     ollama: ProviderStatus;
     google: ProviderStatus;
-    anthropic: ProviderStatus;
     openai: ProviderStatus;
     openrouter: ProviderStatus;
   };
   environment: {
     ollama_configured: boolean;
     google_key_configured: boolean;
-    anthropic_key_configured: boolean;
     openai_key_configured: boolean;
     openrouter_key_configured: boolean;
   };
@@ -382,12 +380,6 @@ export default function DiagnosticsPage() {
               status={healthData?.providers.google || { status: "unhealthy" }}
               onTest={() => handleTestProvider("google")}
               isTesting={testingProvider === "google"}
-            />
-            <ProviderCard
-              name="Anthropic Claude"
-              status={healthData?.providers.anthropic || { status: "unhealthy" }}
-              onTest={() => handleTestProvider("anthropic")}
-              isTesting={testingProvider === "anthropic"}
             />
             <ProviderCard
               name="OpenAI"

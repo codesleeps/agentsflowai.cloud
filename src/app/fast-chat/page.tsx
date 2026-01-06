@@ -34,7 +34,7 @@ interface Message {
 }
 
 export default function FastChatPage() {
-  const [selectedModelId, setSelectedModelId] = useState("gemini-2.5-flash");
+  const [selectedModelId, setSelectedModelId] = useState("gemini-1.5-flash");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -82,7 +82,7 @@ export default function FastChatPage() {
         },
         body: JSON.stringify({
           agentId:
-            selectedModelId === "gemini-2.5-flash-image" ? "nano-banana-agent" :
+            selectedModelId === "gemini-1.5-flash" ? "nano-banana-agent" :
               selectedModelId === "mistral:7b" ? "fast-chat-agent" :
                 "gemini-agent",
           message: messageContent.trim(),
@@ -305,8 +305,8 @@ export default function FastChatPage() {
             onSend={(val) => handleSend(val)}
             isLoading={isTyping}
             models={[
-              { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", isNew: true, priority: 1 },
-              { id: "gemini-2.5-flash-image", name: "Nano Banana", provider: "Google", isNew: true },
+              { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "Google", isNew: true, priority: 1 },
+              { id: "gemini-1.5-flash", name: "Nano Banana", provider: "Google", isNew: true },
               { id: "llama-3.1-405b", name: "Llama 3.1 405B", provider: "OpenRouter" },
               { id: "mistral:7b", name: "Mistral 7B (Local)", provider: "Ollama" },
             ]}

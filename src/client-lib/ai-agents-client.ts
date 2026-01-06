@@ -23,6 +23,16 @@ export function useAIAgents() {
   return useSWR<AIAgent[]>('/ai/agents', fetcher);
 }
 
+// Provider error type matching server shape
+interface ProviderError {
+  provider: string;
+  model: string;
+  error: string;
+  errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'unknown';
+  duration: number;
+  timestamp: Date;
+}
+
 // Generate response from an agent
 export async function generateAgentResponse(
   agentId: string,
@@ -39,6 +49,7 @@ export async function generateAgentResponse(
     usedProvider?: string;
     fallbackUsed?: boolean;
     note?: string;
+    errorLog?: ProviderError[];
   }>('/ai/agents', {
     agentId,
     message,
@@ -248,6 +259,7 @@ export async function getAgentResponseWithFallback(
         usedProvider: raw.usedProvider,
         fallbackUsed: raw.fallbackUsed,
         note: raw.note,
+        errorLog: raw.errorLog, // Pass through errorLog so consumers can render provider failure details
       }
     };
     // Validate using Zod schema; will throw if invalid
@@ -257,7 +269,7 @@ export async function getAgentResponseWithFallback(
     console.error("Agent response validation failed or API error:", e);
     // Return a generic fallback message
     return {
-      content: "I’m having trouble generating a response right now. Please try again later.",
+      content: "I'm having trouble generating a response right now. Please try again later.",
       role: "assistant",
     };
   }

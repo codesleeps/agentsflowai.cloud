@@ -16,7 +16,7 @@ const TEST_AGENT: AIAgent = {
   provider: "ollama",
   supportedProviders: [
     { provider: "ollama", model: "mistral:7b", priority: 1 },
-    { provider: "google", model: "gemini-2.5-flash", priority: 2 },
+    { provider: "google", model: "gemini-1.5-flash", priority: 2 },
     { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", priority: 3 },
   ],
   defaultProvider: "ollama",
@@ -49,7 +49,6 @@ interface HealthCheckResponse {
   environment: {
     ollama_configured: boolean;
     google_key_configured: boolean;
-    anthropic_key_configured: boolean;
     openai_key_configured: boolean;
     openrouter_key_configured: boolean;
   };
@@ -187,9 +186,8 @@ export async function GET() {
 
   // Check environment variables
   const environment = {
-    ollama_configured: !!(process.env.OLLAMA_BASE_URL || true), // Ollama can work without explicit config
+    ollama_configured: !!process.env.OLLAMA_BASE_URL,
     google_key_configured: !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY),
-    anthropic_key_configured: !!process.env.ANTHROPIC_API_KEY,
     openai_key_configured: !!process.env.OPENAI_API_KEY,
     openrouter_key_configured: !!process.env.OPENROUTER_API_KEY,
   };
@@ -198,8 +196,8 @@ export async function GET() {
   const [ollamaResult, googleResult, openrouterResult, openaiResult] = await Promise.all([
     testProviderWithTimeout("ollama", "mistral:7b"),
     environment.google_key_configured
-      ? testProviderWithTimeout("google", "gemini-2.5-flash")
-      : Promise.resolve({ status: "unhealthy" as const, model: "gemini-2.5-flash", error: "GOOGLE_API_KEY not configured" }),
+      ? testProviderWithTimeout("google", "gemini-1.5-flash")
+      : Promise.resolve({ status: "unhealthy" as const, model: "gemini-1.5-flash", error: "GOOGLE_API_KEY not configured" }),
     environment.openrouter_key_configured
       ? testProviderWithTimeout("openrouter", "meta-llama/llama-3.3-70b-instruct:free")
       : Promise.resolve({ status: "unhealthy" as const, model: "meta-llama/llama-3.3-70b-instruct:free", error: "OPENROUTER_API_KEY not configured" }),
@@ -210,7 +208,8 @@ export async function GET() {
 
   // Get Ollama models and check for missing required models
   const ollamaModels = await getOllamaModels();
-  if (ollamaResult.status === "healthy") {
+  // Always compute missing models when Ollama is reachable (has models list, even if empty)
+  if (ollamaModels.length > 0 || ollamaResult.status !== "unhealthy" || (ollamaResult.error && !ollamaResult.error.includes("not configured"))) {
     ollamaResult.available_models = ollamaModels;
 
     // Check for missing agent-required models
@@ -245,7 +244,10 @@ export async function GET() {
   const totalConfigured = Object.values(environment).filter(Boolean).length;
 
   let overall_status: "healthy" | "degraded" | "unhealthy";
-  if (healthyCount === totalConfigured) {
+  // Guard: when no providers are configured, system is unhealthy
+  if (totalConfigured === 0) {
+    overall_status = "unhealthy";
+  } else if (healthyCount === totalConfigured) {
     overall_status = "healthy";
   } else if (healthyCount >= Math.ceil(totalConfigured / 2)) {
     overall_status = "degraded";

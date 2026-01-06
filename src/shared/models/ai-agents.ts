@@ -181,7 +181,7 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "gemini-2.5-pro",
+    model: "gemini-1.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -199,7 +199,7 @@ export const AI_AGENTS: AIAgent[] = [
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-1.5-pro",
         priority: 1,
       },
       {
@@ -230,7 +230,7 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "gemini-2.5-pro",
+    model: "gemini-1.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -247,7 +247,7 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-1.5-pro",
         priority: 1,
       },
       {
@@ -277,7 +277,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "gemini-2.5-pro",
+    model: "gemini-1.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -294,7 +294,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-1.5-pro",
         priority: 1,
       },
       {
@@ -309,7 +309,7 @@ Always provide specific, actionable recommendations. Use data to support your in
       },
       {
         provider: "google",
-        model: "gemini-2.5-flash-image",
+        model: "gemini-1.5-flash",
         priority: 4,
       },
     ],
@@ -330,7 +330,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "gemini-2.5-pro",
+    model: "gemini-1.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -346,7 +346,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-1.5-pro",
         priority: 1,
       },
       {
@@ -376,7 +376,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "gemini-2.5-pro",
+    model: "gemini-1.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -393,7 +393,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-1.5-pro",
         priority: 1,
       },
       {
@@ -424,7 +424,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       "Search engine optimization, keywords, meta tags, and rankings",
     icon: "🔍",
     category: "seo",
-    model: "gemini-2.5-pro",
+    model: "gemini-1.5-pro",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -441,7 +441,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-pro",
+        model: "gemini-1.5-pro",
         priority: 1,
       },
       {
@@ -498,7 +498,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       },
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         priority: 3
       },
     ],
@@ -515,7 +515,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Powered by Google Gemini Flash for advanced reasoning and speed",
     icon: "✨",
     category: "fast-chat",
-    model: "gemini-2.5-flash",
+    model: "gemini-1.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "low",
@@ -531,7 +531,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         priority: 1
       },
       {
@@ -554,10 +554,10 @@ Always follow current SEO best practices. Focus on user intent and search qualit
   {
     id: "nano-banana-agent",
     name: "Nano Banana Agent",
-    description: "Creative image generation and editing powered by Gemini 2.5 Flash Image",
+    description: "Creative image generation and editing powered by Gemini 1.5 Flash",
     icon: "🍌",
     category: "content-creation",
-    model: "gemini-2.5-flash-image",
+    model: "gemini-1.5-flash",
     provider: "google",
     defaultProvider: "google",
     costTier: "medium",
@@ -572,12 +572,12 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "google",
-        model: "gemini-2.5-flash-image",
+        model: "gemini-1.5-flash",
         priority: 1,
       },
       {
         provider: "google",
-        model: "gemini-3-pro-image-preview",
+        model: "gemini-1.5-pro",
         priority: 2,
       },
     ],

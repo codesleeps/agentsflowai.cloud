@@ -587,6 +587,27 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
   }
 }
 
+// Helper function to classify error type from error message
+function classifyErrorType(errorMessage: string): 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'unknown' {
+  const lowerError = errorMessage.toLowerCase();
+  
+  if (lowerError.includes('timeout') || lowerError.includes('timeouterror') || lowerError.includes('aborted')) {
+    return 'timeout';
+  } else if (lowerError.includes('rate limit') || lowerError.includes('quota') || lowerError.includes('too many requests')) {
+    return 'rate_limit';
+  } else if (lowerError.includes('api key') || lowerError.includes('authentication') || lowerError.includes('unauthorized') || lowerError.includes('forbidden')) {
+    return 'auth_error';
+  } else if (lowerError.includes('model') && (lowerError.includes('not found') || lowerError.includes('not available'))) {
+    return 'model_not_found';
+  } else if (lowerError.includes('network') || lowerError.includes('fetch') || lowerError.includes('econnrefused') || lowerError.includes('connection refused')) {
+    return 'network_error';
+  } else if (lowerError.includes('api error') || lowerError.includes('server error')) {
+    return 'api_error';
+  }
+  
+  return 'unknown';
+}
+
 async function executeWithFallback(
   agent: AIAgent,
   message: string,
@@ -660,7 +681,8 @@ async function executeWithFallback(
         status: "success",
       });
 
-      return {
+      // Include errorLog if there were prior failures before fallback succeeded
+      const responsePayload: AIAgentResponse = {
         response: result.response,
         model,
         agentId: agent.id,
@@ -670,6 +692,20 @@ async function executeWithFallback(
         fallbackUsed: provider !== agent.defaultProvider,
         usedProvider: provider,
       };
+
+      // Add errorLog to successful response if fallback was used and there were prior failures
+      if (errorLog.length > 0 && provider !== agent.defaultProvider) {
+        responsePayload.errorLog = errorLog.map(entry => ({
+          provider: entry.provider,
+          model: entry.model,
+          error: entry.error,
+          errorType: classifyErrorType(entry.error),
+          duration: entry.duration,
+          timestamp: entry.timestamp,
+        }));
+      }
+
+      return responsePayload;
     } catch (error) {
       const providerDuration = Date.now() - providerAttemptStartTime;
       lastError = error instanceof Error ? error : new Error(String(error));
