@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, Loader2, Sparkles, Activity } from "lucide-react";
+import { Bot, Send, Loader2, Sparkles, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { ChatArea } from "@/components/chat/ChatArea";
@@ -46,6 +47,7 @@ export default function FastChatPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
+  const [hasProviderIssues, setHasProviderIssues] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -111,13 +113,18 @@ export default function FastChatPage() {
 
         // Show warning toast if fallback was used or errors occurred
         if (data.fallbackUsed || (data.errorLog && data.errorLog.length > 0)) {
+          setHasProviderIssues(true);
           toast.warning("AI Provider Issues Detected", {
-            description: "Using fallback provider. Check system status for details.",
+            description: `${data.fallbackUsed ? 'Fallback provider activated. ' : ''}${data.errorLog?.length || 0} provider(s) failed.`,
             action: {
-              label: "View Status",
+              label: "View Diagnostics",
               onClick: () => window.location.href = "/ai-agents/diagnostics",
             },
+            duration: 8000,
           });
+        } else {
+          // Reset flag if no issues
+          setHasProviderIssues(false);
         }
       } else {
         throw new Error(data.error || "Failed to get response");
@@ -128,11 +135,19 @@ export default function FastChatPage() {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content:
-          "I'm having trouble connecting right now. Please try again in a moment.",
+          "I'm having trouble connecting right now. Please try again in a moment or check the system status.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-      toast.error("Connection error. Please try again.");
+      setHasProviderIssues(true);
+      toast.error("Connection Error", {
+        description: "Unable to reach AI providers. Check system diagnostics.",
+        action: {
+          label: "View Diagnostics",
+          onClick: () => window.location.href = "/ai-agents/diagnostics",
+        },
+        duration: 8000,
+      });
     } finally {
       setIsTyping(false);
     }
@@ -168,11 +183,30 @@ export default function FastChatPage() {
             <div>
               <h1 className="text-xl font-semibold">Fast Chat</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1 animate-pulse" />
-                  Online
+                <Badge 
+                  variant="secondary" 
+                  className={cn(
+                    "transition-all",
+                    hasProviderIssues 
+                      ? "bg-amber-500/20 text-amber-700 dark:text-amber-400" 
+                      : "bg-green-500/20 text-green-700 dark:text-green-400"
+                  )}
+                >
+                  <span 
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full mr-1 animate-pulse",
+                      hasProviderIssues ? "bg-amber-500" : "bg-green-500"
+                    )} 
+                  />
+                  {hasProviderIssues ? "Fallback Mode" : "Online"}
                 </Badge>
-                <Link href="/ai-agents/diagnostics" className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                <Link 
+                  href="/ai-agents/diagnostics" 
+                  className={cn(
+                    "text-[10px] hover:text-primary transition-colors flex items-center gap-1",
+                    hasProviderIssues ? "text-amber-600 font-semibold" : "text-muted-foreground"
+                  )}
+                >
                   <Activity className="h-3 w-3" />
                   System Status
                 </Link>
@@ -194,6 +228,24 @@ export default function FastChatPage() {
             )}
           </div>
         </div>
+        
+        {/* Provider Status Alert */}
+        {hasProviderIssues && (
+          <div className="mx-auto max-w-4xl px-4 pb-3 sm:px-6 lg:px-8">
+            <Alert className="bg-amber-500/10 border-amber-500/30">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-xs">
+                <span className="font-semibold">AI Provider Issues Detected:</span> Primary providers unavailable. Using fallback provider.{" "}
+                <Link 
+                  href="/ai-agents/diagnostics" 
+                  className="underline underline-offset-2 hover:text-primary font-medium"
+                >
+                  View detailed diagnostics →
+                </Link>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
       </header>
 
       {/* Main Chat Area */}

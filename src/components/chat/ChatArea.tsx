@@ -44,24 +44,29 @@ function ErrorDetails({ errorLog }: { errorLog: Array<{ provider: string; model:
 
     return (
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
                 <CollapsibleTrigger asChild>
                     <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-7 px-2 text-xs hover:bg-background/50"
+                        className="h-7 px-2 text-xs hover:bg-destructive/10 text-destructive hover:text-destructive"
                     >
                         <span className="flex items-center gap-1.5">
-                            <AlertTriangle className="h-3 w-3" />
-                            View Error Details
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            View Error Details ({errorLog.length})
                             {isOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </span>
                     </Button>
                 </CollapsibleTrigger>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs bg-primary/5 border-primary/30 hover:bg-primary/10" 
+                    asChild
+                >
                     <Link href="/ai-agents/diagnostics" className="flex items-center gap-1">
-                        <Activity className="h-3 w-3" />
-                        System Status
+                        <Activity className="h-3.5 w-3.5" />
+                        Check System Status
                     </Link>
                 </Button>
             </div>
@@ -70,7 +75,10 @@ function ErrorDetails({ errorLog }: { errorLog: Array<{ provider: string; model:
                 <Alert className="bg-muted/50 border-muted">
                     <AlertDescription>
                         <div className="space-y-2">
-                            <p className="text-xs font-semibold mb-2">Provider Attempts:</p>
+                            <p className="text-xs font-semibold mb-2 text-destructive flex items-center gap-1.5">
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                Provider Failures ({errorLog.length} attempt{errorLog.length !== 1 ? 's' : ''}):
+                            </p>
                             {errorLog.map((err, idx) => (
                                 <div 
                                     key={idx} 
@@ -211,20 +219,31 @@ export function ChatArea({
 
                             {/* Fallback indicator and error details */}
                             {message.role === "assistant" && (message.fallbackUsed || message.errorLog) && (
-                                <div className="mt-3 space-y-2">
+                                <div className="mt-3 space-y-2.5">
                                     {message.fallbackUsed && (
-                                        <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 flex items-center gap-1 w-fit">
-                                            <AlertTriangle className="h-3 w-3" />
-                                            Fallback Used
-                                        </Badge>
+                                        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                                            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                            <div className="flex-1 space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 h-5 px-2 text-[10px] font-bold">
+                                                        FALLBACK PROVIDER USED
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-xs text-amber-700/80 dark:text-amber-600/80">
+                                                    Primary AI provider(s) unavailable. Response generated using backup provider.
+                                                </p>
+                                            </div>
+                                        </div>
                                     )}
 
                                     {message.note && (
-                                        <p className="text-xs text-muted-foreground italic">{message.note}</p>
+                                        <p className="text-xs text-muted-foreground italic pl-2 border-l-2 border-muted">{message.note}</p>
                                     )}
 
                                     {message.errorLog && message.errorLog.length > 0 && (
-                                        <ErrorDetails errorLog={message.errorLog} />
+                                        <div className="p-2.5 rounded-lg bg-destructive/5 border border-destructive/20">
+                                            <ErrorDetails errorLog={message.errorLog} />
+                                        </div>
                                     )}
                                 </div>
                             )}

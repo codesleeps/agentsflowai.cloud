@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, User, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { Bot, Send, User, Sparkles, Loader2, RefreshCw, Activity, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateAgentResponse, getAgentResponseWithFallback } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
@@ -51,6 +52,7 @@ export default function ChatPage() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [hasProviderIssues, setHasProviderIssues] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const services = SERVICES;
 
@@ -116,13 +118,18 @@ export default function ChatPage() {
 
         // Show warning toast if fallback was used or errors occurred
         if (data.fallbackUsed || (data.errorLog && data.errorLog.length > 0)) {
+          setHasProviderIssues(true);
           toast.warning("AI Provider Issues Detected", {
-            description: "Using fallback provider. Check system status for details.",
+            description: `${data.fallbackUsed ? 'Fallback provider activated. ' : ''}${data.errorLog?.length || 0} provider(s) failed.`,
             action: {
-              label: "View Status",
+              label: "View Diagnostics",
               onClick: () => window.location.href = "/ai-agents/diagnostics",
             },
+            duration: 8000,
           });
+        } else {
+          // Reset flag if no issues
+          setHasProviderIssues(false);
         }
       } else {
         throw new Error(data.error || "Failed to get response");
@@ -131,10 +138,19 @@ export default function ChatPage() {
       console.error("Error generating response:", error);
       const errorMessage: ChatMessage = {
         role: "assistant",
-        content: "I apologize, but I encountered an issue processing your request. Please try again or contact our team directly for assistance.",
+        content: "I apologize, but I encountered an issue processing your request. Please check the system diagnostics or try again later.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
+      setHasProviderIssues(true);
+      toast.error("Connection Error", {
+        description: "Unable to reach AI providers. Check system diagnostics.",
+        action: {
+          label: "View Diagnostics",
+          onClick: () => window.location.href = "/ai-agents/diagnostics",
+        },
+        duration: 8000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -167,35 +183,80 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-1 flex-col h-full">
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Bot className="h-5 w-5 text-primary" />
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bot className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="font-semibold flex items-center gap-2">
+                  AI Chat Agent
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "transition-all",
+                      hasProviderIssues 
+                        ? "bg-amber-500/20 text-amber-700 dark:text-amber-400" 
+                        : "bg-green-500/20 text-green-700 dark:text-green-400"
+                    )}
+                  >
+                    <span 
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full mr-1 animate-pulse",
+                        hasProviderIssues ? "bg-amber-500" : "bg-green-500"
+                      )} 
+                    />
+                    {hasProviderIssues ? "Fallback Mode" : "Online"}
+                  </Badge>
+                </h1>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Powered by AgentsFlowAI
+                  </p>
+                  <Link 
+                    href="/ai-agents/diagnostics" 
+                    className={cn(
+                      "text-[10px] hover:text-primary transition-colors flex items-center gap-1",
+                      hasProviderIssues ? "text-amber-600 font-semibold" : "text-muted-foreground"
+                    )}
+                  >
+                    <Activity className="h-3 w-3" />
+                    System Status
+                  </Link>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="font-semibold flex items-center gap-2">
-                AI Chat Agent
-                <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1 animate-pulse" />
-                  Online
-                </Badge>
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Powered by AgentsFlowAI
-              </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleReset}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                New Chat
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/">Back to Dashboard</Link>
+              </Button>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleReset}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              New Chat
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/">Back to Dashboard</Link>
-            </Button>
           </div>
         </div>
+        
+        {/* Provider Status Alert */}
+        {hasProviderIssues && (
+          <div className="px-4 pb-3">
+            <Alert className="bg-amber-500/10 border-amber-500/30">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-xs">
+                <span className="font-semibold">AI Provider Issues Detected:</span> Primary providers unavailable. Using fallback provider.{" "}
+                <Link 
+                  href="/ai-agents/diagnostics" 
+                  className="underline underline-offset-2 hover:text-primary font-medium"
+                >
+                  View detailed diagnostics →
+                </Link>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 overflow-hidden bg-transparent">
