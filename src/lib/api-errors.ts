@@ -15,6 +15,17 @@ export class AuthenticationError extends Error {
   }
 }
 
+export class APIKeyExpiredError extends Error {
+  constructor(
+    public provider: string,
+    public renewalUrl: string,
+    public envVarName: string
+  ) {
+    super(`Your ${provider} API key has expired. Renew it at ${renewalUrl} and update ${envVarName} in your environment variables`);
+    this.name = 'APIKeyExpiredError';
+  }
+}
+
 export class AuthorizationError extends Error {
   constructor(message: string = 'Access denied') {
     super(message);
@@ -67,6 +78,15 @@ export function handleApiError(error: Error): NextResponse {
     errorCode = 'VALIDATION_ERROR';
     message = 'Validation failed';
     details = error.errors;
+  } else if (error instanceof APIKeyExpiredError) {
+    statusCode = 401;
+    errorCode = 'API_KEY_EXPIRED';
+    message = error.message;
+    details = {
+      provider: error.provider,
+      renewalUrl: error.renewalUrl,
+      envVarName: error.envVarName
+    };
   } else if (error instanceof AuthenticationError) {
     statusCode = 401;
     errorCode = 'AUTHENTICATION_ERROR';

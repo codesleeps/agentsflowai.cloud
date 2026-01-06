@@ -1,5 +1,6 @@
 import { logModelUsage } from "./ai-usage-tracker";
 import { AIModelUsage } from "@prisma/client";
+import { APIKeyExpiredError } from "../lib/api-errors";
 
 // Type definitions for the fallback handler
 interface GenerationRequest {
@@ -66,8 +67,17 @@ export async function handleAnthropicProvider(
     );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error?.message || response.statusText;
+      
+      // Check for expired API key
+      if (errorMessage.toLowerCase().includes('expired') || 
+          (response.status === 401 && errorMessage.toLowerCase().includes('authentication'))) {
+        throw new APIKeyExpiredError('Anthropic', 'https://console.anthropic.com/', 'ANTHROPIC_API_KEY');
+      }
+      
       throw new Error(
-        `Anthropic API error: ${response.status} ${response.statusText}`,
+        `Anthropic API error: ${response.status} ${errorMessage}`,
       );
     }
 

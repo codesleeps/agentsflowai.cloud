@@ -28,7 +28,7 @@ interface ProviderError {
   provider: string;
   model: string;
   error: string;
-  errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'unknown';
+  errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'api_key_expired' | 'unknown';
   duration: number;
   timestamp: Date;
 }

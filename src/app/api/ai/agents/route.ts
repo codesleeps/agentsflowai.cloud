@@ -5,7 +5,7 @@ import {
   validateAndSanitize,
 } from "@/lib/validation-schemas";
 import { requireAuth } from "@/lib/auth-helpers";
-import { handleApiError } from "@/lib/api-errors";
+import { handleApiError, APIKeyExpiredError } from "@/lib/api-errors";
 import * as cheerio from "cheerio";
 import axios from "axios";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
@@ -18,7 +18,7 @@ interface ProviderError {
   provider: string;
   model: string;
   error: string;
-  errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'unknown';
+  errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'api_key_expired' | 'unknown';
   duration: number;
   timestamp: Date;
 }
@@ -83,6 +83,39 @@ async function verifyEnvironmentVariables() {
 
 // Run verification on module load
 verifyEnvironmentVariables();
+
+// Helper function to parse provider error responses for expiration detection
+async function parseProviderError(response: Response): Promise<{
+  isExpired: boolean;
+  message: string;
+  reason?: string;
+}> {
+  try {
+    const errorBody = await response.json();
+    const errorMessage = errorBody.error?.message || errorBody.message || JSON.stringify(errorBody);
+    const lowerMessage = errorMessage.toLowerCase();
+    
+    // Check for expiration indicators
+    const isExpired = lowerMessage.includes('expired') || 
+                     lowerMessage.includes('api_key_invalid') || 
+                     lowerMessage.includes('renew');
+    
+    // Extract reason if available (Google API structure)
+    const reason = errorBody.error?.details?.[0]?.reason || errorBody.error?.reason;
+    
+    return {
+      isExpired: isExpired || reason === 'API_KEY_INVALID',
+      message: errorMessage,
+      reason
+    };
+  } catch (parseError) {
+    // If parsing fails, return the status text
+    return {
+      isExpired: false,
+      message: response.statusText,
+    };
+  }
+}
 
 // Helper to extract text from URL
 async function fetchUrlContent(url: string): Promise<string | null> {
@@ -298,11 +331,17 @@ export async function handleGoogleProvider(
         const attemptDuration = Date.now() - attemptStartTime;
         lastError = error;
 
-        // Determine error type
+        // Determine error type and check for expired API key
         let errorType = 'unknown';
         let errorMessage = error instanceof Error ? error.message : String(error);
+        const lowerError = errorMessage.toLowerCase();
 
-        if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
+        // Check for expired API key first (priority check)
+        if (lowerError.includes('expired') || lowerError.includes('api_key_invalid') || lowerError.includes('renew')) {
+          errorType = 'api_key_expired';
+          console.warn(`[Google Provider] Model ${modelName} failed after ${attemptDuration}ms: ${errorType} - API key expired`);
+          throw new APIKeyExpiredError('Google', 'https://makersuite.google.com/app/apikey', 'GOOGLE_API_KEY');
+        } else if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
           errorType = 'timeout';
         } else if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
           errorType = 'rate_limit';
@@ -317,6 +356,12 @@ export async function handleGoogleProvider(
         }
 
         console.warn(`[Google Provider] Model ${modelName} failed after ${attemptDuration}ms: ${errorType} - ${errorMessage}`);
+        
+        // Update lastError with enhanced message for expired keys
+        if (errorType === 'api_key_expired') {
+          lastError = new Error(errorMessage);
+        }
+        
         continue;
       }
     }
@@ -391,13 +436,19 @@ export async function handleOpenRouter(
 
     if (!response.ok) {
       const requestDuration = Date.now() - requestStartTime;
-      const errorData = await response.json().catch(() => ({}));
-
+      
+      // Parse error response to check for expiration
+      const errorInfo = await parseProviderError(response.clone());
+      
       // Parse specific OpenRouter error codes
       let errorType = 'unknown';
-      let errorDetails = errorData.error?.message || response.statusText;
+      let errorDetails = errorInfo.message;
 
-      if (response.status === 401) {
+      // Check for expired API key first
+      if (errorInfo.isExpired || (response.status === 401 && errorInfo.message.toLowerCase().includes('expired'))) {
+        console.error(`[OpenRouter Provider] Model ${agent.model} failed (${response.status}) after ${requestDuration}ms: api_key_expired - API key expired`);
+        throw new APIKeyExpiredError('OpenRouter', 'https://openrouter.ai/keys', 'OPENROUTER_API_KEY');
+      } else if (response.status === 401) {
         errorType = 'auth_error';
         errorDetails = 'Authentication failed - invalid API key';
       } else if (response.status === 403) {
@@ -482,7 +533,15 @@ export async function handleOpenAI(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+    const errorMessage = errorData.error?.message || response.statusText;
+    
+    // Check for expired API key
+    if (errorMessage.toLowerCase().includes('expired') || 
+        (response.status === 401 && errorMessage.toLowerCase().includes('invalid'))) {
+      throw new APIKeyExpiredError('OpenAI', 'https://platform.openai.com/api-keys', 'OPENAI_API_KEY');
+    }
+    
+    throw new Error(`OpenAI API error: ${errorMessage}`);
   }
 
   const data = await response.json();
@@ -588,10 +647,13 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
 }
 
 // Helper function to classify error type from error message
-function classifyErrorType(errorMessage: string): 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'unknown' {
+function classifyErrorType(errorMessage: string): 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'api_key_expired' | 'unknown' {
   const lowerError = errorMessage.toLowerCase();
   
-  if (lowerError.includes('timeout') || lowerError.includes('timeouterror') || lowerError.includes('aborted')) {
+  // Priority check for expired key detection before generic auth error
+  if (lowerError.includes('expired') || lowerError.includes('renew') || lowerError.includes('api_key_invalid')) {
+    return 'api_key_expired';
+  } else if (lowerError.includes('timeout') || lowerError.includes('timeouterror') || lowerError.includes('aborted')) {
     return 'timeout';
   } else if (lowerError.includes('rate limit') || lowerError.includes('quota') || lowerError.includes('too many requests')) {
     return 'rate_limit';
@@ -783,7 +845,18 @@ function generateFallbackResponse(agentId: string, message: string, errorLog?: A
       diagnosticSection += `   Error: ${entry.error}\n`;
 
       // Generate troubleshooting suggestions based on error type
-      if (entry.error.includes('API key') || entry.error.includes('authentication') || entry.error.includes('auth_error')) {
+      const errorType = classifyErrorType(entry.error);
+      
+      if (errorType === 'api_key_expired') {
+        const providerUpper = entry.provider.toUpperCase();
+        const renewalUrls = {
+          google: 'https://makersuite.google.com/app/apikey',
+          openrouter: 'https://openrouter.ai/keys',
+          anthropic: 'https://console.anthropic.com/settings/keys'
+        };
+        const renewalUrl = renewalUrls[entry.provider as keyof typeof renewalUrls] || 'your provider dashboard';
+        troubleshootingSteps.push(`🔑 **${providerUpper} API Key Expired**: Renew at ${renewalUrl} → Update \`${providerUpper}_API_KEY\` in your \`.env\` file → Restart application`);
+      } else if (entry.error.includes('API key') || entry.error.includes('authentication') || entry.error.includes('auth_error')) {
         troubleshootingSteps.push(`🔑 **${entry.provider.toUpperCase()} API Key**: Check that \`${entry.provider.toUpperCase()}_API_KEY\` is set in your environment variables`);
       } else if (entry.error.includes('timeout')) {
         troubleshootingSteps.push(`⏱️ **${entry.provider.toUpperCase()} Timeout**: The ${entry.provider} service took too long to respond. Try again later or check service status`);

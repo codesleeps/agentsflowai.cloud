@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validateProviderKeys, getProviderStatus, getAllProviderStatuses, type ProviderValidationResult } from "./startup-validation";
 
 const serverEnvSchema = z.object({
   // Database
@@ -107,6 +108,19 @@ export function validateEnv(): Env {
           );
         }
       }
+
+      // Check if we're in build mode
+      const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
+        process.env.npm_lifecycle_event === 'build' ||
+        !process.env.NODE_ENV;
+
+      // Run provider validation only on server-side and not during build time
+      if (!isBuildTime) {
+        // Run provider validation asynchronously and don't block startup
+        validateProviderKeys().catch((error) => {
+          console.warn('[Startup Validation] Provider validation failed:', error);
+        });
+      }
     } else {
       // On the client, only validate client variables
       // We cast the result to full Env type but server props will be missing (undefined)
@@ -150,3 +164,8 @@ export function getEnv(): Env {
   }
   return validatedEnv;
 }
+
+/**
+ * Export provider status functions for external access
+ */
+export { getProviderStatus, getAllProviderStatuses, type ProviderValidationResult };
