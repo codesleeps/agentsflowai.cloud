@@ -5,6 +5,7 @@ import { Inter } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import { Toaster } from "@/components/ui/sonner";
 import { validateEnv } from "@/lib/env-validation";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.className}`}>
+      <GoogleAnalytics />
       <body className="min-h-screen">
         <Providers
           attribute="class"
