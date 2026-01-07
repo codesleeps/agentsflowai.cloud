@@ -26,12 +26,15 @@ async function getProviderCosts(): Promise<AIProviderCost[]> {
 
 export async function logModelUsage(params: LogUsageParams) {
   try {
-    const cost = await calculateCost(
-      params.provider,
-      params.model,
-      params.prompt_tokens,
-      params.completion_tokens,
-    );
+    // Use provided cost_usd if available, otherwise calculate it
+    const cost = params.cost_usd !== undefined && params.cost_usd !== null
+      ? params.cost_usd
+      : await calculateCost(
+          params.provider,
+          params.model,
+          params.prompt_tokens,
+          params.completion_tokens,
+        );
 
     const { user_id, ...rest } = params;
     const total_tokens = params.prompt_tokens + params.completion_tokens;

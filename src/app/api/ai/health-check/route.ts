@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleGoogleProvider, handleOllamaProvider, handleOpenRouter, handleOpenAI } from "../agents/route";
+import { handleGoogleProvider, handleOllamaProvider, handleOpenRouter, handleOpenAIProvider } from "../agents/route";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIAgent } from "@/shared/models/ai-agents";
 import { APIKeyExpiredError } from "@/lib/api-errors";
@@ -98,7 +98,7 @@ async function testProvider(providerName: string, model: string): Promise<Provid
         );
         break;
       case "openai":
-        result = await handleOpenAI(
+        result = await handleOpenAIProvider(
           { ...TEST_AGENT, model },
           testMessage,
           [],

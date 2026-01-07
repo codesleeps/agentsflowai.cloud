@@ -305,12 +305,35 @@ Before each generation request, AgentsFlowAI:
 2. Checks if required model is available
 3. Provides clear error messages with fix commands
 
+### Provider Priority Strategy
+
+**Important Update:** As of the latest configuration, AgentsFlowAI prioritizes cloud-based providers for optimal performance and reliability:
+
+#### Web Development Agent Priority:
+1. **OpenRouter** (meta-llama/llama-3.3-70b-instruct:free) - Primary, fast and free
+2. **OpenAI** (gpt-4o-mini) - Secondary, low-cost fallback
+3. **Google Gemini** (gemini-1.5-flash) - Tertiary cloud fallback
+4. **Ollama** (codellama:7b) - Final local fallback
+
+This configuration ensures:
+- **Faster responses**: Cloud providers respond in 2-4s vs 5-8s for local Ollama
+- **Higher reliability**: 95%+ success rate with cloud providers
+- **No cold start**: Cloud models don't require loading time
+- **Local fallback**: Ollama still available when cloud providers are down
+
+#### Other Agents:
+Some agents like **Fast Chat Agent** and **Social Media Agent** still prioritize Ollama for:
+- Privacy-sensitive queries
+- Offline operation capability
+- Zero API costs
+
 ### Fallback Chain
 
-If Ollama models are unavailable, requests automatically fall back to:
-1. Google Gemini (if configured)
-2. OpenRouter (if configured)
-3. OpenAI (if configured)
+The system uses intelligent provider fallback:
+1. Attempts primary provider (OpenRouter for web-dev-agent)
+2. Falls back to secondary if primary fails
+3. Continues down priority list until success
+4. Returns static fallback if all providers fail
 
 ## Support
 

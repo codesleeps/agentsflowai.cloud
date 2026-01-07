@@ -39,7 +39,11 @@
     "docker:dev:build": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml build",
     "docker:dev:down": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml down",
     "docker:clean": "docker-compose down -v",
-    "docker:ollama:pull": "docker-compose exec ollama ollama pull mistral:7b && docker-compose exec ollama ollama pull llama3.1:8b && docker-compose exec ollama ollama pull gemma2:9b"
+    "docker:ollama:pull": "docker-compose exec ollama ollama pull mistral:7b && docker-compose exec ollama ollama pull gemma2:9b && docker-compose exec ollama ollama pull codellama:7b",
+    "docker:ollama:warmup": "docker-compose exec ollama sh -c 'ollama run mistral:7b \"test\" && ollama run gemma2:9b \"test\" && ollama run codellama:7b \"test\"'",
+    "docker:ollama:status": "docker-compose exec ollama ollama list",
+    "docker:ollama:pull:all": "npm run docker:ollama:pull",
+    "warmup:ollama": "tsx scripts/warmup-ollama.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.22.0",

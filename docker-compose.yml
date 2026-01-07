@@ -13,7 +13,8 @@ services:
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - agentsflowai-network
@@ -35,11 +36,11 @@ services:
     networks:
       - agentsflowai-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:11434/api/tags && curl -f -X POST http://localhost:11434/api/generate -d '{\"model\":\"mistral:7b\",\"prompt\":\"test\",\"stream\":false}' --max-time 30"]
       interval: 30s
-      timeout: 10s
+      timeout: 30s
       retries: 3
-      start_period: 10s
+      start_period: 60s
 
 networks:
   agentsflowai-network:

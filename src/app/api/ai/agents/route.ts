@@ -11,7 +11,7 @@ import axios from "axios";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIMessage } from "@/shared/models/types";
 import { AIAgent } from "../../../../shared/models/ai-agents";
-import { checkOllamaHealth, isModelAvailable, suggestModelPull, getAvailableOllamaModels } from "@/server-lib/ollama-utils";
+import { checkOllamaHealth, isModelAvailable, suggestModelPull, getAvailableOllamaModels, getOllamaTimeoutWithFirstLoad, markModelAsLoaded, isFirstLoad, warmupOllamaModels } from "@/server-lib/ollama-utils";
 
 // Structured error response types
 interface ProviderError {
@@ -21,6 +21,146 @@ interface ProviderError {
   errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'api_key_expired' | 'unknown';
   duration: number;
   timestamp: Date;
+}
+
+// Structured fallback error with suggested action and documentation
+interface FallbackErrorDetail {
+  provider: string;
+  model: string;
+  error: string;
+  errorType: 'timeout' | 'api_error' | 'network_error' | 'auth_error' | 'rate_limit' | 'model_not_found' | 'api_key_expired' | 'unknown';
+  suggestedAction: string;
+  documentationUrl: string;
+  retryGuidance?: {
+    shouldRetry: boolean;
+    initialWaitMs: number;
+    backoffMultiplier: number;
+    maxRetries: number;
+  };
+}
+
+// Retry guidance by error type
+function getRetryGuidance(errorType: string): { shouldRetry: boolean; initialWaitMs: number; backoffMultiplier: number; maxRetries: number } {
+  const retryConfigs: Record<string, { shouldRetry: boolean; initialWaitMs: number; backoffMultiplier: number; maxRetries: number }> = {
+    timeout: {
+      shouldRetry: true,
+      initialWaitMs: 30000, // 30 seconds
+      backoffMultiplier: 2,
+      maxRetries: 3,
+    },
+    rate_limit: {
+      shouldRetry: true,
+      initialWaitMs: 60000, // 60 seconds for rate limits
+      backoffMultiplier: 2,
+      maxRetries: 3,
+    },
+    api_error: {
+      shouldRetry: true,
+      initialWaitMs: 15000, // 15 seconds for server errors
+      backoffMultiplier: 2,
+      maxRetries: 2,
+    },
+    network_error: {
+      shouldRetry: true,
+      initialWaitMs: 10000, // 10 seconds for network issues
+      backoffMultiplier: 1.5,
+      maxRetries: 2,
+    },
+    auth_error: {
+      shouldRetry: false, // Don't retry auth errors without fixing credentials
+      initialWaitMs: 0,
+      backoffMultiplier: 0,
+      maxRetries: 0,
+    },
+    api_key_expired: {
+      shouldRetry: false, // Don't retry until key is renewed
+      initialWaitMs: 0,
+      backoffMultiplier: 0,
+      maxRetries: 0,
+    },
+    model_not_found: {
+      shouldRetry: false, // Don't retry, model needs to be changed
+      initialWaitMs: 0,
+      backoffMultiplier: 0,
+      maxRetries: 0,
+    },
+    unknown: {
+      shouldRetry: true,
+      initialWaitMs: 20000,
+      backoffMultiplier: 1.5,
+      maxRetries: 2,
+    },
+  };
+  
+  return retryConfigs[errorType] || retryConfigs.unknown;
+}
+
+// Get documentation URL by provider and error type
+function getDocumentationUrl(provider: string, errorType: string): string {
+  const docsUrls: Record<string, Record<string, string>> = {
+    google: {
+      general: 'https://ai.google.dev/docs',
+      timeout: 'https://ai.google.dev/docs/troubleshooting#timeouts',
+      rate_limit: 'https://ai.google.dev/quotas',
+      auth_error: 'https://ai.google.dev/api-keys',
+      api_key_expired: 'https://makersuite.google.com/app/apikey',
+    },
+    openrouter: {
+      general: 'https://openrouter.ai/docs',
+      timeout: 'https://openrouter.ai/docs/troubleshooting',
+      rate_limit: 'https://openrouter.ai/docs/guides/rate-limits',
+      auth_error: 'https://openrouter.ai/docs/authentication',
+      api_key_expired: 'https://openrouter.ai/keys',
+    },
+    openai: {
+      general: 'https://platform.openai.com/docs',
+      timeout: 'https://platform.openai.com/docs/api-reference/error-codes',
+      rate_limit: 'https://platform.openai.com/docs/guides/rate-limits',
+      auth_error: 'https://platform.openai.com/docs/api-reference/authentication',
+      api_key_expired: 'https://platform.openai.com/api-keys',
+    },
+    ollama: {
+      general: 'https://ollama.com/docs',
+      timeout: 'https://ollama.com/docs/troubleshooting#timeouts',
+      network_error: 'https://ollama.com/docs/troubleshooting#connection',
+      model_not_found: 'https://ollama.com/docs/models',
+    },
+  };
+  
+  const providerDocs = docsUrls[provider.toLowerCase()] || {};
+  return providerDocs[errorType] || providerDocs['general'] || 'https://docs.agentsflowai.cloud/troubleshooting';
+}
+
+// Get suggested action by error type
+function getSuggestedAction(provider: string, errorType: string, error: string): string {
+  const actions: Record<string, string> = {
+    timeout: `The ${provider} service took too long to respond. Implement exponential backoff: wait 30s, then retry. If using local models, check system resources.`,
+    rate_limit: `You've exceeded ${provider}'s rate limit. Implement exponential backoff: wait 60s, double wait on each retry. Consider upgrading your plan for higher limits.`,
+    api_error: `${provider} server error. Wait 15s and retry with exponential backoff. If persistent, check ${provider} status page.`,
+    network_error: `Network connectivity issue with ${provider}. Check internet connection, firewall, and ${provider} service status.`,
+    auth_error: `Authentication failed for ${provider}. Verify API key is correctly set in environment variables.`,
+    api_key_expired: `API key for ${provider} has expired or been revoked. Renew at your provider dashboard and update the API key in .env file.`,
+    model_not_found: `Model not available on ${provider}. Check model availability or try a different model from the supported list.`,
+    unknown: `Unexpected error with ${provider}. Check logs and documentation for troubleshooting steps.`,
+  };
+  
+  return actions[errorType] || actions.unknown;
+}
+
+// Create detailed fallback error for a provider
+function createFallbackErrorDetail(entry: { provider: string; model: string; error: string; duration: number; timestamp: Date }): FallbackErrorDetail {
+  const errorType = classifyErrorType(entry.error);
+  const retryGuidance = getRetryGuidance(errorType);
+  
+  return {
+    provider: entry.provider,
+    model: entry.model,
+    error: entry.error,
+    errorType,
+    suggestedAction: getSuggestedAction(entry.provider, errorType, entry.error),
+    documentationUrl: getDocumentationUrl(entry.provider, errorType),
+    retryGuidance: retryGuidance.shouldRetry ? retryGuidance : undefined,
+  };
 }
 
 interface AIAgentResponse {
@@ -34,6 +174,9 @@ interface AIAgentResponse {
   usedProvider: string;
   note?: string;
   errorLog?: ProviderError[];
+  errorDetails?: FallbackErrorDetail[];
+  healthCheckUrl?: string;
+  documentationUrl?: string;
 }
 
 // Module-level environment check (runs once on load)
@@ -41,6 +184,7 @@ async function verifyEnvironmentVariables() {
   const providers = {
     google: !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY),
     openrouter: !!process.env.OPENROUTER_API_KEY,
+    openai: !!process.env.OPENAI_API_KEY,
     ollama: !!process.env.OLLAMA_BASE_URL,
   };
 
@@ -71,6 +215,32 @@ async function verifyEnvironmentVariables() {
 
     if (ollamaHealthCheck.available) {
       console.log('[AI Agents API] Ollama status: reachable');
+      
+      // Check model availability
+      const requiredModels = ['mistral:7b', 'gemma2:9b', 'codellama:7b'];
+      const availableModels = ollamaHealthCheck.models || [];
+      
+      const availableRequiredModels = requiredModels.filter(m => availableModels.includes(m));
+      const missingModels = requiredModels.filter(m => !availableModels.includes(m));
+      
+      console.log(`[AI Agents API] Ollama models available: ${availableRequiredModels.join(', ')} (${availableRequiredModels.length}/${requiredModels.length})`);
+      
+      if (missingModels.length > 0) {
+        console.log(`[AI Agents API] Missing models: ${missingModels.join(', ')} - Run: docker-compose exec ollama ollama pull ${missingModels[0]}`);
+        console.log('[AI Agents API] WARNING: Ollama is running but some required models are missing.');
+      }
+      
+      // Optional warmup on startup
+      if (process.env.OLLAMA_WARMUP_ON_STARTUP === 'true' && availableRequiredModels.length > 0) {
+        console.log('[AI Agents API] Starting model warmup (OLLAMA_WARMUP_ON_STARTUP=true)...');
+        warmupOllamaModels(availableRequiredModels)
+          .then(result => {
+            console.log(`[AI Agents API] Model warmup completed: ${result.warmedModels.length} warmed, ${result.failedModels.length} failed in ${(result.totalTime / 1000).toFixed(1)}s`);
+          })
+          .catch(err => {
+            console.log(`[AI Agents API] Model warmup error: ${err.message}`);
+          });
+      }
     } else {
       console.log('[AI Agents API] Ollama status: unreachable');
       console.log('[AI Agents API] Ollama not detected. Install from https://ollama.com or set OLLAMA_BASE_URL');
@@ -115,6 +285,26 @@ async function parseProviderError(response: Response): Promise<{
       message: response.statusText,
     };
   }
+}
+
+// Helper function to calculate OpenAI API costs
+function calculateOpenAICost(model: string, promptTokens: number, completionTokens: number): number {
+  // Pricing as of 2024 (per 1M tokens)
+  const pricing: Record<string, { input: number; output: number }> = {
+    'gpt-4o': { input: 5, output: 15 },
+    'gpt-4o-mini': { input: 0.15, output: 0.6 },
+    'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
+  };
+
+  const modelPricing = pricing[model.toLowerCase()];
+  if (!modelPricing) {
+    console.warn(`[OpenAI Cost] Unknown model: ${model}, using GPT-3.5-turbo pricing`);
+    return calculateOpenAICost('gpt-3.5-turbo', promptTokens, completionTokens);
+  }
+
+  const inputCost = (promptTokens / 1_000_000) * modelPricing.input;
+  const outputCost = (completionTokens / 1_000_000) * modelPricing.output;
+  return inputCost + outputCost;
 }
 
 // Helper to extract text from URL
@@ -249,6 +439,16 @@ ${scrapedContent}`;
   }
 }
 
+// Helper function to calculate Google model timeout
+function getGoogleModelTimeout(modelName: string): number {
+  if (modelName.toLowerCase().includes('flash')) {
+    return 20000; // 20s for Flash models
+  } else if (modelName.toLowerCase().includes('pro')) {
+    return 40000; // 40s for Pro models
+  }
+  return 30000; // 30s default
+}
+
 export async function handleGoogleProvider(
   agent: AIAgent,
   message: string,
@@ -301,9 +501,10 @@ export async function handleGoogleProvider(
           parts: [{ text: fullPrompt }]
         });
 
-        // Add timeout protection for Google API calls
+        // Add timeout protection for Google API calls with model-specific timeouts
+        const timeoutMs = getGoogleModelTimeout(modelName);
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Google API timeout after 30s')), 30000)
+          setTimeout(() => reject(new Error(`Google API timeout after ${timeoutMs}ms`)), timeoutMs)
         );
 
         const result = await Promise.race([
@@ -393,6 +594,7 @@ export async function handleOpenRouter(
   conversationHistory: AIMessage[],
   systemPrompt: string
 ) {
+  const OPENROUTER_TIMEOUT_MS = 30000;
   const functionStartTime = Date.now();
   console.log(`[OpenRouter Provider] Starting request with model: ${agent.model}`);
 
@@ -415,7 +617,7 @@ export async function handleOpenRouter(
     { role: "user", content: message },
   ];
 
-  console.log(`[OpenRouter Provider] Request details: model=${agent.model}, messageCount=${messages.length}`);
+  console.log(`[OpenRouter Provider] Request details: model=${agent.model}, messageCount=${messages.length}, timeout=${OPENROUTER_TIMEOUT_MS}ms`);
 
   const requestStartTime = Date.now();
   try {
@@ -431,7 +633,7 @@ export async function handleOpenRouter(
         model: agent.model,
         messages,
       }),
-      signal: AbortSignal.timeout(30000), // 30 second timeout
+      signal: AbortSignal.timeout(OPENROUTER_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -494,7 +696,7 @@ export async function handleOpenRouter(
 
     if (error instanceof Error && error.name === 'AbortError') {
       errorType = 'timeout';
-      errorMessage = `Request aborted due to timeout after 30s`;
+      errorMessage = `Request aborted due to timeout after ${OPENROUTER_TIMEOUT_MS}ms for model ${agent.model}`;
     } else if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
       errorType = 'timeout';
     } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
@@ -506,49 +708,152 @@ export async function handleOpenRouter(
   }
 }
 
-export async function handleOpenAI(
+export async function handleOpenAIProvider(
   agent: AIAgent,
   message: string,
   conversationHistory: AIMessage[],
-  systemPrompt: string
+  systemPrompt: string,
 ) {
+  const functionStartTime = Date.now();
+  console.log(`[OpenAI Provider] Starting request with model: ${agent.model}`);
+
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not defined");
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: agent.model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...conversationHistory.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user", content: message },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error?.message || response.statusText;
-    
-    // Check for expired API key
-    if (errorMessage.toLowerCase().includes('expired') || 
-        (response.status === 401 && errorMessage.toLowerCase().includes('invalid'))) {
-      throw new APIKeyExpiredError('OpenAI', 'https://platform.openai.com/api-keys', 'OPENAI_API_KEY');
-    }
-    
-    throw new Error(`OpenAI API error: ${errorMessage}`);
+  console.log(`[OpenAI Provider] API key configured: ${!!apiKey}`);
+  if (!apiKey) {
+    console.error('[OpenAI Provider] OPENAI_API_KEY not found in environment');
+    throw new Error("OPENAI_API_KEY is not defined");
   }
 
-  const data = await response.json();
-  return {
-    response: data.choices[0]?.message?.content || "",
-    tokensUsed: data.usage?.total_tokens || 0,
-  };
+  // Validate supported models
+  const supportedModels = ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'];
+  if (!supportedModels.includes(agent.model.toLowerCase())) {
+    console.error(`[OpenAI Provider] Unsupported model: ${agent.model}. Supported: ${supportedModels.join(', ')}`);
+    throw new Error(`Unsupported OpenAI model: ${agent.model}. Supported models: ${supportedModels.join(', ')}`);
+  }
+
+  // Set timeout: 60s for GPT-4 models, 30s for others
+  const isGPT4Model = agent.model.toLowerCase().startsWith('gpt-4');
+  const timeoutMs = isGPT4Model ? 60000 : 30000;
+
+  // Import OpenAI SDK
+  const { OpenAI } = await import('openai');
+  const openai = new OpenAI({ apiKey });
+
+  // Map conversation history to OpenAI message format
+  const messages = [
+    { role: "system" as const, content: systemPrompt },
+    ...conversationHistory.map((msg) => ({
+      role: msg.role as "user" | "assistant" | "system",
+      content: msg.content,
+    })),
+    { role: "user" as const, content: message },
+  ];
+
+  console.log(`[OpenAI Provider] Request details: model=${agent.model}, messageCount=${messages.length}, timeout=${timeoutMs}ms`);
+
+  const requestStartTime = Date.now();
+  try {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const completion = await openai.chat.completions.create({
+      model: agent.model,
+      messages,
+      max_tokens: 2048, // Consistent with other providers
+    }, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const requestDuration = Date.now() - requestStartTime;
+    const totalDuration = Date.now() - functionStartTime;
+
+    const responseText = completion.choices[0]?.message?.content || "";
+    const usage = completion.usage;
+
+    if (!usage) {
+      console.warn(`[OpenAI Provider] No usage data returned for model ${agent.model}`);
+    }
+
+    const promptTokens = usage?.prompt_tokens || 0;
+    const completionTokens = usage?.completion_tokens || 0;
+    const totalTokens = usage?.total_tokens || 0;
+    const cost = calculateOpenAICost(agent.model, promptTokens, completionTokens);
+
+    console.log(`[OpenAI Provider] Model ${agent.model} succeeded after ${totalDuration}ms: ${totalTokens} tokens (${promptTokens} prompt + ${completionTokens} completion), cost $${cost.toFixed(6)}`);
+
+    return {
+      response: responseText,
+      tokensUsed: totalTokens,
+      cost,
+      promptTokens,
+      completionTokens,
+    };
+  } catch (error) {
+    const requestDuration = Date.now() - requestStartTime;
+    const totalDuration = Date.now() - functionStartTime;
+
+    // Handle AbortError/timeout
+    if (error instanceof Error && error.name === 'AbortError') {
+      const errorMessage = `Request aborted due to timeout after ${timeoutMs}ms`;
+      console.error(`[OpenAI Provider] Model ${agent.model} failed after ${totalDuration}ms: timeout - ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
+
+    // Handle OpenAI API errors
+    if (error instanceof Error && 'status' in error) {
+      const apiError = error as any;
+      const status = apiError.status;
+      const errorData = apiError.error || {};
+      const errorMessage = errorData.message || apiError.message || 'Unknown API error';
+
+      // Check for expired API key first
+      if (errorMessage.toLowerCase().includes('expired') ||
+          errorMessage.toLowerCase().includes('api_key_invalid') ||
+          (status === 401 && errorMessage.toLowerCase().includes('invalid'))) {
+        console.error(`[OpenAI Provider] Model ${agent.model} failed (${status}) after ${requestDuration}ms: api_key_expired - API key expired`);
+        throw new APIKeyExpiredError('OpenAI', 'https://platform.openai.com/api-keys', 'OPENAI_API_KEY');
+      }
+
+      // Classify other errors
+      let errorType = 'unknown';
+      if (status === 401) {
+        errorType = 'auth_error';
+      } else if (status === 403) {
+        errorType = 'auth_error';
+      } else if (status === 429) {
+        errorType = 'rate_limit';
+      } else if (status === 404) {
+        errorType = 'model_not_found';
+      } else if (status >= 500) {
+        errorType = 'api_error';
+      } else if (status === 400 && errorMessage.toLowerCase().includes('model')) {
+        errorType = 'model_not_found';
+      } else if (errorMessage.toLowerCase().includes('timeout') || errorMessage.toLowerCase().includes('timeouterror')) {
+        errorType = 'timeout';
+      } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+        errorType = 'network_error';
+      }
+
+      console.error(`[OpenAI Provider] Model ${agent.model} failed (${status}) after ${requestDuration}ms: ${errorType} - ${errorMessage}`);
+      throw new Error(`OpenAI API error (${status}): ${errorMessage}`);
+    }
+
+    // Handle network or other errors
+    let errorType = 'unknown';
+    let errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage.toLowerCase().includes('timeout') || errorMessage.toLowerCase().includes('timeouterror')) {
+      errorType = 'timeout';
+    } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch') || errorMessage.toLowerCase().includes('econnrefused')) {
+      errorType = 'network_error';
+    }
+
+    console.error(`[OpenAI Provider] Model ${agent.model} failed after ${requestDuration}ms: ${errorType} - ${errorMessage}`);
+    throw error;
+  }
 }
 
 export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]) {
@@ -579,7 +884,11 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
     throw new Error(errorMessage);
   }
 
-  console.log(`[Ollama Provider] Pre-flight check passed: model=${agent.model}, available=true`);
+  // Calculate dynamic timeout based on model size and first-load status
+  const timeoutMs = getOllamaTimeoutWithFirstLoad(agent.model, agent.ollamaModelSize);
+  const isFirstLoadAttempt = isFirstLoad(agent.model);
+  
+  console.log(`[Ollama Provider] Pre-flight check passed: model=${agent.model}, size=${agent.ollamaModelSize || 'unknown'}, timeout=${timeoutMs}ms, firstLoad=${isFirstLoadAttempt}`);
 
   const requestPayload = {
     model: agent.model,
@@ -594,7 +903,7 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestPayload),
-      signal: AbortSignal.timeout(30000), // Increased timeout from 5s to 30s for local Ollama
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (!ollamaResponse.ok) {
@@ -613,7 +922,10 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
     const totalDuration = Date.now() - functionStartTime;
     const responseLength = (data.message?.content || data.response || '').length;
 
-    console.log(`[Ollama Provider] Model ${agent.model} succeeded after ${totalDuration}ms: ${responseLength} chars, ${data.eval_count || 0} tokens`);
+    console.log(`[Ollama Provider] Model ${agent.model} (size: ${agent.ollamaModelSize || 'unknown'}) succeeded after ${totalDuration}ms: ${responseLength} chars, ${data.eval_count || 0} tokens`);
+
+    // Mark model as loaded for future timeout optimization
+    markModelAsLoaded(agent.model);
 
     return {
       response: data.message?.content || data.response,
@@ -628,7 +940,8 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
 
     if (errorInstance.name === 'TimeoutError' || errorMessage.includes('timeout')) {
       errorType = 'timeout';
-      errorMessage = `Request timed out after 30s - model may be loading for first time`;
+      const firstLoadMsg = isFirstLoadAttempt ? 'first load' : 'subsequent load';
+      errorMessage = `Request timed out after ${timeoutMs}ms (model: ${agent.model}, size: ${agent.ollamaModelSize || 'unknown'}, ${firstLoadMsg}). Model may be loading for first time. Subsequent requests will be faster.`;
       console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
     } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Connection refused')) {
       errorType = 'network_error';
@@ -720,7 +1033,7 @@ async function executeWithFallback(
           systemPrompt,
         );
       } else if (provider === "openai") {
-        result = await handleOpenAI(
+        result = await handleOpenAIProvider(
           { ...agent, model },
           message,
           conversationHistory,
@@ -731,14 +1044,20 @@ async function executeWithFallback(
       }
 
       const latency = Date.now() - startTime;
+
+      // Extract usage data based on provider
+      const promptTokens = provider === 'openai' ? (result as any).promptTokens || 0 : 0;
+      const completionTokens = provider === 'openai' ? (result as any).completionTokens || 0 : result.tokensUsed || 0;
+      const cost = provider === 'openai' ? (result as any).cost || 0 : 0;
+
       await logModelUsage({
         user_id: userId,
         agent_id: agent.id,
         provider,
         model,
-        prompt_tokens: 0, // Simplified for now
-        completion_tokens: result.tokensUsed || 0,
-        cost_usd: 0, // TODO: Implement cost calculation
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        cost_usd: cost,
         latency_ms: latency,
         status: "success",
       });
@@ -819,17 +1138,40 @@ async function executeWithFallback(
   });
 
   const primaryError = errorLog.length > 0 ? errorLog[0].error : (lastError?.message || "Unknown error");
+  
+  // Create structured error details for each provider failure
+  const errorDetails = errorLog.map(entry => createFallbackErrorDetail(entry));
+  
+  // Build retry guidance summary from all errors
+  const retryableErrors = errorDetails.filter(d => d.retryGuidance?.shouldRetry);
+  let retryGuidanceSummary = '';
+  if (retryableErrors.length > 0) {
+    const initialWait = Math.max(...retryableErrors.map(d => d.retryGuidance!.initialWaitMs));
+    const maxRetries = Math.max(...retryableErrors.map(d => d.retryGuidance!.maxRetries));
+    retryGuidanceSummary = `\n\n**Retry Guidance:** Wait ${Math.round(initialWait/1000)}s before retrying, with exponential backoff. Maximum ${maxRetries} retries recommended.`;
+  }
+  
   return {
-    response: generateFallbackResponse(agent.id, message, errorLog),
+    response: generateFallbackResponse(agent.id, message, errorLog, retryGuidanceSummary),
     model: "fallback",
     agentId: agent.id,
     agentName: agent.name,
     note: `All ${errorLog.length} AI providers failed after ${latency}ms. Primary error: ${primaryError}`,
-    errorLog, // Include error log in response for client-side diagnostics
+    errorLog: errorLog.map(entry => ({
+      provider: entry.provider,
+      model: entry.model,
+      error: entry.error,
+      errorType: classifyErrorType(entry.error),
+      duration: entry.duration,
+      timestamp: entry.timestamp,
+    })),
+    errorDetails, // Include structured error details with suggestedAction, documentationUrl, and retryGuidance
+    healthCheckUrl: '/api/ai/health-check', // Include health check endpoint URL
+    documentationUrl: 'https://docs.agentsflowai.cloud/troubleshooting', // Include main documentation URL
   };
 }
 
-function generateFallbackResponse(agentId: string, message: string, errorLog?: Array<{provider: string, model: string, error: string, duration: number, timestamp: Date}>): string {
+function generateFallbackResponse(agentId: string, message: string, errorLog?: Array<{provider: string, model: string, error: string, duration: number, timestamp: Date}>, retryGuidanceSummary?: string): string {
   const lowercaseMessage = message.toLowerCase();
 
   // Generate diagnostic information from error log
@@ -885,6 +1227,9 @@ function generateFallbackResponse(agentId: string, message: string, errorLog?: A
     }
   }
 
+  // Append retry guidance if provided
+  const retrySection = retryGuidanceSummary ? `\n${retryGuidanceSummary}` : '';
+
   switch (agentId) {
     case "web-dev-agent":
       if (
@@ -912,7 +1257,7 @@ ${diagnosticSection}
 **Quick Recovery:**
 1. Check API keys in your \`.env\` file
 2. Ensure Ollama is running if using local models
-3. Try again in a few moments for rate-limited services`;
+3. Try again in a few moments for rate-limited services${retrySection}`;
       }
       return `I'm currently in **Fallback Mode** due to AI provider connectivity issues.
 
@@ -928,7 +1273,7 @@ ${diagnosticSection}
 1. Verify API keys are configured
 2. Check Ollama service status
 3. Wait for rate limits to reset
-4. Refresh and try again`;
+4. Refresh and try again${retrySection}`;
 
     case "analytics-agent":
       return `# Analytics Insights (Fallback Mode)
@@ -953,7 +1298,7 @@ ${diagnosticSection}
 1. Check API key configuration
 2. Verify network connectivity
 3. Wait for service availability
-4. Retry the analysis request`;
+4. Retry the analysis request${retrySection}`;
 
     default:
       return `# AI Capability Unavailable
@@ -974,6 +1319,6 @@ ${diagnosticSection}
 - **Rate Limits**: Wait for quota resets on limited services
 - **Support**: Contact system administrator if issues persist
 
-**Request ID:** ${Date.now()}-${agentId}-${errorLog?.length || 0}`;
+**Request ID:** ${Date.now()}-${agentId}-${errorLog?.length || 0}${retrySection}`;
   }
 }

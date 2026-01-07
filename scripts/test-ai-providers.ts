@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import { config } from "dotenv";
-import { handleGoogleProvider as agentRouteHandleGoogle, handleOpenRouter as agentRouteHandleOpenRouter, handleOpenAI as agentRouteHandleOpenAI, handleOllamaProvider as agentRouteHandleOllama } from "../src/app/api/ai/agents/route";
+import { handleGoogleProvider as agentRouteHandleGoogle, handleOpenRouter as agentRouteHandleOpenRouter, handleOpenAIProvider as agentRouteHandleOpenAI, handleOllamaProvider as agentRouteHandleOllama } from "../src/app/api/ai/agents/route";
 import { handleAnthropicProvider, handleGoogleProvider, handleOllamaProvider } from "../src/server-lib/ai-fallback-handler";
 import { logDiagnosticTest } from "../src/server-lib/ai-usage-tracker";
 import { AIAgent } from "../src/shared/models/ai-agents";

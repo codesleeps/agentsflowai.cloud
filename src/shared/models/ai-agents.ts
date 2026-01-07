@@ -181,12 +181,12 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "codellama:7b",
-    provider: "ollama",
-    defaultProvider: "ollama",
-    costTier: "free",
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
+    costTier: "low",
     isActive: true,
-    ollamaModelSize: 'medium',
+    ollamaModelSize: 'large',
     capabilities: [
       "Generate React/Next.js components",
       "Debug JavaScript/TypeScript code",
@@ -198,40 +198,52 @@ export const AI_AGENTS: AIAgent[] = [
     ],
     supportedProviders: [
       {
-        provider: "ollama",
-        model: "codellama:7b",
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "mistral:7b",
+        provider: "openai",
+        model: "gpt-4o-mini",
         priority: 2,
       },
       {
-        provider: "ollama",
-        model: "gemma2:9b",
+        provider: "google",
+        model: "gemini-1.5-flash",
         priority: 3,
       },
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "ollama",
+        model: "codellama:7b",
         priority: 4,
       },
-      {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
-        priority: 5,
-      },
     ],
-    systemPrompt: `You are an expert web development assistant specializing in modern web technologies. You help users:
-- Generate high-quality React/Next.js components
-- Debug JavaScript/TypeScript code effectively
-- Optimize web application performance
-- Create RESTful API endpoints
-- Write comprehensive unit tests
-- Explain complex code concepts clearly
+    systemPrompt: `You are an expert web development assistant specializing in modern web technologies. You help users build production-ready applications using:
 
-Always prioritize clean, maintainable code. Follow modern best practices and consider scalability.`,
+**Core Technologies:**
+- React 19 with Server Components and Suspense
+- Next.js 15 with App Router architecture
+- TypeScript for type-safe development
+- Tailwind CSS for styling
+
+**Best Practices:**
+- Generate clean, maintainable, and type-safe code
+- Use Server Components by default, Client Components when needed
+- Implement Server Actions for data mutations
+- Follow Next.js 15 conventions (app directory, route handlers, metadata API)
+- Optimize performance with code splitting and lazy loading
+- Write accessible components following WCAG guidelines
+- Include comprehensive error handling and loading states
+
+**Capabilities:**
+- Generate React/Next.js components with proper TypeScript types
+- Debug JavaScript/TypeScript code effectively
+- Create API route handlers with proper validation
+- Write unit tests using Jest and React Testing Library
+- Optimize bundle size and runtime performance
+- Explain complex concepts clearly with examples
+
+Always prioritize developer experience, maintainability, and production readiness. Provide complete, working code examples that follow current best practices.`,
   },
   {
     id: "analytics-agent",
@@ -240,12 +252,12 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "mistral:7b",
-    provider: "ollama",
-    defaultProvider: "ollama",
-    costTier: "free",
+    model: "meta-llama/llama-3.3-70b-instruct:free",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
+    costTier: "low",
     isActive: true,
-    ollamaModelSize: 'medium',
+    ollamaModelSize: 'large',
     capabilities: [
       "Analyze business metrics",
       "Identify trends and patterns",
@@ -256,29 +268,19 @@ Always prioritize clean, maintainable code. Follow modern best practices and con
     ],
     supportedProviders: [
       {
-        provider: "ollama",
-        model: "mistral:7b",
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 1,
       },
       {
-        provider: "ollama",
-        model: "gemma2:9b",
+        provider: "google",
+        model: "gemini-1.5-flash",
         priority: 2,
       },
       {
         provider: "ollama",
-        model: "codellama:7b",
+        model: "mistral:7b",
         priority: 3,
-      },
-      {
-        provider: "google",
-        model: "gemini-1.5-pro",
-        priority: 4,
-      },
-      {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
-        priority: 5,
       },
     ],
     systemPrompt: `You are a data analytics expert specializing in business intelligence and data-driven decision making. You help users:
@@ -322,16 +324,6 @@ Always provide specific, actionable recommendations. Use data to support your in
         model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
-      {
-        provider: "ollama",
-        model: "gemma2:9b",
-        priority: 3,
-      },
-      {
-        provider: "google",
-        model: "gemini-1.5-flash",
-        priority: 4,
-      },
     ],
     systemPrompt: `You are an expert content creator and copywriter with years of experience in digital marketing. You help users:
 - Write engaging blog posts and articles
@@ -355,6 +347,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     defaultProvider: "google",
     costTier: "medium",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Create marketing strategies",
       "Design sales funnels",
@@ -396,10 +389,10 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "mistral:7b",
-    provider: "ollama",
-    defaultProvider: "ollama",
-    costTier: "free",
+    model: "gemini-1.5-flash",
+    provider: "google",
+    defaultProvider: "google",
+    costTier: "low",
     isActive: true,
     ollamaModelSize: 'medium',
     capabilities: [
@@ -412,29 +405,19 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     ],
     supportedProviders: [
       {
-        provider: "ollama",
-        model: "mistral:7b",
-        priority: 1,
-      },
-      {
-        provider: "ollama",
-        model: "gemma2:9b",
-        priority: 2,
-      },
-      {
-        provider: "ollama",
-        model: "codellama:7b",
-        priority: 3,
-      },
-      {
         provider: "google",
-        model: "gemini-1.5-pro",
-        priority: 4,
+        model: "gemini-1.5-flash",
+        priority: 1,
       },
       {
         provider: "openrouter",
         model: "meta-llama/llama-3.3-70b-instruct:free",
-        priority: 5,
+        priority: 2,
+      },
+      {
+        provider: "ollama",
+        model: "mistral:7b",
+        priority: 3,
       },
     ],
     systemPrompt: `You are a social media expert with deep knowledge of all major platforms including Twitter/X, LinkedIn, Instagram, Facebook, and TikTok. You help users:
@@ -479,11 +462,6 @@ Always consider platform-specific best practices. Focus on engagement and commun
         model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
-      {
-        provider: "ollama",
-        model: "mistral:7b",
-        priority: 3,
-      },
     ],
     systemPrompt: `You are an SEO expert with comprehensive knowledge of search engine algorithms, keyword research, and content optimization. You help users:
 - Conduct keyword research
@@ -499,15 +477,15 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     id: "fast-chat-agent",
     name: "Fast Chat Agent",
     description:
-      "High-speed responses using local Ollama for quick answers and chat",
+      "High-speed responses using Gemini Flash with OpenRouter fallback for quick answers and chat",
     icon: "⚡",
     category: "fast-chat",
-    model: "mistral:7b",
-    provider: "ollama",
-    defaultProvider: "ollama",
-    costTier: "free",
+    model: "gemini-1.5-flash",
+    provider: "google",
+    defaultProvider: "google",
+    costTier: "low",
     isActive: true,
-    ollamaModelSize: 'medium',
+    ollamaModelSize: 'small',
     capabilities: [
       "Rapid responses",
       "General knowledge",
@@ -517,8 +495,8 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     ],
     supportedProviders: [
       {
-        provider: "ollama",
-        model: "mistral:7b",
+        provider: "google",
+        model: "gemini-1.5-flash",
         priority: 1
       },
       {
@@ -527,12 +505,12 @@ Always follow current SEO best practices. Focus on user intent and search qualit
         priority: 2
       },
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "ollama",
+        model: "mistral:7b",
         priority: 3
       },
     ],
-    systemPrompt: `You are a helpful, fast, and efficient AI assistant powered by Ollama's Mistral model.
+    systemPrompt: `You are a helpful, fast, and efficient AI assistant powered by Gemini Flash with OpenRouter and Ollama fallback for speed.
 - Keep answers concise and to the point.
 - Prioritize speed and clarity.
 - Be friendly and conversational.
@@ -592,6 +570,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     defaultProvider: "google",
     costTier: "medium",
     isActive: true,
+    ollamaModelSize: 'medium',
     capabilities: [
       "Text-to-image generation",
       "Consistent subject editing",
