@@ -36,7 +36,7 @@ services:
     networks:
       - agentsflowai-network
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:11434/api/tags && curl -f -X POST http://localhost:11434/api/generate -d '{\"model\":\"mistral:7b\",\"prompt\":\"test\",\"stream\":false}' --max-time 30"]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:11434/api/tags && curl -f -X POST -H 'Content-Type: application/json' http://localhost:11434/api/generate -d '{\"model\":\"mistral:7b\",\"prompt\":\"test\",\"stream\":false}' --max-time 30"]
       interval: 30s
       timeout: 30s
       retries: 3

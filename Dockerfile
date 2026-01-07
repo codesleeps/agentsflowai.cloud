@@ -54,7 +54,9 @@ FROM node:20-alpine AS runner
 # Install runtime dependencies
 # - libc6-compat: Required for Next.js on Alpine
 # - dumb-init: Proper signal handling for PID 1 in containers (graceful shutdowns)
-RUN apk add --no-cache libc6-compat dumb-init
+# - curl: Health check support
+# - netcat-openbsd: Redis connectivity checks in entrypoint
+RUN apk add --no-cache libc6-compat dumb-init curl netcat-openbsd
 
 WORKDIR /app
 
@@ -83,6 +85,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # Prisma Client needs the schema at runtime for certain operations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
+# Copy scripts directory
+COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+
+# Copy entrypoint script
+COPY --from=builder --chown=root:root /app/scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
+
+# Make entrypoint executable
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Switch to non-root user
 USER nextjs
 
@@ -98,9 +109,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Use dumb-init to handle signals properly
-# This ensures SIGTERM and other signals are forwarded correctly for graceful shutdowns
-ENTRYPOINT ["dumb-init", "--"]
-
-# Start the Next.js standalone server
-CMD ["node", "server.js"]
+# Use custom entrypoint for graceful shutdown and model warmup
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

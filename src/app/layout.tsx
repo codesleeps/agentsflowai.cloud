@@ -6,6 +6,7 @@ import { Providers } from "@/components/Providers";
 import { Toaster } from "@/components/ui/sonner";
 import { validateEnv } from "@/lib/env-validation";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import { registerShutdownHandlers } from "@/lib/graceful-shutdown";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,6 +26,11 @@ export const metadata: Metadata = {
   },
   manifest: "/favicons/site.webmanifest",
 };
+
+// Register graceful shutdown handlers on server startup
+if (typeof window === 'undefined') {
+  registerShutdownHandlers();
+}
 
 export default function RootLayout({
   children,

@@ -11,7 +11,12 @@ import axios from "axios";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIMessage } from "@/shared/models/types";
 import { AIAgent } from "../../../../shared/models/ai-agents";
-import { checkOllamaHealth, isModelAvailable, suggestModelPull, getAvailableOllamaModels, getOllamaTimeoutWithFirstLoad, markModelAsLoaded, isFirstLoad, warmupOllamaModels } from "@/server-lib/ollama-utils";
+import { checkOllamaHealth, isModelAvailable, suggestModelPull, getAvailableOllamaModels, getOllamaTimeoutWithFirstLoad, markModelAsLoaded, isFirstLoad, warmupOllamaModels, queueOllamaRequest, getQueueStatus, getMaxConcurrentRequests, getMaxRequestsPerMinute } from "@/server-lib/ollama-utils";
+import { getCachedAIResponse, setCachedAIResponse, generateCacheKey } from "@/server-lib/redis-cache";
+import { registerShutdownHandlers } from "@/lib/graceful-shutdown";
+
+// Register graceful shutdown handlers at module load (only in production)
+registerShutdownHandlers();
 
 // Structured error response types
 interface ProviderError {
@@ -230,10 +235,11 @@ async function verifyEnvironmentVariables() {
         console.log('[AI Agents API] WARNING: Ollama is running but some required models are missing.');
       }
       
-      // Optional warmup on startup
-      if (process.env.OLLAMA_WARMUP_ON_STARTUP === 'true' && availableRequiredModels.length > 0) {
-        console.log('[AI Agents API] Starting model warmup (OLLAMA_WARMUP_ON_STARTUP=true)...');
-        warmupOllamaModels(availableRequiredModels)
+      // Warmup on startup (default behavior for top 3 models)
+      const shouldWarmup = process.env.OLLAMA_WARMUP_ON_STARTUP !== 'false'; // Default to true unless explicitly set to false
+      if (shouldWarmup && availableRequiredModels.length > 0) {
+        console.log('[AI Agents API] Starting model warmup (default behavior)...');
+        warmupOllamaModels(availableRequiredModels.slice(0, 3)) // Top 3 models by default
           .then(result => {
             console.log(`[AI Agents API] Model warmup completed: ${result.warmedModels.length} warmed, ${result.failedModels.length} failed in ${(result.totalTime / 1000).toFixed(1)}s`);
           })
@@ -884,11 +890,9 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
     throw new Error(errorMessage);
   }
 
-  // Calculate dynamic timeout based on model size and first-load status
-  const timeoutMs = getOllamaTimeoutWithFirstLoad(agent.model, agent.ollamaModelSize);
   const isFirstLoadAttempt = isFirstLoad(agent.model);
   
-  console.log(`[Ollama Provider] Pre-flight check passed: model=${agent.model}, size=${agent.ollamaModelSize || 'unknown'}, timeout=${timeoutMs}ms, firstLoad=${isFirstLoadAttempt}`);
+  console.log(`[Ollama Provider] Pre-flight check passed: model=${agent.model}, size=${agent.ollamaModelSize || 'unknown'}, firstLoad=${isFirstLoadAttempt}`);
 
   const requestPayload = {
     model: agent.model,
@@ -899,37 +903,41 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
   console.log(`[Ollama Provider] Request payload: model=${requestPayload.model}, messageCount=${requestPayload.messages.length}`);
 
   try {
-    const ollamaResponse = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestPayload),
-      signal: AbortSignal.timeout(timeoutMs),
-    });
+    // Use the queue for request management
+    const queueResult = await queueOllamaRequest(
+      agent.model,
+      requestPayload,
+      agent.id,
+      agent.ollamaModelSize
+    );
 
-    if (!ollamaResponse.ok) {
-      if (ollamaResponse.status === 404) {
-        console.error(`[Ollama Provider] Model ${agent.model} failed: model_not_found - Model "${agent.model}" not found. Available models can be listed with 'ollama list'`);
-        throw new Error(`Ollama model "${agent.model}" not found. Please pull it using 'ollama pull ${agent.model}' or list available models with 'ollama list'`);
-      }
+    // Await the actual result from the queued promise
+    const data = await queueResult.result;
 
-      const errorType = ollamaResponse.status >= 500 ? 'api_error' : 'unknown';
-      const errorMessage = `Ollama API returned ${ollamaResponse.status}`;
-      console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
-      throw new Error(`Ollama API returned ${ollamaResponse.status}`);
-    }
-
-    const data = await ollamaResponse.json();
     const totalDuration = Date.now() - functionStartTime;
     const responseLength = (data.message?.content || data.response || '').length;
+    const waitTimeMs = queueResult.metadata.isDedupHit ? 0 : (Date.now() - queueResult.metadata.enqueueTime);
 
-    console.log(`[Ollama Provider] Model ${agent.model} (size: ${agent.ollamaModelSize || 'unknown'}) succeeded after ${totalDuration}ms: ${responseLength} chars, ${data.eval_count || 0} tokens`);
+    console.log(`[Ollama Provider] Model ${agent.model} (size: ${agent.ollamaModelSize || 'unknown'}) succeeded after ${totalDuration}ms: ${responseLength} chars, ${data.eval_count || 0} tokens, queueWait=${waitTimeMs}ms, dedupHit=${queueResult.metadata.isDedupHit}`);
 
-    // Mark model as loaded for future timeout optimization
-    markModelAsLoaded(agent.model);
+    // Log usage with queue metadata
+    await logModelUsage({
+      user_id: "ollama-queue",
+      agent_id: agent.id,
+      provider: "ollama",
+      model: agent.model,
+      prompt_tokens: 0,
+      completion_tokens: data.eval_count || 0,
+      cost_usd: 0,
+      latency_ms: totalDuration,
+      status: "success",
+      error_message: undefined,
+    });
 
     return {
       response: data.message?.content || data.response,
       tokensUsed: data.eval_count || 0,
+      queueMetadata: queueResult.metadata,
     };
   } catch (error) {
     const totalDuration = Date.now() - functionStartTime;
@@ -938,16 +946,19 @@ export async function handleOllamaProvider(agent: AIAgent, messages: AIMessage[]
     let errorType = 'unknown';
     let errorMessage = errorInstance.message;
 
-    if (errorInstance.name === 'TimeoutError' || errorMessage.includes('timeout')) {
+    // Check for rate limit errors from queue
+    if (errorMessage.includes('Rate limit exceeded')) {
+      errorType = 'rate_limit';
+      console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
+    } else if (errorInstance.name === 'AbortError' || errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
       errorType = 'timeout';
       const firstLoadMsg = isFirstLoadAttempt ? 'first load' : 'subsequent load';
-      errorMessage = `Request timed out after ${timeoutMs}ms (model: ${agent.model}, size: ${agent.ollamaModelSize || 'unknown'}, ${firstLoadMsg}). Model may be loading for first time. Subsequent requests will be faster.`;
+      errorMessage = `Request timed out (model: ${agent.model}, size: ${agent.ollamaModelSize || 'unknown'}, ${firstLoadMsg}). Model may be loading for first time.`;
       console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
-    } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Connection refused')) {
+    } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Connection refused') || errorMessage.includes('Queue cleared')) {
       errorType = 'network_error';
-      errorMessage = `Connection refused - is Ollama running at ${OLLAMA_BASE_URL}?`;
       console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
-    } else if (errorMessage.includes('model') && errorMessage.includes('not found')) {
+    } else if (errorMessage.includes('model') && (errorMessage.includes('not found') || errorMessage.includes('not pulled'))) {
       errorType = 'model_not_found';
       console.error(`[Ollama Provider] Model ${agent.model} failed: ${errorType} - ${errorMessage}`);
     } else {
@@ -1007,6 +1018,30 @@ async function executeWithFallback(
       timestamp: new Date(),
     },
   ];
+
+  // Check Redis cache for ALL providers in priority order before invoking any
+  // This allows fallback providers to reuse cached responses from higher-priority providers
+  for (const providerConfig of providers) {
+    const { provider, model } = providerConfig;
+    const cacheKey = generateCacheKey(provider, model, messages);
+    const cachedResponse = await getCachedAIResponse(cacheKey);
+    
+    if (cachedResponse) {
+      console.log(`[Redis Cache] Cache HIT for ${provider}/${model}`);
+      return {
+        response: cachedResponse.response,
+        model: cachedResponse.model,
+        agentId: agent.id,
+        agentName: agent.name,
+        tokensUsed: cachedResponse.tokensUsed || 0,
+        generationTime: 0,
+        fallbackUsed: provider !== agent.defaultProvider,
+        usedProvider: cachedResponse.provider,
+        cached: true,
+        timestamp: cachedResponse.timestamp,
+      };
+    }
+  }
 
   for (const providerConfig of providers) {
     const { provider, model } = providerConfig;
@@ -1085,6 +1120,16 @@ async function executeWithFallback(
           timestamp: entry.timestamp,
         }));
       }
+
+      // Cache the successful response using the provider and model that succeeded
+      const cacheKey = generateCacheKey(provider, model, messages);
+      await setCachedAIResponse(cacheKey, {
+        response: result.response,
+        provider,
+        model,
+        tokensUsed: result.tokensUsed,
+        timestamp: new Date().toISOString(),
+      });
 
       return responsePayload;
     } catch (error) {
@@ -1322,3 +1367,4 @@ ${diagnosticSection}
 **Request ID:** ${Date.now()}-${agentId}-${errorLog?.length || 0}${retrySection}`;
   }
 }
+
