@@ -13,30 +13,30 @@ import { AI_AGENTS } from '@/shared/models/ai-agents';
 // ============================================
 
 // Setup all mocks before any imports
-const mockLogModelUsage = jest.fn();
-const mockGetCachedAIResponse = jest.fn();
-const mockSetCachedAIResponse = jest.fn();
-const mockGenerateCacheKey = jest.fn();
-const mockCheckOllamaHealth = jest.fn();
-const mockIsModelAvailable = jest.fn();
-const mockQueueOllamaRequest = jest.fn();
-const mockGetQueueStatus = jest.fn();
+const mockLogModelUsage = jest.fn<(data: any) => Promise<void>>();
+const mockGetCachedAIResponse = jest.fn<(key: string) => Promise<any | null>>();
+const mockSetCachedAIResponse = jest.fn<(key: string, value: any, ttl?: number) => Promise<void>>();
+const mockGenerateCacheKey = jest.fn<(provider: string, model: string, messages: any[]) => string>();
+const mockCheckOllamaHealth = jest.fn<() => Promise<{ available: boolean; models: string[] }>>();
+const mockIsModelAvailable = jest.fn<(model: string) => Promise<boolean>>();
+const mockQueueOllamaRequest = jest.fn<(model: string, payload: any, agentId: string, size?: 'small' | 'medium' | 'large') => Promise<any>>();
+const mockGetQueueStatus = jest.fn<() => Promise<{ waiting: number; processing: number; maxConcurrent: number; requestsPerMinute: number }>>();
 
 jest.mock('@/server-lib/redis-cache', () => ({
-  getCachedAIResponse: (...args: any[]) => mockGetCachedAIResponse(...args),
-  setCachedAIResponse: (...args: any[]) => mockSetCachedAIResponse(...args),
-  generateCacheKey: (...args: any[]) => mockGenerateCacheKey(...args),
+  getCachedAIResponse: (...args: Parameters<typeof mockGetCachedAIResponse>) => mockGetCachedAIResponse(...args),
+  setCachedAIResponse: (...args: Parameters<typeof mockSetCachedAIResponse>) => mockSetCachedAIResponse(...args),
+  generateCacheKey: (...args: Parameters<typeof mockGenerateCacheKey>) => mockGenerateCacheKey(...args),
 }));
 
 jest.mock('@/server-lib/ai-usage-tracker', () => ({
-  logModelUsage: (...args: any[]) => mockLogModelUsage(...args),
+  logModelUsage: (...args: Parameters<typeof mockLogModelUsage>) => mockLogModelUsage(...args),
 }));
 
 jest.mock('@/server-lib/ollama-utils', () => ({
-  checkOllamaHealth: (...args: any[]) => mockCheckOllamaHealth(...args),
-  isModelAvailable: (...args: any[]) => mockIsModelAvailable(...args),
-  queueOllamaRequest: (...args: any[]) => mockQueueOllamaRequest(...args),
-  getQueueStatus: (...args: any[]) => mockGetQueueStatus(...args),
+  checkOllamaHealth: (...args: Parameters<typeof mockCheckOllamaHealth>) => mockCheckOllamaHealth(...args),
+  isModelAvailable: (...args: Parameters<typeof mockIsModelAvailable>) => mockIsModelAvailable(...args),
+  queueOllamaRequest: (...args: Parameters<typeof mockQueueOllamaRequest>) => mockQueueOllamaRequest(...args),
+  getQueueStatus: (...args: Parameters<typeof mockGetQueueStatus>) => mockGetQueueStatus(...args),
 }));
 
 // ============================================
@@ -165,8 +165,8 @@ describe('AI Fallback Chain Integration Tests', () => {
       );
       
       expect(failedCall).toBeDefined();
-      expect(failedCall[0].provider).toBe('google');
-      expect(failedCall[0].status).toBe('failed');
+      expect(failedCall![0].provider).toBe('google');
+      expect(failedCall![0].status).toBe('failed');
     });
 
     it('should log fallback status when all providers exhausted', async () => {
@@ -190,8 +190,8 @@ describe('AI Fallback Chain Integration Tests', () => {
       );
       
       expect(fallbackCall).toBeDefined();
-      expect(fallbackCall[0].provider).toBe('fallback');
-      expect(fallbackCall[0].status).toBe('fallback');
+      expect(fallbackCall![0].provider).toBe('fallback');
+      expect(fallbackCall![0].status).toBe('fallback');
     });
   });
 
