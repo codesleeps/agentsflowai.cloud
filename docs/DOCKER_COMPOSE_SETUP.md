@@ -39,13 +39,15 @@ Edit `.env` and add your required values:
 ```bash
 # Required
 DATABASE_URL=postgresql://user:password@host:5432/database?sslmode=require
-SESSION_SECRET=your-session-secret-here
-BETTER_AUTH_SECRET=your-auth-secret-here
+SESSION_SECRET=J9WalKa/kK5JR/ZaAmVjOT9VZeuBMsxLTQwaTy66zOA=
+BETTER_AUTH_SECRET=K02Ve5mw7WCb6wQ6EdFBsfvb6pmvXhSTHD5G+t4kR3c=
 
 # Optional AI providers (at least one recommended)
-OPENAI_API_KEY=your-openai-key
-ANTHROPIC_API_KEY=your-anthropic-key
-GOOGLE_API_KEY=your-google-key
+OPENAI_API_KEY=your-openai-api-key-here
+GOOGLE_API_KEY=AIzaSyBw__c3Ru7hq2xAfH9-NosVbFSLetbsjeM
+OPENROUTER_API_KEY=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
+
+
 ```
 
 ### 2. Build Docker Images
