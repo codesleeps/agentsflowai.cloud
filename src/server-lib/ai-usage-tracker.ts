@@ -658,3 +658,69 @@ export async function getCostProjection(
     percentChange: Math.round(percentChange * 100) / 100,
   };
 }
+
+// ============================================
+// DIAGNOSTICS & ERROR LOGGING
+// ============================================
+
+export interface DiagnosticData {
+  id: string;
+  provider: string;
+  model: string;
+  status: "success" | "failed" | "fallback";
+  latency_ms: number;
+  error_message?: string;
+  created_at: Date;
+  user_id: string;
+  agent_id: string;
+}
+
+export async function getRecentDiagnostics(limit: number = 20): Promise<DiagnosticData[]> {
+  try {
+    const diagnostics = await db.aIModelUsage.findMany({
+      take: limit,
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        provider: true,
+        model: true,
+        status: true,
+        latency_ms: true,
+        error_message: true,
+        created_at: true,
+        user_id: true,
+        agent_id: true,
+      },
+    });
+
+    return diagnostics as DiagnosticData[];
+  } catch (error) {
+    console.error("Failed to fetch diagnostics:", error);
+    return [];
+  }
+}
+
+export async function logIntegrationError(
+  userId: string,
+  endpoint: string,
+  error: Error,
+  prompt: string,
+) {
+  try {
+    // Log integration-specific errors with detailed context
+    await logModelUsage({
+      user_id: userId,
+      agent_id: "integration-endpoint",
+      provider: "integration",
+      model: endpoint,
+      prompt_tokens: prompt.length,
+      completion_tokens: 0,
+      cost_usd: 0,
+      latency_ms: 0,
+      status: "failed",
+      error_message: `Integration error: ${error.message}`,
+    });
+  } catch (logError) {
+    console.error("Failed to log integration error:", logError);
+  }
+}
