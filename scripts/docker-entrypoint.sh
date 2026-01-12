@@ -56,18 +56,24 @@ if [ -n "$REDIS_URL" ]; then
     echo "✓ Redis is ready"
 fi
 
-# Wait for database (Neon PostgreSQL - external host)
+# Wait for database (PostgreSQL)
 if [ -n "$DATABASE_URL" ]; then
     echo "Waiting for database service..."
     # Extract host from DATABASE_URL (format: postgres://user:pass@host:5432/db)
     DB_HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:]+):.*|\1|')
     DB_PORT=$(echo "$DATABASE_URL" | sed -E 's|.*:([0-9]+)/.*|\1|')
     
-    until nc -z "$DB_HOST" "${DB_PORT:-5432}" > /dev/null 2>&1; do
-        echo "  Database not ready at $DB_HOST:${DB_PORT:-5432}, waiting..."
-        sleep 2
-    done
-    echo "✓ Database is ready"
+    # Check if it's an external managed database (Supabase/Neon/etc)
+    if echo "$DB_HOST" | grep -qE '(supabase\.co|neon\.tech|render\.com|railway\.app)'; then
+        echo "✓ Detected external managed database ($DB_HOST), skipping connectivity check"
+    else
+        # For local databases, wait for them to be ready
+        until nc -z "$DB_HOST" "${DB_PORT:-5432}" > /dev/null 2>&1; do
+            echo "  Database not ready at $DB_HOST:${DB_PORT:-5432}, waiting..."
+            sleep 2
+        done
+        echo "✓ Database is ready"
+    fi
 else
     echo "WARNING: DATABASE_URL not set, skipping database health check"
 fi
