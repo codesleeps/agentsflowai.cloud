@@ -56,7 +56,8 @@ FROM node:20-alpine AS runner
 # - dumb-init: Proper signal handling for PID 1 in containers (graceful shutdowns)
 # - curl: Health check support
 # - netcat-openbsd: Redis connectivity checks in entrypoint
-RUN apk add --no-cache libc6-compat dumb-init curl netcat-openbsd
+# - openssl: Required for Prisma Client
+RUN apk add --no-cache libc6-compat dumb-init curl netcat-openbsd openssl
 
 WORKDIR /app
 
