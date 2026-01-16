@@ -233,3 +233,83 @@ export async function completeOnboarding(data: {
 
   return response.json();
 }
+
+// Marketing Campaigns
+export interface MarketingCampaign {
+  id: string;
+  userId: string;
+  name: string;
+  topic: string;
+  targetAudience?: string | null;
+  goal?: string | null;
+  brandVoice?: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  steps?: MarketingCampaignStep[];
+}
+
+export interface MarketingCampaignStep {
+  id: string;
+  campaignId: string;
+  type: string;
+  status: string;
+  input?: any;
+  output?: any;
+  error?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketingCampaignsResponse {
+  campaigns: MarketingCampaign[];
+  total: number;
+}
+
+export function useMarketingCampaigns() {
+  return useSWR<MarketingCampaignsResponse, Error>("/marketing/campaigns", fetcher, {
+    refreshInterval: 10000, // Refresh every 10 seconds to track progress
+  });
+}
+
+export function useMarketingCampaign(id: string) {
+  return useSWR<{ campaign: MarketingCampaign }, Error>(
+    id ? `/marketing/campaigns/${id}` : null,
+    fetcher,
+    {
+      refreshInterval: 5000, // Refresh every 5 seconds during execution
+    },
+  );
+}
+
+export async function createMarketingCampaign(data: {
+  name: string;
+  topic: string;
+  targetAudience?: string;
+  goal?: string;
+  brandVoice?: string;
+}) {
+  try {
+    return await apiClient
+      .post<{ campaign: MarketingCampaign; message: string }>("/marketing/campaigns", data)
+      .then((res) => res.data);
+  } finally {
+    await mutate("/marketing/campaigns");
+  }
+}
+
+export async function runMarketingAgent(campaignId: string, agentType: "research" | "content") {
+  try {
+    return await apiClient
+      .post<{ message: string; step: MarketingCampaignStep }>(
+        `/marketing/campaigns/${campaignId}/run`,
+        { agentType },
+      )
+      .then((res) => res.data);
+  } finally {
+    await mutate(`/marketing/campaigns/${campaignId}`);
+    await mutate("/marketing/campaigns");
+  }
+}

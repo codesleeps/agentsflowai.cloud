@@ -16,6 +16,7 @@ import {
   User,
   Users as TeamIcon,
   Activity,
+  Rocket,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -53,6 +54,7 @@ const mainNavItems = [
   { href: "/ai-agents", label: "AI Agents", icon: Bot },
   { href: "/ai-agents/diagnostics", label: "Provider Diagnostics", icon: Activity },
   { href: "/chat", label: "AI Chat Agent", icon: MessageSquare },
+  { href: "/marketing", label: "Marketing", icon: Rocket },
   { href: "/leads", label: "Leads", icon: Users },
   { href: "/services", label: "Services", icon: Package },
   { href: "/appointments", label: "Appointments", icon: Calendar },
