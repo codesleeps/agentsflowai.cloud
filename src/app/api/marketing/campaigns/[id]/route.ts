@@ -9,14 +9,15 @@ import { db } from "@/server-lib/prisma";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
 
     const campaign = await db.marketingCampaign.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
       include: {
@@ -45,15 +46,16 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request);
     const body = await request.json();
+    const { id } = await params;
 
     const campaign = await db.marketingCampaign.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -66,7 +68,7 @@ export async function PATCH(
     }
 
     const updated = await db.marketingCampaign.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: body.name,
         topic: body.topic,
@@ -95,14 +97,15 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
 
     const campaign = await db.marketingCampaign.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id,
       },
     });
@@ -115,7 +118,7 @@ export async function DELETE(
     }
 
     await db.marketingCampaign.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({

@@ -358,7 +358,7 @@ export async function runContentAgent(
     },
   });
 
-  const brief = researchStep.output as ResearchAgentOutput;
+  const brief = researchStep.output as unknown as ResearchAgentOutput;
 
   const input: SEOContentAgentInput = {
     topic: campaign.topic,

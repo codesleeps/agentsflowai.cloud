@@ -9,13 +9,14 @@ import { runNextCampaignStep } from "@/server-lib/marketing-agents";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request);
+    const { id } = await params;
 
     // Run next step (the function handles authorization checks)
-    const result = await runNextCampaignStep(params.id);
+    const result = await runNextCampaignStep(id);
 
     if (result.stepType === null) {
       return NextResponse.json({
