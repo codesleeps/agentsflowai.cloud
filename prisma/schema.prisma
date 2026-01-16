@@ -876,3 +876,82 @@ model CallResponse {
   @@index([timestamp])
   @@map("call_responses")
 }
+
+// ============================================
+// MARKETING AUTOMATION MODELS
+// ============================================
+
+enum MarketingCampaignStatus {
+  draft
+  in_progress
+  needs_review
+  completed
+  error
+}
+
+enum MarketingCampaignStepType {
+  research
+  content
+  analytics
+}
+
+enum MarketingCampaignStepStatus {
+  pending
+  running
+  done
+  error
+}
+
+model MarketingCampaign {
+  id             String                    @id @default(uuid())
+  userId         String
+  name           String
+  topic          String
+  targetAudience String?
+  goal           String?                   // e.g. "email signups", "SEO traffic"
+  status         MarketingCampaignStatus   @default(draft)
+  
+  // Brand context (optional)
+  brandVoice     String?
+  brandContext   Json?                     // Store brand guidelines, tone, etc.
+  
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  steps          MarketingCampaignStep[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("marketing_campaigns")
+}
+
+model MarketingCampaignStep {
+  id         String                        @id @default(uuid())
+  campaignId String
+  type       MarketingCampaignStepType
+  status     MarketingCampaignStepStatus   @default(pending)
+  
+  // Agent execution data
+  input      Json?                         // Input to the agent
+  output     Json?                         // Structured result from the agent
+  error      String?
+  
+  // AI provider details
+  aiProvider String?                       // google, openrouter, openai, ollama
+  aiModel    String?                       // Model used
+  tokensUsed Int?                          // Total tokens consumed
+  costUsd    Float?                        // Estimated cost
+  
+  // Timing
+  startedAt  DateTime?
+  finishedAt DateTime?
+  
+  createdAt  DateTime                      @default(now())
+  updatedAt  DateTime                      @updatedAt
+
+  campaign   MarketingCampaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([type, status])
+  @@map("marketing_campaign_steps")
+}
