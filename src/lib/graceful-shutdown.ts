@@ -1,5 +1,6 @@
 import { shutdownQueue } from '@/server-lib/ollama-utils';
 import { closeRedisConnection } from '@/server-lib/redis-cache';
+import { closeMCPConnections } from '@/lib/mcp/client';
 
 let isShuttingDown = false;
 
@@ -23,6 +24,10 @@ export async function handleGracefulShutdown(signal: string): Promise<void> {
     // Close Redis connection
     console.log('[Shutdown] Closing Redis connection...');
     await closeRedisConnection();
+
+    // Close MCP connections
+    console.log('[Shutdown] Closing MCP connections...');
+    await closeMCPConnections();
 
     console.log('[Shutdown] Graceful shutdown complete');
     process.exit(0);

@@ -7,6 +7,7 @@
  */
 
 import { checkOllamaHealth } from '../server-lib/ollama-utils';
+import { validateMCPServerConfig, isMCPEnabled, getConfiguredMCPServers } from './mcp/servers';
 
 export interface ProviderValidationResult {
   provider: string;
@@ -473,7 +474,7 @@ async function checkOllamaHealthWrapper(): Promise<ProviderValidationResult> {
 
   try {
     const health = await checkOllamaHealth();
-    
+
     if (health.available) {
       return {
         provider,
@@ -500,6 +501,104 @@ async function checkOllamaHealthWrapper(): Promise<ProviderValidationResult> {
       lastChecked: new Date(),
     };
   }
+}
+
+/**
+ * Validate MCP server configurations
+ */
+async function validateMCPServers(): Promise<ProviderValidationResult[]> {
+  const results: ProviderValidationResult[] = [];
+
+  if (!isMCPEnabled()) {
+    // MCP is disabled, return valid status for each server type
+    const servers = ['Context7', 'Fetch', 'Playwright'];
+    servers.forEach(server => {
+      results.push({
+        provider: `MCP-${server}`,
+        status: 'valid',
+        message: 'MCP services are disabled',
+        lastChecked: new Date(),
+      });
+    });
+    return results;
+  }
+
+  // Check if at least one server is configured when MCP is enabled
+  const configuredServers = getConfiguredMCPServers();
+  if (Object.keys(configuredServers).length === 0) {
+    results.push({
+      provider: 'MCP-Config',
+      status: 'invalid',
+      message: 'MCP is enabled but no servers are configured. At least one MCP server must be configured when MCP is enabled.',
+      lastChecked: new Date(),
+    });
+    return results;
+  }
+
+  // Check configuration validation
+  const configValidation = validateMCPServerConfig();
+  if (!configValidation.valid) {
+    configValidation.errors.forEach(error => {
+      results.push({
+        provider: 'MCP-Config',
+        status: 'invalid',
+        message: error,
+        lastChecked: new Date(),
+      });
+    });
+    return results;
+  }
+
+  // Test connectivity to configured servers
+  for (const [serverName, config] of Object.entries(configuredServers)) {
+    if (config && config.healthCheckEndpoint) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(config.healthCheckEndpoint, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'AgentsFlowAI-HealthCheck/1.0'
+          }
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          results.push({
+            provider: `MCP-${serverName.charAt(0).toUpperCase() + serverName.slice(1)}`,
+            status: 'valid',
+            message: 'MCP server is reachable and healthy',
+            lastChecked: new Date(),
+          });
+        } else {
+          results.push({
+            provider: `MCP-${serverName.charAt(0).toUpperCase() + serverName.slice(1)}`,
+            status: 'unreachable',
+            message: `Health check failed with status ${response.status}`,
+            lastChecked: new Date(),
+          });
+        }
+      } catch (error) {
+        results.push({
+          provider: `MCP-${serverName.charAt(0).toUpperCase() + serverName.slice(1)}`,
+          status: 'unreachable',
+          message: error instanceof Error ? error.message : 'Connection failed',
+          lastChecked: new Date(),
+        });
+      }
+    } else {
+      results.push({
+        provider: `MCP-${serverName.charAt(0).toUpperCase() + serverName.slice(1)}`,
+        status: 'missing',
+        message: 'Server not configured or no health endpoint available',
+        lastChecked: new Date(),
+      });
+    }
+  }
+
+  return results;
 }
 
 /**
@@ -556,7 +655,14 @@ export async function validateProviderKeys(): Promise<void> {
     checkOllamaHealthWrapper(),
   ];
 
-  const results = await Promise.all(validationTasks);
+  // Run AI provider validations in parallel
+  const aiResults = await Promise.all(validationTasks);
+
+  // Run MCP server validations (may take longer, run separately)
+  const mcpResults = await validateMCPServers();
+
+  // Combine all results
+  const results = [...aiResults, ...mcpResults];
 
   // Cache all results
   results.forEach(result => {

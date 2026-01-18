@@ -31,6 +31,13 @@ const serverEnvSchema = z.object({
   // Inngest
   INNGEST_SIGNING_KEY: z.string().optional(),
   INNGEST_EVENT_KEY: z.string().optional(),
+
+  // MCP Services
+  MCP_CONTEXT7_ENDPOINT: z.string().url().optional(),
+  MCP_CONTEXT7_API_KEY: z.string().optional(),
+  MCP_FETCH_ENDPOINT: z.string().url().optional(),
+  MCP_PLAYWRIGHT_ENDPOINT: z.string().url().optional(),
+  MCP_ENABLED: z.string().optional().default("true"),
 });
 
 const clientEnvSchema = z.object({
