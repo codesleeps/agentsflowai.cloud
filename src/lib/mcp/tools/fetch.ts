@@ -16,7 +16,8 @@ import {
   createMCPTimeoutError,
   createMCPValidationError
 } from '../errors'
-import { getMCPServerConfig } from '../servers'
+import { getMCPServerConfig, MCP_FALLBACK_CHAINS } from '../servers'
+import { executeMCPTool, executeWithRetryAndFallback } from './shared'
 
 // Rate limiting storage for fetch operations
 interface FetchRateLimitEntry {
@@ -171,9 +172,6 @@ async function executeWithRetry<T>(
   context: MCPToolExecutionContext,
   userId: string
 ): Promise<T> {
-  const startTime = Date.now()
-  let lastError: Error | null = null
-
   // Check rate limit first
   const rateLimitCheck = checkRateLimit(userId)
   if (!rateLimitCheck.allowed) {
@@ -184,59 +182,24 @@ async function executeWithRetry<T>(
     )
   }
 
-  for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
-    try {
-      const result = await operation()
+  // Set fallback servers from configuration
+  context.fallbackServers = MCP_FALLBACK_CHAINS.fetch
 
-      // Check if result is MCPToolResponse with success: false
-      if (result && typeof result === 'object' && 'success' in result && result.success === false) {
-        const executionTime = Date.now() - startTime
-        trackUsage(context.toolName, executionTime, false)
+  const result = await executeWithRetryAndFallback(operation, context, userId, executeMCPTool)
 
-        // Treat success: false as retryable error
-        const error = new Error((result as any).error || 'Tool execution failed')
-        lastError = error
-
-        // Check if error is retryable
-        if (!isRetryableError(error)) {
-          break
-        }
-
-        // Exponential backoff delay
-        if (attempt < RETRY_ATTEMPTS - 1) {
-          const delay = RETRY_DELAY_BASE * Math.pow(2, attempt)
-          await new Promise(resolve => setTimeout(resolve, delay))
-        }
-        continue
-      }
-
-      // Track successful usage
-      const executionTime = Date.now() - startTime
-      trackUsage(context.toolName, executionTime, true)
-
-      return result
-    } catch (error) {
-      lastError = error as Error
-      const executionTime = Date.now() - startTime
-
-      // Track failed attempt
-      trackUsage(context.toolName, executionTime, false)
-
-      // Check if error is retryable
-      if (!isRetryableError(error)) {
-        break
-      }
-
-      // Exponential backoff delay
-      if (attempt < RETRY_ATTEMPTS - 1) {
-        const delay = RETRY_DELAY_BASE * Math.pow(2, attempt)
-        await new Promise(resolve => setTimeout(resolve, delay))
-      }
-    }
+  // Track usage for successful executions
+  if (result && typeof result === 'object' && 'success' in result && 'executionTime' in result && 'serverName' in result && 'toolName' in result && result.success) {
+    const toolResult = result as MCPToolResponse
+    trackUsage(
+      context.toolName,
+      toolResult.executionTime,
+      true,
+      toolResult.metrics?.estimatedCost ?? ((toolResult.executionTime / 1000) * 0.001),
+      toolResult.metrics?.bytesTransferred ?? 0
+    )
   }
 
-  // All retries failed
-  throw lastError || new Error('Operation failed after retries')
+  return result
 }
 
 /**
@@ -308,15 +271,20 @@ async function executeFetchTool(
 
     const executionTime = Date.now() - startTime
 
-    // Track bytes transferred if available
-    const bytesTransferred = result?.contentLength || result?.size || 0
+    // Track bytes transferred if available and compute estimated cost
+    const bytesTransferred = (result as any)?.contentLength || (result as any)?.size || 0
+    const estimatedCost = ((bytesTransferred / 1024 / 1024) * 0.01) + ((executionTime / 1000) * 0.001) // $0.01 per MB + $0.001 per second
 
     return {
       success: true,
       data: result,
       executionTime,
       serverName: 'fetch',
-      toolName
+      toolName,
+      metrics: {
+        bytesTransferred,
+        estimatedCost
+      }
     }
 
   } catch (error) {
@@ -402,28 +370,39 @@ export async function extractContent(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  if (!html || html.trim().length === 0) {
-    throw createMCPValidationError('fetch', 'extract_content', { html: 'HTML content is required' })
-  }
+  try {
+    if (!html || html.trim().length === 0) {
+      throw createMCPValidationError('fetch', 'extract_content', { html: 'HTML content is required' })
+    }
 
-  const context: MCPToolExecutionContext = {
-    serverName: 'fetch',
-    toolName: 'extract_content',
-    parameters: {
-      html,
-      selector: options.selector,
-      extractType: options.extractType || 'text'
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+    const context: MCPToolExecutionContext = {
+      serverName: 'fetch',
+      toolName: 'extract_content',
+      parameters: {
+        html,
+        selector: options.selector,
+        extractType: options.extractType || 'text'
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executeFetchTool('extract_content', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executeFetchTool('extract_content', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'fetch',
+      toolName: 'extract_content'
+    }
+  }
 }
 
 /**
@@ -439,29 +418,40 @@ export async function parseHtml(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  if (!html || html.trim().length === 0) {
-    throw createMCPValidationError('fetch', 'parse_html', { html: 'HTML content is required' })
-  }
+  try {
+    if (!html || html.trim().length === 0) {
+      throw createMCPValidationError('fetch', 'parse_html', { html: 'HTML content is required' })
+    }
 
-  const context: MCPToolExecutionContext = {
-    serverName: 'fetch',
-    toolName: 'parse_html',
-    parameters: {
-      html,
-      parseType: options.parseType || 'dom',
-      removeScripts: options.removeScripts !== false,
-      removeStyles: options.removeStyles !== false
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+    const context: MCPToolExecutionContext = {
+      serverName: 'fetch',
+      toolName: 'parse_html',
+      parameters: {
+        html,
+        parseType: options.parseType || 'dom',
+        removeScripts: options.removeScripts !== false,
+        removeStyles: options.removeStyles !== false
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executeFetchTool('parse_html', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executeFetchTool('parse_html', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'fetch',
+      toolName: 'parse_html'
+    }
+  }
 }
 
 /**
@@ -477,30 +467,41 @@ export async function fetchAndExtract(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  // Validate URL
-  if (!validateUrl(url)) {
-    throw createMCPValidationError('fetch', 'fetch_and_extract', { url: 'Invalid URL format' })
-  }
+  try {
+    // Validate URL
+    if (!validateUrl(url)) {
+      throw createMCPValidationError('fetch', 'fetch_and_extract', { url: 'Invalid URL format' })
+    }
 
-  const context: MCPToolExecutionContext = {
-    serverName: 'fetch',
-    toolName: 'fetch_and_extract',
-    parameters: {
-      url,
-      selector: options.selector,
-      extractType: options.extractType || 'text',
-      followRedirects: options.followRedirects !== false
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+    const context: MCPToolExecutionContext = {
+      serverName: 'fetch',
+      toolName: 'fetch_and_extract',
+      parameters: {
+        url,
+        selector: options.selector,
+        extractType: options.extractType || 'text',
+        followRedirects: options.followRedirects !== false
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executeFetchTool('fetch_and_extract', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executeFetchTool('fetch_and_extract', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'fetch',
+      toolName: 'fetch_and_extract'
+    }
+  }
 }
 
 /**

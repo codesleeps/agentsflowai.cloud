@@ -21,6 +21,34 @@ const mcpEnvSchema = z.object({
 // Parse environment variables
 const env = mcpEnvSchema.parse(process.env)
 
+// Fallback server configurations
+export const MCP_FALLBACK_CHAINS = {
+  context7: [
+    {
+      serverName: 'fetch',
+      toolName: 'fetch_and_extract',
+      parameters: { extractType: 'text' },
+      priority: 1
+    }
+  ],
+  fetch: [
+    {
+      serverName: 'context7',
+      toolName: 'search',
+      parameters: {},
+      priority: 1
+    }
+  ],
+  playwright: [
+    {
+      serverName: 'fetch',
+      toolName: 'fetch_url',
+      parameters: {},
+      priority: 1
+    }
+  ]
+}
+
 // MCP Server Configurations
 export const MCP_SERVERS: MCPServerRegistry = {
   context7: {

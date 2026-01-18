@@ -44,6 +44,12 @@ export interface MCPToolResponse {
   executionTime: number
   serverName: string
   toolName: string
+  metrics?: {
+    bytesTransferred?: number
+    screenshotsTaken?: number
+    estimatedCost: number
+  }
+  fallbackUsed?: boolean
 }
 
 // Server-Specific Types

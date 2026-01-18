@@ -1,4 +1,4 @@
-c/**
+/**
  * MCP Tools Wrapper Functions
  *
  * This module provides wrapper functions for MCP tools with error handling,

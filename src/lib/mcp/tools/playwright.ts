@@ -16,7 +16,8 @@ import {
   createMCPTimeoutError,
   createMCPValidationError
 } from '../errors'
-import { getMCPServerConfig } from '../servers'
+import { getMCPServerConfig, MCP_FALLBACK_CHAINS } from '../servers'
+import { executeMCPTool, executeWithRetryAndFallback } from './shared'
 
 // Rate limiting storage for playwright operations
 interface PlaywrightRateLimitEntry {
@@ -171,9 +172,6 @@ async function executeWithRetry<T>(
   context: MCPToolExecutionContext,
   userId: string
 ): Promise<T> {
-  const startTime = Date.now()
-  let lastError: Error | null = null
-
   // Check rate limit first
   const rateLimitCheck = checkRateLimit(userId)
   if (!rateLimitCheck.allowed) {
@@ -184,59 +182,24 @@ async function executeWithRetry<T>(
     )
   }
 
-  for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
-    try {
-      const result = await operation()
+  // Set fallback servers from configuration
+  context.fallbackServers = MCP_FALLBACK_CHAINS.playwright
 
-      // Check if result is MCPToolResponse with success: false
-      if (result && typeof result === 'object' && 'success' in result && result.success === false) {
-        const executionTime = Date.now() - startTime
-        trackUsage(context.toolName, executionTime, false)
+  const result = await executeWithRetryAndFallback(operation, context, userId, executeMCPTool)
 
-        // Treat success: false as retryable error
-        const error = new Error((result as any).error || 'Tool execution failed')
-        lastError = error
-
-        // Check if error is retryable
-        if (!isRetryableError(error)) {
-          break
-        }
-
-        // Exponential backoff delay
-        if (attempt < RETRY_ATTEMPTS - 1) {
-          const delay = RETRY_DELAY_BASE * Math.pow(2, attempt)
-          await new Promise(resolve => setTimeout(resolve, delay))
-        }
-        continue
-      }
-
-      // Track successful usage
-      const executionTime = Date.now() - startTime
-      trackUsage(context.toolName, executionTime, true)
-
-      return result
-    } catch (error) {
-      lastError = error as Error
-      const executionTime = Date.now() - startTime
-
-      // Track failed attempt
-      trackUsage(context.toolName, executionTime, false)
-
-      // Check if error is retryable
-      if (!isRetryableError(error)) {
-        break
-      }
-
-      // Exponential backoff delay
-      if (attempt < RETRY_ATTEMPTS - 1) {
-        const delay = RETRY_DELAY_BASE * Math.pow(2, attempt)
-        await new Promise(resolve => setTimeout(resolve, delay))
-      }
-    }
+  // Track usage for successful executions
+  if (result && typeof result === 'object' && 'success' in result && 'executionTime' in result && 'serverName' in result && 'toolName' in result && result.success) {
+    const toolResult = result as MCPToolResponse
+    trackUsage(
+      context.toolName,
+      toolResult.executionTime,
+      true,
+      toolResult.metrics?.estimatedCost ?? ((toolResult.executionTime / 1000) * 0.002),
+      toolResult.metrics?.screenshotsTaken ?? 0
+    )
   }
 
-  // All retries failed
-  throw lastError || new Error('Operation failed after retries')
+  return result
 }
 
 /**
@@ -308,15 +271,20 @@ async function executePlaywrightTool(
 
     const executionTime = Date.now() - startTime
 
-    // Track screenshots if taken
-    const screenshotsTaken = result?.screenshot ? 1 : 0
+    // Track screenshots if taken and compute estimated cost
+    const screenshotsTaken = (result as any)?.screenshot ? 1 : 0
+    const estimatedCost = (screenshotsTaken * 0.005) + ((executionTime / 1000) * 0.002) // $0.005 per screenshot + $0.002 per second
 
     return {
       success: true,
       data: result,
       executionTime,
       serverName: 'playwright',
-      toolName
+      toolName,
+      metrics: {
+        screenshotsTaken,
+        estimatedCost
+      }
     }
 
   } catch (error) {
@@ -349,29 +317,40 @@ export async function navigateToUrl(
     userId: string
   }
 ): Promise<MCPToolResponse> {
-  // Validate URL
-  if (!validateUrl(url)) {
-    throw createMCPValidationError('playwright', 'navigate', { url: 'Invalid URL format' })
-  }
+  try {
+    // Validate URL
+    if (!validateUrl(url)) {
+      throw createMCPValidationError('playwright', 'navigate', { url: 'Invalid URL format' })
+    }
 
-  const context: MCPToolExecutionContext = {
-    serverName: 'playwright',
-    toolName: 'navigate',
-    parameters: {
-      url,
-      waitUntil: options.waitUntil || 'load',
-      timeout: options.timeout || 30000
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+    const context: MCPToolExecutionContext = {
+      serverName: 'playwright',
+      toolName: 'navigate',
+      parameters: {
+        url,
+        waitUntil: options.waitUntil || 'load',
+        timeout: options.timeout || 30000
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executePlaywrightTool('navigate', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executePlaywrightTool('navigate', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'playwright',
+      toolName: 'navigate'
+    }
+  }
 }
 
 /**
@@ -387,25 +366,36 @@ export async function takeScreenshot(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  const context: MCPToolExecutionContext = {
-    serverName: 'playwright',
-    toolName: 'screenshot',
-    parameters: {
-      selector: options.selector,
-      fullPage: options.fullPage || false,
-      format: options.format || 'png',
-      quality: options.quality || 80
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+  try {
+    const context: MCPToolExecutionContext = {
+      serverName: 'playwright',
+      toolName: 'screenshot',
+      parameters: {
+        selector: options.selector,
+        fullPage: options.fullPage || false,
+        format: options.format || 'png',
+        quality: options.quality || 80
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executePlaywrightTool('screenshot', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executePlaywrightTool('screenshot', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'playwright',
+      toolName: 'screenshot'
+    }
+  }
 }
 
 /**
@@ -422,36 +412,47 @@ export async function interactWithElement(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  if (!selector || selector.trim().length === 0) {
-    throw createMCPValidationError('playwright', 'interact', { selector: 'Selector is required' })
-  }
+  try {
+    if (!selector || selector.trim().length === 0) {
+      throw createMCPValidationError('playwright', 'interact', { selector: 'Selector is required' })
+    }
 
-  if (action === 'type' || action === 'fill') {
-    if (!options.text) {
-      throw createMCPValidationError('playwright', 'interact', { text: 'Text is required for type/fill actions' })
+    if (action === 'type' || action === 'fill') {
+      if (!options.text) {
+        throw createMCPValidationError('playwright', 'interact', { text: 'Text is required for type/fill actions' })
+      }
+    }
+
+    const context: MCPToolExecutionContext = {
+      serverName: 'playwright',
+      toolName: 'interact',
+      parameters: {
+        action,
+        selector,
+        text: options.text,
+        delay: options.delay || 100,
+        force: options.force || false
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
+
+    return await executeWithRetry(
+      () => executePlaywrightTool('interact', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'playwright',
+      toolName: 'interact'
     }
   }
-
-  const context: MCPToolExecutionContext = {
-    serverName: 'playwright',
-    toolName: 'interact',
-    parameters: {
-      action,
-      selector,
-      text: options.text,
-      delay: options.delay || 100,
-      force: options.force || false
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
-
-  return executeWithRetry(
-    () => executePlaywrightTool('interact', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
 }
 
 /**
@@ -467,29 +468,40 @@ export async function extractFromPage(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  if (!selector || selector.trim().length === 0) {
-    throw createMCPValidationError('playwright', 'extract', { selector: 'Selector is required' })
-  }
+  try {
+    if (!selector || selector.trim().length === 0) {
+      throw createMCPValidationError('playwright', 'extract', { selector: 'Selector is required' })
+    }
 
-  const context: MCPToolExecutionContext = {
-    serverName: 'playwright',
-    toolName: 'extract',
-    parameters: {
-      selector,
-      extractType: options.extractType || 'text',
-      attribute: options.attribute,
-      multiple: options.multiple || false
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+    const context: MCPToolExecutionContext = {
+      serverName: 'playwright',
+      toolName: 'extract',
+      parameters: {
+        selector,
+        extractType: options.extractType || 'text',
+        attribute: options.attribute,
+        multiple: options.multiple || false
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executePlaywrightTool('extract', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executePlaywrightTool('extract', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'playwright',
+      toolName: 'extract'
+    }
+  }
 }
 
 /**
@@ -503,28 +515,39 @@ export async function waitForElement(
     userId: string
   }
 ): Promise<MCPToolResponse> {
-  if (!selector || selector.trim().length === 0) {
-    throw createMCPValidationError('playwright', 'wait_for', { selector: 'Selector is required' })
-  }
+  try {
+    if (!selector || selector.trim().length === 0) {
+      throw createMCPValidationError('playwright', 'wait_for', { selector: 'Selector is required' })
+    }
 
-  const context: MCPToolExecutionContext = {
-    serverName: 'playwright',
-    toolName: 'wait_for',
-    parameters: {
-      selector,
-      state: options.state || 'visible',
-      timeout: options.timeout || 10000
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+    const context: MCPToolExecutionContext = {
+      serverName: 'playwright',
+      toolName: 'wait_for',
+      parameters: {
+        selector,
+        state: options.state || 'visible',
+        timeout: options.timeout || 10000
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executePlaywrightTool('wait_for', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executePlaywrightTool('wait_for', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'playwright',
+      toolName: 'wait_for'
+    }
+  }
 }
 
 /**
@@ -537,26 +560,37 @@ export async function executeJavaScript(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  if (!script || script.trim().length === 0) {
-    throw createMCPValidationError('playwright', 'execute_js', { script: 'JavaScript code is required' })
-  }
+  try {
+    if (!script || script.trim().length === 0) {
+      throw createMCPValidationError('playwright', 'execute_js', { script: 'JavaScript code is required' })
+    }
 
-  const context: MCPToolExecutionContext = {
-    serverName: 'playwright',
-    toolName: 'execute_js',
-    parameters: {
-      script
-    },
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+    const context: MCPToolExecutionContext = {
+      serverName: 'playwright',
+      toolName: 'execute_js',
+      parameters: {
+        script
+      },
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executePlaywrightTool('execute_js', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executePlaywrightTool('execute_js', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'playwright',
+      toolName: 'execute_js'
+    }
+  }
 }
 
 /**
@@ -568,20 +602,31 @@ export async function getPageInfo(
     timeout?: number
   }
 ): Promise<MCPToolResponse> {
-  const context: MCPToolExecutionContext = {
-    serverName: 'playwright',
-    toolName: 'get_page_info',
-    parameters: {},
-    timeout: options.timeout || MAX_TIMEOUT,
-    retryOnFailure: true,
-    trackUsage: true
-  }
+  try {
+    const context: MCPToolExecutionContext = {
+      serverName: 'playwright',
+      toolName: 'get_page_info',
+      parameters: {},
+      timeout: options.timeout || MAX_TIMEOUT,
+      retryOnFailure: true,
+      trackUsage: true
+    }
 
-  return executeWithRetry(
-    () => executePlaywrightTool('get_page_info', context.parameters, options.userId, context.timeout),
-    context,
-    options.userId
-  )
+    return await executeWithRetry(
+      () => executePlaywrightTool('get_page_info', context.parameters, options.userId, context.timeout),
+      context,
+      options.userId
+    )
+  } catch (error) {
+    // Normalize all errors to MCPToolResponse
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      executionTime: 0,
+      serverName: 'playwright',
+      toolName: 'get_page_info'
+    }
+  }
 }
 
 /**

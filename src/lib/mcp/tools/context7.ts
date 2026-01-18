@@ -16,7 +16,8 @@ import {
   createMCPTimeoutError,
   createMCPToolNotFoundError
 } from '../errors'
-import { getMCPServerConfig } from '../servers'
+import { getMCPServerConfig, MCP_FALLBACK_CHAINS } from '../servers'
+import { executeMCPTool, executeWithRetryAndFallback } from './shared'
 
 // Rate limiting storage similar to src/lib/rate-limiter.ts
 interface Context7RateLimitEntry {
@@ -166,9 +167,6 @@ async function executeWithRetry(
   context: MCPToolExecutionContext,
   userId: string
 ): Promise<MCPToolResponse> {
-  const startTime = Date.now()
-  let lastError: Error | null = null
-
   // Check rate limit first
   const rateLimitCheck = checkRateLimit(userId)
   if (!rateLimitCheck.allowed) {
@@ -179,91 +177,23 @@ async function executeWithRetry(
     )
   }
 
-  // Primary server attempts with retries
-  for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
-    try {
-      const result = await operation()
+  // Set fallback servers from configuration
+  context.fallbackServers = MCP_FALLBACK_CHAINS.context7
 
-      // Check if result is MCPToolResponse with success: false
-      if (result && typeof result === 'object' && 'success' in result && result.success === false) {
-        const executionTime = Date.now() - startTime
-        trackUsage(context.toolName, executionTime, false)
+  const result = await executeWithRetryAndFallback(operation, context, userId, executeMCPTool)
 
-        // Treat success: false as retryable error
-        const error = new Error((result as any).error || 'Tool execution failed')
-        lastError = error
-
-        // Check if error is retryable
-        if (!isRetryableError(error)) {
-          break
-        }
-
-        // Exponential backoff delay
-        if (attempt < RETRY_ATTEMPTS - 1) {
-          const delay = RETRY_DELAY_BASE * Math.pow(2, attempt)
-          await new Promise(resolve => setTimeout(resolve, delay))
-        }
-        continue
-      }
-
-      // Track successful usage
-      const executionTime = Date.now() - startTime
-      trackUsage(context.toolName, executionTime, true)
-
-      return result
-    } catch (error) {
-      lastError = error as Error
-      const executionTime = Date.now() - startTime
-
-      // Track failed attempt
-      trackUsage(context.toolName, executionTime, false)
-
-      // Check if error is retryable
-      if (!isRetryableError(error)) {
-        break
-      }
-
-      // Exponential backoff delay
-      if (attempt < RETRY_ATTEMPTS - 1) {
-        const delay = RETRY_DELAY_BASE * Math.pow(2, attempt)
-        await new Promise(resolve => setTimeout(resolve, delay))
-      }
-    }
+  // Track usage for successful executions
+  if (result.success) {
+    const timeFallback = (result.executionTime / 1000) * 0.001 // $0.001 per second
+    trackUsage(
+      context.toolName,
+      result.executionTime,
+      true,
+      result.metrics?.estimatedCost ?? timeFallback
+    )
   }
 
-  // Try fallback servers if configured
-  if (context.fallbackServers && context.fallbackServers.length > 0) {
-    // Sort fallback servers by priority
-    const sortedFallbacks = context.fallbackServers.sort((a, b) => a.priority - b.priority)
-
-    for (const fallback of sortedFallbacks) {
-      try {
-        // Create fallback operation
-        const fallbackOperation = async () => {
-          // For now, assume fallback uses same executeContext7Tool but with different server
-          // In practice, this would need server-specific logic
-          const fallbackToolName = fallback.toolName || context.toolName
-          const fallbackParams = { ...context.parameters, ...(fallback.parameters || {}) }
-
-          return await executeContext7Tool(fallbackToolName, fallbackParams, userId, context.timeout)
-        }
-
-        const result = await fallbackOperation()
-
-        // Track successful fallback usage
-        const executionTime = Date.now() - startTime
-        trackUsage(context.toolName, executionTime, true)
-
-        return result
-      } catch (error) {
-        lastError = error as Error
-        // Continue to next fallback
-      }
-    }
-  }
-
-  // All retries and fallbacks failed
-  throw lastError || new Error('Operation failed after retries and fallbacks')
+  return result
 }
 
 /**
@@ -322,12 +252,18 @@ async function executeContext7Tool(
 
     const executionTime = Date.now() - startTime
 
+    // Compute estimated cost based on execution time (time-based pricing model)
+    const estimatedCost = (executionTime / 1000) * 0.001 // $0.001 per second
+
     return {
       success: true,
       data: result,
       executionTime,
       serverName: 'context7',
-      toolName
+      toolName,
+      metrics: {
+        estimatedCost
+      }
     }
 
   } catch (error) {
