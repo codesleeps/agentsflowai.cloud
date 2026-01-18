@@ -265,11 +265,28 @@ export async function getAgentResponseWithFallback(
     // Validate using Zod schema; will throw if invalid
     AgentResponseSchema.parse(candidate);
     return candidate;
-  } catch (e) {
+  } catch (e: any) {
     console.error("Agent response validation failed or API error:", e);
-    // Return a generic fallback message
+
+    let fallbackContent =
+      "I'm having trouble generating a response right now. Please try again later.";
+
+    // If this is an Axios error with a response body, try to surface it
+    if (e?.response?.data) {
+      const data = e.response.data;
+      if (typeof data === "string") {
+        fallbackContent = `Agent API error: ${data}`;
+      } else if (typeof data.error === "string") {
+        fallbackContent = `Agent API error: ${data.error}`;
+      } else if (typeof data.message === "string") {
+        fallbackContent = `Agent API error: ${data.message}`;
+      }
+    } else if (e instanceof Error && e.message) {
+      fallbackContent = `Agent client error: ${e.message}`;
+    }
+
     return {
-      content: "I'm having trouble generating a response right now. Please try again later.",
+      content: fallbackContent,
       role: "assistant",
     };
   }
