@@ -161,6 +161,12 @@ export interface MCPToolExecutionContext {
   timeout?: number
   retryOnFailure: boolean
   trackUsage: boolean
+  fallbackServers?: Array<{
+    serverName: string
+    toolName?: string
+    parameters?: Record<string, any>
+    priority: number
+  }>
 }
 
 // Usage Tracking Types
@@ -172,6 +178,9 @@ export interface MCPUsageMetrics {
   averageLatency: number
   errorCount: number
   lastUsed: Date
+  totalCost: number
+  bytesTransferred?: number
+  screenshotsTaken?: number
 }
 
 export interface MCPServerMetrics {
