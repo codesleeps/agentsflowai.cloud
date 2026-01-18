@@ -27,8 +27,7 @@ export type ActivityType =
   | "APIKEY_REVOKE"
   | "SETTINGS_UPDATE"
   | "PAGE_VIEW"
-  | "EXPORT_DATA"
-  | "PROVIDER_ALL_FAILED";
+  | "EXPORT_DATA";
 
 export interface LogActivityParams {
   userId?: string;
@@ -187,5 +186,4 @@ export const ActivityTypeDescriptions: Record<ActivityType, string> = {
   SETTINGS_UPDATE: "Updated settings",
   PAGE_VIEW: "Viewed page",
   EXPORT_DATA: "Exported data",
-  PROVIDER_ALL_FAILED: "All AI providers failed",
 };

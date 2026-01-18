@@ -1171,6 +1171,7 @@ async function executeWithFallback(
   console.error(`[Fallback Chain] Error details:`, JSON.stringify(errorLog, null, 2));
 
   // Log critical system activity for admin notification
+  /*
   await logActivity({
     userId: userId,
     type: "PROVIDER_ALL_FAILED",
@@ -1183,6 +1184,7 @@ async function executeWithFallback(
     resourceType: "ai_agent",
     resourceId: agent.id,
   });
+  */
 
   await logModelUsage({
     user_id: userId,
