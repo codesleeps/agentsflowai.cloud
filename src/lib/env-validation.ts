@@ -77,6 +77,20 @@ export function validateEnv(): Env {
       const parsedClient = clientEnvSchema.parse(process.env);
       validatedEnv = { ...parsedServer, ...parsedClient };
 
+      // Log configured providers on startup
+      const configuredProviders: string[] = [];
+      if (parsedServer.OPENAI_API_KEY) configuredProviders.push('OpenAI');
+      if (parsedServer.ANTHROPIC_API_KEY) configuredProviders.push('Anthropic');
+      if (parsedServer.GOOGLE_API_KEY || parsedServer.GOOGLE_GENERATIVE_AI_API_KEY) configuredProviders.push('Google');
+      if (parsedServer.OPENROUTER_API_KEY) configuredProviders.push('OpenRouter');
+      if (parsedServer.OLLAMA_BASE_URL) configuredProviders.push('Ollama');
+
+      if (configuredProviders.length === 0) {
+        console.warn('⚠️ [Startup Warning] No AI providers configured. AI features will not work.');
+      } else {
+        console.log(`[Startup] Configured AI Providers: ${configuredProviders.join(', ')}`);
+      }
+
       // Google API key validation: warn on conflicting or deprecated usage
       const googleApiKey = parsedServer.GOOGLE_API_KEY;
       const googleGenerativeAiApiKey = parsedServer.GOOGLE_GENERATIVE_AI_API_KEY;
