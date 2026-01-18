@@ -239,6 +239,18 @@ export const ModelConfigSchema = z.object({
   ),
 });
 
+export const UserAIPreferenceUpdateSchema = z.object({
+  agentId: z.string(),
+  fallbackChain: z.array(
+    z.object({
+      provider: AIProviderEnum,
+      model: z.string(),
+      priority: z.number(),
+      isEnabled: z.boolean().optional().default(true),
+    })
+  ),
+});
+
 export const UsageQuerySchema = z.object({
   userId: z.string().uuid(),
   dateRange: z.object({

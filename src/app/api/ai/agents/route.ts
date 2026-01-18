@@ -14,6 +14,7 @@ import { AIAgent } from "../../../../shared/models/ai-agents";
 import { checkOllamaHealth, isModelAvailable, suggestModelPull, getAvailableOllamaModels, getOllamaTimeoutWithFirstLoad, markModelAsLoaded, isFirstLoad, warmupOllamaModels, queueOllamaRequest, getQueueStatus, getMaxConcurrentRequests, getMaxRequestsPerMinute } from "@/server-lib/ollama-utils";
 import { getCachedAIResponse, setCachedAIResponse, generateCacheKey } from "@/server-lib/redis-cache";
 import { registerShutdownHandlers } from "@/lib/graceful-shutdown";
+import { logActivity } from "@/lib/activity-log";
 
 // Register graceful shutdown handlers at module load (only in production)
 registerShutdownHandlers();
@@ -1169,6 +1170,20 @@ async function executeWithFallback(
   console.error(`[Fallback Chain] All providers exhausted. Total attempts: ${errorLog.length}, Total time: ${latency}ms`);
   console.error(`[Fallback Chain] Error details:`, JSON.stringify(errorLog, null, 2));
 
+  // Log critical system activity for admin notification
+  await logActivity({
+    userId: userId,
+    type: "PROVIDER_ALL_FAILED",
+    description: `All AI providers failed for agent ${agent.id}`,
+    metadata: {
+      agentId: agent.id,
+      errorLog: errorLog.map(e => ({ provider: e.provider, error: e.error })),
+      latency,
+    },
+    resourceType: "ai_agent",
+    resourceId: agent.id,
+  });
+
   await logModelUsage({
     user_id: userId,
     agent_id: agent.id,
@@ -1222,6 +1237,8 @@ function generateFallbackResponse(agentId: string, message: string, errorLog?: A
   // Generate diagnostic information from error log
   let diagnosticSection = '';
   let troubleshootingSteps = [];
+  
+  const configLink = `\n\n⚙️ **Configure API Keys**`;
 
   if (errorLog && errorLog.length > 0) {
     diagnosticSection = `\n\n## Diagnostic Information\n\n**Agent ID:** ${agentId}\n**Timestamp:** ${new Date().toISOString()}\n**Total Attempts:** ${errorLog.length}\n\n### Provider Errors:\n`;
@@ -1302,7 +1319,7 @@ ${diagnosticSection}
 **Quick Recovery:**
 1. Check API keys in your \`.env\` file
 2. Ensure Ollama is running if using local models
-3. Try again in a few moments for rate-limited services${retrySection}`;
+3. Try again in a few moments for rate-limited services${retrySection}${configLink}`;
       }
       return `I'm currently in **Fallback Mode** due to AI provider connectivity issues.
 
@@ -1318,7 +1335,7 @@ ${diagnosticSection}
 1. Verify API keys are configured
 2. Check Ollama service status
 3. Wait for rate limits to reset
-4. Refresh and try again${retrySection}`;
+4. Refresh and try again${retrySection}${configLink}`;
 
     case "analytics-agent":
       return `# Analytics Insights (Fallback Mode)
@@ -1343,7 +1360,7 @@ ${diagnosticSection}
 1. Check API key configuration
 2. Verify network connectivity
 3. Wait for service availability
-4. Retry the analysis request${retrySection}`;
+4. Retry the analysis request${retrySection}${configLink}`;
 
     default:
       return `# AI Capability Unavailable
@@ -1364,7 +1381,6 @@ ${diagnosticSection}
 - **Rate Limits**: Wait for quota resets on limited services
 - **Support**: Contact system administrator if issues persist
 
-**Request ID:** ${Date.now()}-${agentId}-${errorLog?.length || 0}${retrySection}`;
+**Request ID:** ${Date.now()}-${agentId}-${errorLog?.length || 0}${retrySection}${configLink}`;
   }
 }
-

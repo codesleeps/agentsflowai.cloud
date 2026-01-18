@@ -1,6 +1,8 @@
 import { logModelUsage } from "./ai-usage-tracker";
 import { AIModelUsage } from "@prisma/client";
 import { APIKeyExpiredError } from "../lib/api-errors";
+import { db } from "@/server-lib/prisma";
+import { AI_AGENT_CONFIGS } from "@/shared/models/ai-agents";
 
 // Type definitions for the fallback handler
 interface GenerationRequest {
@@ -10,6 +12,7 @@ interface GenerationRequest {
   reasoningEffort?: "low" | "medium" | "high";
   modelProvider?: "openai" | "google";
   userId: string;
+  agentId?: string; // Optional agent ID to look up specific configs
 }
 
 interface GenerationResult {
@@ -436,6 +439,54 @@ ${contextMessage}
 What else can I help you with?`;
 }
 
+// Helper to get effective configuration for an agent
+async function getEffectiveAgentConfig(
+  userId: string, 
+  agentId: string, 
+  defaultProvider: "openai" | "google" = "openai"
+): Promise<AgentConfig> {
+  // 1. Get default config from static definitions
+  const staticConfig = AI_AGENT_CONFIGS[agentId];
+  
+  // Base config structure
+  let config: AgentConfig = {
+    agentId,
+    primaryProvider: (staticConfig?.defaultProvider as any) || defaultProvider,
+    primaryModel: staticConfig?.model || "gpt-4o-mini",
+    fallbackChain: staticConfig?.supportedProviders.map(p => ({
+      provider: p.provider as any,
+      model: p.model,
+      priority: p.priority
+    })) || []
+  };
+
+  // 2. Check for user overrides in DB
+  try {
+    const userPrefs = await db.aIModelConfig.findMany({
+      where: { userId, agentId, isEnabled: true },
+      orderBy: { priority: 'asc' }
+    });
+
+    if (userPrefs.length > 0) {
+      // Use user preferences
+      const primary = userPrefs[0];
+      config.primaryProvider = primary.provider as any;
+      config.primaryModel = primary.model;
+      
+      config.fallbackChain = userPrefs.map(p => ({
+        provider: p.provider as any,
+        model: p.model,
+        priority: p.priority
+      }));
+    }
+  } catch (error) {
+    console.warn(`Failed to fetch user AI preferences for ${agentId}:`, error);
+    // Fallback to static config on DB error
+  }
+
+  return config;
+}
+
 // Simplified version of executeWithFallback for text generation
 export async function executeSimpleGeneration(
   request: GenerationRequest,
@@ -447,34 +498,14 @@ export async function executeSimpleGeneration(
     reasoningEffort = "low",
     modelProvider = "openai",
     userId,
+    agentId,
   } = request;
 
-  // Determine agent configuration based on model provider
-  const agentConfig: AgentConfig =
-    modelProvider === "google"
-      ? {
-          agentId: "gemini-agent",
-          primaryProvider: "google",
-          primaryModel: "gemini-pro",
-          fallbackChain: [
-            { provider: "ollama", model: "glm4:9b", priority: 1 },
-            { provider: "ollama", model: "mistral", priority: 2 },
-            {
-              provider: "anthropic",
-              model: "claude-sonnet-4-5-20250929",
-              priority: 3,
-            },
-          ],
-        }
-      : {
-          agentId: "fast-chat-agent",
-          primaryProvider: "ollama",
-          primaryModel: "glm4:9b",
-          fallbackChain: [
-            { provider: "ollama", model: "mistral", priority: 1 },
-            { provider: "google", model: "gemini-2.5-flash", priority: 2 },
-          ],
-        };
+  // Determine target agent ID
+  const targetAgentId = agentId || (modelProvider === "google" ? "gemini-agent" : "fast-chat-agent");
+
+  // Get effective configuration (merging defaults with user prefs)
+  const agentConfig = await getEffectiveAgentConfig(userId, targetAgentId, modelProvider);
 
   const providers = [
     { provider: agentConfig.primaryProvider, model: agentConfig.primaryModel },
@@ -484,9 +515,14 @@ export async function executeSimpleGeneration(
     })),
   ];
 
+  // Remove duplicates
+  const uniqueProviders = providers.filter((v, i, a) => 
+    a.findIndex(t => (t.provider === v.provider && t.model === v.model)) === i
+  );
+
   let lastError: Error | null = null;
 
-  for (const { provider, model } of providers) {
+  for (const { provider, model } of uniqueProviders) {
     try {
       let result: { text: string; provider: string };
 

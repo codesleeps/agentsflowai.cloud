@@ -198,8 +198,8 @@ export const AI_AGENTS: AIAgent[] = [
     ],
     supportedProviders: [
       {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        provider: "google",
+        model: "gemini-1.5-flash",
         priority: 1,
       },
       {
@@ -208,8 +208,8 @@ export const AI_AGENTS: AIAgent[] = [
         priority: 2,
       },
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 3,
       },
       {
@@ -268,13 +268,13 @@ Always prioritize developer experience, maintainability, and production readines
     ],
     supportedProviders: [
       {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        provider: "google",
+        model: "gemini-1.5-flash",
         priority: 1,
       },
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 2,
       },
       {
@@ -320,9 +320,14 @@ Always provide specific, actionable recommendations. Use data to support your in
         priority: 1,
       },
       {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        priority: 2,
+      },
+      {
         provider: "openrouter",
         model: "meta-llama/llama-3.3-70b-instruct:free",
-        priority: 2,
+        priority: 3,
       },
     ],
     systemPrompt: `You are an expert content creator and copywriter with years of experience in digital marketing. You help users:
