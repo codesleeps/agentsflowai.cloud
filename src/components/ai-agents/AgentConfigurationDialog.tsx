@@ -55,12 +55,6 @@ const modelOptions = {
     { value: "llama3.1:8b", label: "Llama 3.1 8B" },
     { value: "codellama:7b", label: "CodeLlama 7B" },
   ],
-  google: [
-    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-    { value: "gemini-pro", label: "Gemini Pro" },
-  ],
   anthropic: [
     { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet" },
   ],
@@ -69,6 +63,9 @@ const modelOptions = {
     { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
   ],
   openrouter: [
+    { value: "deepseek/deepseek-chat", label: "DeepSeek Chat" },
+    { value: "z-ai/glm-4.5-air", label: "GLM-4.5-Air" },
+    { value: "deepseek/deepseek-chat:free", label: "DeepSeek Chat (Free)" },
     { value: "anthropic/claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
     { value: "openai/gpt-4-turbo", label: "GPT-4 Turbo" },
   ],
@@ -240,10 +237,9 @@ export function AgentConfigurationDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ollama">Ollama (Local)</SelectItem>
-                  <SelectItem value="google">Google Gemini</SelectItem>
                   <SelectItem value="anthropic">Anthropic Claude</SelectItem>
                   <SelectItem value="openai">OpenAI GPT</SelectItem>
-                  <SelectItem value="openrouter">OpenRouter</SelectItem>
+                  <SelectItem value="openrouter">OpenRouter (Chinese Models)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -280,7 +280,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-black uppercase tracking-[0.1em] text-secondary">Advanced Sync</h3>
-                    <p className="text-[9px] font-mono text-white/70 mt-0.5">GEMINI_1.5_PRO_V2</p>
+                    <p className="text-[9px] font-mono text-white/70 mt-0.5">DEEPSEEK_CHAT_V1</p>
                   </div>
                 </div>
                 <div className="space-y-6">
@@ -363,7 +363,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 border-b border-primary/5 pb-2">
                   <Terminal className="h-3 w-3" />
                   <span className="text-white/60">01:55:01</span>
-                  <span className="text-primary/70">LLM_GATEWAY: GOOGLE_GEMINI_STABLE_UPLINK</span>
+                  <span className="text-primary/70">LLM_GATEWAY: OPENROUTER_CHINESE_MODELS</span>
                 </div>
               </div>
             </div>

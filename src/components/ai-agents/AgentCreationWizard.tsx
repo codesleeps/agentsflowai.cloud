@@ -111,28 +111,6 @@ const modelOptions = {
       description: "Specialized for code generation",
     },
   ],
-  google: [
-    {
-      value: "gemini-2.5-pro",
-      label: "Gemini 2.5 Pro",
-      description: "Google's advanced multimodal model",
-    },
-    {
-      value: "gemini-2.5-flash",
-      label: "Gemini 2.5 Flash",
-      description: "Fast and intelligent for most tasks",
-    },
-    {
-      value: "gemini-2.0-flash",
-      label: "Gemini 2.0 Flash",
-      description: "Second generation workhorse model with 1M token context",
-    },
-    {
-      value: "gemini-pro",
-      label: "Gemini Pro",
-      description: "Google's previous generation model",
-    },
-  ],
   anthropic: [
     {
       value: "claude-3-5-sonnet-20241022",
@@ -153,6 +131,21 @@ const modelOptions = {
     },
   ],
   openrouter: [
+    {
+      value: "deepseek/deepseek-chat",
+      label: "DeepSeek Chat",
+      description: "Cost-effective Chinese model, excellent for coding",
+    },
+    {
+      value: "z-ai/glm-4.5-air",
+      label: "GLM-4.5-Air",
+      description: "Agent-optimized Chinese model with reasoning capabilities",
+    },
+    {
+      value: "deepseek/deepseek-chat:free",
+      label: "DeepSeek Chat (Free)",
+      description: "Free tier of DeepSeek for testing",
+    },
     {
       value: "anthropic/claude-3.5-sonnet",
       label: "Claude 3.5 Sonnet (via OpenRouter)",
@@ -374,11 +367,10 @@ export function AgentCreationWizard({ onComplete }: AgentCreationWizardProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ollama">Ollama (Local)</SelectItem>
-                  <SelectItem value="google">Google Gemini</SelectItem>
                   <SelectItem value="anthropic">Anthropic Claude</SelectItem>
                   <SelectItem value="openai">OpenAI GPT</SelectItem>
                   <SelectItem value="openrouter">
-                    OpenRouter (Multi-provider)
+                    OpenRouter (Chinese Models)
                   </SelectItem>
                 </SelectContent>
               </Select>

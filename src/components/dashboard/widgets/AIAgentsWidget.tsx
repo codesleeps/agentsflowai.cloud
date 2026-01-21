@@ -9,10 +9,10 @@ interface AIAgentsWidgetProps {
 
 export function AIAgentsWidget({ stats }: AIAgentsWidgetProps) {
   const agents = [
-    { name: "Chat Agent", status: "active", uptime: "99.9%", load: 12, provider: "Gemini 2.0" },
-    { name: "Lead Qualifier", status: "active", uptime: "100%", load: 45, provider: "Gemma 2 (local)" },
-    { name: "Web Developer", status: "active", uptime: "98.5%", load: 82, provider: "CodeGemma (local)" },
-    { name: "Analytics Agent", status: "standby", uptime: "N/A", load: 0, provider: "Ministral" },
+    { name: "Chat Agent", status: "active", uptime: "99.9%", load: 12, provider: "DeepSeek" },
+    { name: "Lead Qualifier", status: "active", uptime: "100%", load: 45, provider: "GLM-4.5-Air" },
+    { name: "Web Developer", status: "active", uptime: "98.5%", load: 82, provider: "DeepSeek" },
+    { name: "Analytics Agent", status: "standby", uptime: "N/A", load: 0, provider: "GLM-4.5-Air" },
   ];
 
   return (

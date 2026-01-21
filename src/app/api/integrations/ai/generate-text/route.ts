@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
 While I work on reconnecting, here's what I can tell you:
 - All our AI agents support multi-model fallback for reliability
-- We use Anthropic Claude, Google Gemini, and local Ollama models
+- We use Anthropic Claude, OpenRouter Chinese models (DeepSeek, GLM-4.5-Air), and local Ollama models
 - Your question has been logged and I'll provide a detailed response once reconnected
 
 In the meantime, you can:

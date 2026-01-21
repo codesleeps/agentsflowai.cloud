@@ -230,10 +230,6 @@ export default function AIAgentsPage() {
               </div>
               <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">
                 <XCircle className="h-3 w-3" />
-                <span>Gemini</span>
-              </div>
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">
-                <XCircle className="h-3 w-3" />
                 <span>OpenRouter</span>
               </div>
               <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">

@@ -34,7 +34,7 @@ interface Message {
 }
 
 export default function FastChatPage() {
-  const [selectedModelId, setSelectedModelId] = useState("gemini-1.5-flash");
+  const [selectedModelId, setSelectedModelId] = useState("deepseek/deepseek-chat:free");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -82,9 +82,10 @@ export default function FastChatPage() {
         },
         body: JSON.stringify({
           agentId:
-            selectedModelId === "gemini-1.5-flash" ? "nano-banana-agent" :
-              selectedModelId === "mistral:7b" ? "fast-chat-agent" :
-                "gemini-agent",
+            selectedModelId === "deepseek/deepseek-chat:free" ? "fast-chat-agent" :
+              selectedModelId === "z-ai/glm-4.5-air" ? "gemini-agent" : // Note: gemini-agent renamed to Advanced Reasoning Agent but ID kept for compatibility
+                selectedModelId === "mistral:7b" ? "fast-chat-agent" :
+                  "fast-chat-agent",
           message: messageContent.trim(),
           conversationHistory: messages.map((m) => ({
             role: m.role,
@@ -305,9 +306,9 @@ export default function FastChatPage() {
             onSend={(val) => handleSend(val)}
             isLoading={isTyping}
             models={[
-              { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "Google", isNew: true, priority: 1 },
-              { id: "gemini-1.5-flash", name: "Nano Banana", provider: "Google", isNew: true },
-              { id: "llama-3.1-405b", name: "Llama 3.1 405B", provider: "OpenRouter" },
+              { id: "deepseek/deepseek-chat:free", name: "DeepSeek Chat (Free)", provider: "OpenRouter", isNew: true, priority: 1 },
+              { id: "z-ai/glm-4.5-air", name: "GLM-4.5-Air", provider: "OpenRouter", isNew: true },
+              { id: "deepseek/deepseek-chat", name: "DeepSeek Chat", provider: "OpenRouter" },
               { id: "mistral:7b", name: "Mistral 7B (Local)", provider: "Ollama" },
             ]}
             selectedModelId={selectedModelId}

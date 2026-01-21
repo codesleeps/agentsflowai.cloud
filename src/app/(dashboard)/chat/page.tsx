@@ -294,11 +294,11 @@ export default function ChatPage() {
               onSend={(val) => handleSend(val)}
               isLoading={isLoading}
               models={[
-                { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "Google", isNew: true },
-                { id: "gemini-1.5-flash", name: "Nano Banana", provider: "Google", isNew: true },
+                { id: "deepseek/deepseek-chat", name: "DeepSeek Chat", provider: "OpenRouter", isNew: true },
+                { id: "z-ai/glm-4.5-air", name: "GLM-4.5-Air", provider: "OpenRouter", isNew: true },
                 { id: "claude-sonnet", name: "Claude Sonnet", provider: "Anthropic" }
               ]}
-              selectedModelId="gemini-1.5-flash"
+              selectedModelId="deepseek/deepseek-chat"
             />
           </div>
         </div>
