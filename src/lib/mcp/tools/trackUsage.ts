@@ -11,7 +11,7 @@ export function trackMCPUsage(
   toolName: string,
   executionTime: number,
   success: boolean,
-  metrics: MCPToolResponse['metrics'] = {},
+  metrics: MCPToolResponse['metrics'] = { estimatedCost: 0 },
   userId?: string
 ): void {
   // Get or create server usage map

@@ -44,8 +44,8 @@ BETTER_AUTH_SECRET=K02Ve5mw7WCb6wQ6EdFBsfvb6pmvXhSTHD5G+t4kR3c=
 
 # Optional AI providers (at least one recommended)
 OPENAI_API_KEY=your-openai-api-key-here
-GOOGLE_API_KEY=AIzaSyBw__c3Ru7hq2xAfH9-NosVbFSLetbsjeM
 OPENROUTER_API_KEY=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
+# Note: OpenRouter provides access to cost-effective Chinese models like DeepSeek and GLM-4.5-Air
 
 
 ```
@@ -229,8 +229,7 @@ graph TD
 | `OLLAMA_BASE_URL` | No | `http://ollama:11434` | Ollama service URL (auto-configured in Docker Compose) |
 | `OPENAI_API_KEY` | No | - | OpenAI API key for GPT models |
 | `ANTHROPIC_API_KEY` | No | - | Anthropic API key for Claude models |
-| `GOOGLE_API_KEY` | No | - | Google AI API key for Gemini models |
-| `OPENROUTER_API_KEY` | No | - | OpenRouter API key for multi-provider access |
+| `OPENROUTER_API_KEY` | No | - | OpenRouter API key for multi-provider access (includes Chinese models like DeepSeek and GLM-4.5-Air) |
 
 ### Application Variables
 

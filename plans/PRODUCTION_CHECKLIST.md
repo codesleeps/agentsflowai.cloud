@@ -260,7 +260,7 @@ Required:
 Recommended:
 - [ ] `OPENAI_API_KEY` - OpenAI API key
 - [ ] `ANTHROPIC_API_KEY` - Anthropic API key
-- [ ] `GOOGLE_GENERATIVE_AI_API_KEY` - Google AI key
+- [ ] `OPENROUTER_API_KEY` - OpenRouter API key (provides access to Chinese models like DeepSeek and GLM-4.5-Air)
 - [ ] `SESSION_SECRET` - Session encryption key
 - [ ] `INNGEST_EVENT_KEY` - Inngest event key
 - [ ] `INNGEST_SIGNING_KEY` - Inngest signing key

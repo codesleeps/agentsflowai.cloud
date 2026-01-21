@@ -47,8 +47,8 @@ ollama pull mistral:7b      # 3.8GB - Fast, general purpose
 # Web Dev Agent, Social Media Agent
 ollama pull llama3.1:8b     # 4.7GB - Better reasoning
 
-# Content Agent, Gemini Agent
-ollama pull gemma2:9b       # 5.4GB - Google's model
+# Content Agent, Advanced Reasoning Agent
+ollama pull gemma2:9b       # 5.4GB - Alternative model (optional)
 ```
 
 ### Model Details
@@ -57,7 +57,7 @@ ollama pull gemma2:9b       # 5.4GB - Google's model
 |-------|------|-----------|---------|
 | `mistral:7b` | 3.8GB | Fast responses, general chat | Fast Chat, Marketing, SEO |
 | `llama3.1:8b` | 4.7GB | Code generation, analysis | Web Dev, Social Media |
-| `gemma2:9b` | 5.4GB | Content creation, reasoning | Content, Gemini |
+| `gemma2:9b` | 5.4GB | Content creation, reasoning | Content, Advanced Reasoning (optional) |
 
 ## Configuration
 
@@ -310,9 +310,9 @@ Before each generation request, AgentsFlowAI:
 **Important Update:** As of the latest configuration, AgentsFlowAI prioritizes cloud-based providers for optimal performance and reliability:
 
 #### Web Development Agent Priority:
-1. **OpenRouter** (meta-llama/llama-3.3-70b-instruct:free) - Primary, fast and free
-2. **OpenAI** (gpt-4o-mini) - Secondary, low-cost fallback
-3. **Google Gemini** (gemini-1.5-flash) - Tertiary cloud fallback
+1. **OpenRouter** (deepseek/deepseek-chat) - Primary, cost-effective Chinese model
+2. **OpenRouter** (z-ai/glm-4.5-air) - Secondary, agent-optimized Chinese model
+3. **OpenAI** (gpt-4o-mini) - Tertiary, low-cost fallback
 4. **Ollama** (codellama:7b) - Final local fallback
 
 This configuration ensures:

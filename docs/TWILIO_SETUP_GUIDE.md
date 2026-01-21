@@ -18,7 +18,7 @@ Auth Token: [Your Auth Token from Twilio Console]
 ## Step 1: Install Dependencies
 
 ```bash
-npm install twilio @google-cloud/speech
+npm install twilio
 ```
 
 ## Step 2: Environment Configuration

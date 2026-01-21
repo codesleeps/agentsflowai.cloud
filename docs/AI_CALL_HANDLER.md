@@ -72,8 +72,8 @@ TWILIO_PHONE_NUMBER=+1234567890
 # OpenRouter Configuration (already configured)
 OPENROUTER_API_KEY=your_openrouter_api_key
 
-# Optional: Google Speech-to-Text (for enhanced accuracy)
-GOOGLE_SPEECH_API_KEY=your_google_speech_key
+# Note: Speech-to-text is handled by Twilio's built-in speech recognition
+# No additional Google services required
 ```
 
 ### 2. Twilio Setup
@@ -102,7 +102,7 @@ npm run db:migrate
 ### 4. Install Dependencies
 
 ```bash
-npm install twilio @google-cloud/speech
+npm install twilio
 ```
 
 ## Usage Examples

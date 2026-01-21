@@ -112,8 +112,8 @@ const [hasProviderIssues, setHasProviderIssues] = useState(false);
 
 ### Provider/Model Visibility
 Every assistant message displays:
-- **Provider**: Color-coded badge (e.g., "google", "ollama")
-- **Model**: Model name badge (e.g., "gemini-2.5-flash")
+- **Provider**: Color-coded badge (e.g., "openrouter", "ollama")
+- **Model**: Model name badge (e.g., "deepseek/deepseek-chat")
 - **Response Time**: In milliseconds
 - **Token Usage**: Number of tokens used
 
