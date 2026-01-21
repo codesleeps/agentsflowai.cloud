@@ -10,8 +10,6 @@ const serverEnvSchema = z.object({
   // AI Services
   OLLAMA_BASE_URL: z
     .preprocess((val) => (val === "" ? undefined : val), z.string().url("OLLAMA_BASE_URL must be a valid URL").optional().default("http://localhost:11434")),
-  GOOGLE_API_KEY: z.string().optional(), // Preferred Google API key variable name
-  GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(), // Deprecated: Use GOOGLE_API_KEY instead
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
@@ -81,7 +79,6 @@ export function validateEnv(): Env {
       const configuredProviders: string[] = [];
       if (parsedServer.OPENAI_API_KEY) configuredProviders.push('OpenAI');
       if (parsedServer.ANTHROPIC_API_KEY) configuredProviders.push('Anthropic');
-      if (parsedServer.GOOGLE_API_KEY || parsedServer.GOOGLE_GENERATIVE_AI_API_KEY) configuredProviders.push('Google');
       if (parsedServer.OPENROUTER_API_KEY) configuredProviders.push('OpenRouter');
       if (parsedServer.OLLAMA_BASE_URL) configuredProviders.push('Ollama');
 
@@ -91,17 +88,6 @@ export function validateEnv(): Env {
         console.log(`[Startup] Configured AI Providers: ${configuredProviders.join(', ')}`);
       }
 
-      // Google API key validation: warn on conflicting or deprecated usage
-      const googleApiKey = parsedServer.GOOGLE_API_KEY;
-      const googleGenerativeAiApiKey = parsedServer.GOOGLE_GENERATIVE_AI_API_KEY;
-
-      if (googleApiKey && googleGenerativeAiApiKey && googleApiKey !== googleGenerativeAiApiKey) {
-        console.warn('[Environment Validation] WARNING: Both GOOGLE_API_KEY and GOOGLE_GENERATIVE_AI_API_KEY are set with different values. GOOGLE_API_KEY is preferred - consider removing GOOGLE_GENERATIVE_AI_API_KEY.');
-      }
-
-      if (!googleApiKey && googleGenerativeAiApiKey) {
-        console.warn('[Environment Validation] WARNING: Only deprecated GOOGLE_GENERATIVE_AI_API_KEY is set. Consider migrating to GOOGLE_API_KEY for consistency.');
-      }
 
       // Additional validation for production
       if (validatedEnv.NODE_ENV === "production") {

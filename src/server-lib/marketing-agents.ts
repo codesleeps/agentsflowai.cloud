@@ -14,7 +14,6 @@ import {
   SEOContentAgentInput,
   SEOContentAgentOutput,
 } from "@/shared/models/marketing-types";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -32,7 +31,7 @@ interface AICallResult {
 
 /**
  * Call AI with fallback chain for marketing agents
- * Uses Google Gemini as primary (free tier), falls back to others
+ * Uses Chinese models via OpenRouter as primary (cost-effective), falls back to others
  */
 async function callAIWithFallback(
   systemPrompt: string,
@@ -40,34 +39,7 @@ async function callAIWithFallback(
 ): Promise<AICallResult> {
   const errors: string[] = [];
 
-  // Try Google Gemini first (free tier, great for marketing content)
-  if (process.env.GOOGLE_API_KEY) {
-    try {
-      const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      const result = await model.generateContent({
-        contents: [
-          { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] },
-        ],
-      });
-
-      const response = result.response;
-      const text = response.text();
-
-      return {
-        content: text,
-        provider: "google",
-        model: "gemini-1.5-flash",
-        tokensUsed: response.usageMetadata?.totalTokenCount || 0,
-        costUsd: 0, // Free tier
-      };
-    } catch (error: any) {
-      errors.push(`Google: ${error.message}`);
-    }
-  }
-
-  // Try OpenRouter (access to many models)
+  // Try OpenRouter Chinese models first (cost-effective, great for marketing content)
   if (process.env.OPENROUTER_API_KEY) {
     try {
       const openrouter = new OpenAI({
@@ -75,21 +47,41 @@ async function callAIWithFallback(
         apiKey: process.env.OPENROUTER_API_KEY,
       });
 
-      const completion = await openrouter.chat.completions.create({
-        model: "meta-llama/llama-3.3-70b-instruct:free",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      });
+      // Try z-ai/glm-4.5-air first (agent-optimized)
+      try {
+        const completion = await openrouter.chat.completions.create({
+          model: "z-ai/glm-4.5-air",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        });
 
-      return {
-        content: completion.choices[0].message.content || "",
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
-        tokensUsed: completion.usage?.total_tokens || 0,
-        costUsd: 0, // Free model
-      };
+        return {
+          content: completion.choices[0].message.content || "",
+          provider: "openrouter",
+          model: "z-ai/glm-4.5-air",
+          tokensUsed: completion.usage?.total_tokens || 0,
+          costUsd: 0, // Cost-effective
+        };
+      } catch (error: any) {
+        // Fallback to DeepSeek if GLM fails
+        const completion = await openrouter.chat.completions.create({
+          model: "deepseek/deepseek-chat",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        });
+
+        return {
+          content: completion.choices[0].message.content || "",
+          provider: "openrouter",
+          model: "deepseek/deepseek-chat",
+          tokensUsed: completion.usage?.total_tokens || 0,
+          costUsd: 0, // Cost-effective
+        };
+      }
     } catch (error: any) {
       errors.push(`OpenRouter: ${error.message}`);
     }

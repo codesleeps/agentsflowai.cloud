@@ -10,7 +10,7 @@ interface GenerationRequest {
   enableWebSearch?: boolean;
   enableDeepResearch?: boolean;
   reasoningEffort?: "low" | "medium" | "high";
-  modelProvider?: "openai" | "google";
+  modelProvider?: "openai";
   userId: string;
   agentId?: string; // Optional agent ID to look up specific configs
 }
@@ -23,10 +23,10 @@ interface GenerationResult {
 
 interface AgentConfig {
   agentId: string;
-  primaryProvider: "ollama" | "google" | "anthropic" | "openai";
+  primaryProvider: "ollama" | "anthropic" | "openai" | "openrouter";
   primaryModel: string;
   fallbackChain: Array<{
-    provider: "ollama" | "google" | "anthropic" | "openai";
+    provider: "ollama" | "anthropic" | "openai" | "openrouter";
     model: string;
     priority: number;
   }>;
@@ -104,151 +104,6 @@ export async function handleAnthropicProvider(
   } catch (error) {
     console.error("Anthropic provider failed:", error);
     throw error;
-  }
-}
-
-// Extracted from agents route - handle Google provider
-export async function handleGoogleProvider(
-  prompt: string,
-  enableWebSearch: boolean,
-  enableDeepResearch: boolean,
-  reasoningEffort: "low" | "medium" | "high",
-  agentConfig: AgentConfig,
-  userId: string,
-): Promise<{ text: string; provider: string }> {
-  const functionStartTime = Date.now();
-  console.log(`[Google Provider] Starting request - Provider: Google, API key configured: ${!!process.env.GOOGLE_API_KEY}`);
-
-  try {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
-      console.error('[Google Provider] Missing API key. Checked: GOOGLE_API_KEY');
-      throw new Error("GOOGLE_API_KEY is not defined");
-    }
-
-    const requestStartTime = Date.now();
-    const response = await fetch(
-      `${process.env.GOOGLE_AI_API_BASE_URL}/v1/models/${agentConfig.primaryModel}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 4096,
-            responseMimeType: "text/plain",
-          },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE",
-            },
-          ],
-        }),
-        signal: AbortSignal.timeout(30000), // 30 second timeout
-      },
-    );
-
-    const requestDuration = Date.now() - requestStartTime;
-
-    if (!response.ok) {
-      let errorType = 'unknown';
-      let errorDetails = `${response.status} ${response.statusText}`;
-
-      if (response.status === 401) {
-        errorType = 'auth_error';
-        errorDetails = 'Authentication failed - invalid API key';
-      } else if (response.status === 403) {
-        errorType = 'auth_error';
-        errorDetails = 'Forbidden - API key lacks permissions';
-      } else if (response.status === 429) {
-        errorType = 'rate_limit';
-        errorDetails = 'Rate limit exceeded - too many requests';
-      } else if (response.status >= 500) {
-        errorType = 'api_error';
-        errorDetails = `Google server error: ${response.status}`;
-      }
-
-      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed (${response.status}) after ${requestDuration}ms: ${errorType} - ${errorDetails}`);
-      throw new Error(`Google API error (${response.status}): ${errorDetails}`);
-    }
-
-    const data = await response.json();
-    const text = data.candidates[0]?.content?.parts[0]?.text || "";
-    const totalDuration = Date.now() - functionStartTime;
-
-    console.log(`[Google Provider] Model ${agentConfig.primaryModel} succeeded after ${totalDuration}ms: ${text.length} chars`);
-
-    await logModelUsage({
-      user_id: userId,
-      model: agentConfig.primaryModel,
-      provider: "google",
-      prompt_tokens: data.usageMetadata?.promptTokenCount || 0,
-      completion_tokens: data.usageMetadata?.candidatesTokenCount || 0,
-      cost_usd: 0, // Will be calculated by logModelUsage
-      latency_ms: totalDuration,
-      status: "success",
-      agent_id: agentConfig.agentId,
-      error_message: undefined,
-    });
-
-    return { text, provider: "google" };
-  } catch (error) {
-    const totalDuration = Date.now() - functionStartTime;
-    const errorInstance = error instanceof Error ? error : new Error(String(error));
-
-    let errorType = 'unknown';
-    let errorMessage = errorInstance.message;
-
-    if (errorInstance.name === 'TimeoutError' || errorMessage.includes('timeout')) {
-      errorType = 'timeout';
-      errorMessage = 'Request timed out after 30s';
-      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
-    } else if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
-      errorType = 'auth_error';
-      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
-    } else {
-      errorType = 'api_error';
-      console.error(`[Google Provider] Model ${agentConfig.primaryModel} failed: ${errorType} - ${errorMessage}`);
-    }
-
-    await logModelUsage({
-      user_id: userId,
-      model: agentConfig.primaryModel,
-      provider: "google",
-      prompt_tokens: 0,
-      completion_tokens: 0,
-      cost_usd: 0,
-      latency_ms: totalDuration,
-      status: "failed",
-      agent_id: agentConfig.agentId,
-      error_message: errorInstance.message,
-    });
-
-    throw errorInstance;
   }
 }
 
@@ -424,7 +279,7 @@ ${contextMessage}
 
 **What's happening:**
 - All our AI agents support multi-model fallback for reliability
-- We use Anthropic Claude, Google Gemini, and local Ollama models
+- We use Anthropic Claude, OpenRouter Chinese models, and local Ollama models
 - Your question has been logged and I'll provide a detailed response once reconnected
 
 **In the meantime, you can:**
@@ -443,7 +298,7 @@ What else can I help you with?`;
 async function getEffectiveAgentConfig(
   userId: string, 
   agentId: string, 
-  defaultProvider: "openai" | "google" = "openai"
+  defaultProvider: "openai" | "openrouter" = "openai"
 ): Promise<AgentConfig> {
   // 1. Get default config from static definitions
   const staticConfig = AI_AGENT_CONFIGS[agentId];
@@ -502,7 +357,7 @@ export async function executeSimpleGeneration(
   } = request;
 
   // Determine target agent ID
-  const targetAgentId = agentId || (modelProvider === "google" ? "gemini-agent" : "fast-chat-agent");
+  const targetAgentId = agentId || "fast-chat-agent";
 
   // Get effective configuration (merging defaults with user prefs)
   const agentConfig = await getEffectiveAgentConfig(userId, targetAgentId, modelProvider);
@@ -529,16 +384,6 @@ export async function executeSimpleGeneration(
       switch (provider) {
         case "anthropic":
           result = await handleAnthropicProvider(
-            prompt,
-            enableWebSearch,
-            enableDeepResearch,
-            reasoningEffort,
-            agentConfig,
-            userId,
-          );
-          break;
-        case "google":
-          result = await handleGoogleProvider(
             prompt,
             enableWebSearch,
             enableDeepResearch,

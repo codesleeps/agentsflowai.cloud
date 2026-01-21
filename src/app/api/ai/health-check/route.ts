@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleGoogleProvider, handleOllamaProvider, handleOpenRouter, handleOpenAIProvider } from "../agents/route";
+import { handleOllamaProvider, handleOpenRouter, handleOpenAIProvider } from "../agents/route";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIAgent } from "@/shared/models/ai-agents";
 import { APIKeyExpiredError } from "@/lib/api-errors";
@@ -18,7 +18,7 @@ const TEST_AGENT: AIAgent = {
   provider: "ollama",
   supportedProviders: [
     { provider: "ollama", model: "mistral:7b", priority: 1 },
-    { provider: "google", model: "gemini-1.5-flash", priority: 2 },
+    { provider: "openrouter", model: "z-ai/glm-4.5-air", priority: 2 },
     { provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", priority: 3 },
   ],
   defaultProvider: "ollama",
@@ -48,13 +48,11 @@ interface HealthCheckResponse {
   overall_status: "healthy" | "degraded" | "unhealthy";
   providers: {
     ollama: ProviderStatus;
-    google: ProviderStatus;
     openrouter: ProviderStatus;
     openai: ProviderStatus;
   };
   environment: {
     ollama_configured: boolean;
-    google_key_configured: boolean;
     openai_key_configured: boolean;
     openrouter_key_configured: boolean;
   };
@@ -80,14 +78,6 @@ async function testProvider(providerName: string, model: string): Promise<Provid
     switch (providerName) {
       case "ollama":
         result = await handleOllamaProvider({ ...TEST_AGENT, model }, testMessages);
-        break;
-      case "google":
-        result = await handleGoogleProvider(
-          { ...TEST_AGENT, model },
-          testMessage,
-          [],
-          TEST_AGENT.systemPrompt
-        );
         break;
       case "openrouter":
         result = await handleOpenRouter(
@@ -230,29 +220,6 @@ async function getOllamaModels(): Promise<string[]> {
   }
 }
 
-async function getGoogleModels(): Promise<string[]> {
-  try {
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (!apiKey) return [];
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
-      {
-        method: "GET",
-        signal: AbortSignal.timeout(5000),
-      }
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.models?.map((m: any) => m.name.replace('models/', '')) || [];
-    }
-    return [];
-  } catch {
-    return [];
-  }
-}
-
 async function getOpenRouterModels(): Promise<string[]> {
   try {
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -320,7 +287,6 @@ export async function GET() {
   // Check environment variables
   const environment = {
     ollama_configured: !!process.env.OLLAMA_BASE_URL,
-    google_key_configured: !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY),
     openai_key_configured: !!process.env.OPENAI_API_KEY,
     openrouter_key_configured: !!process.env.OPENROUTER_API_KEY,
   };
@@ -329,23 +295,19 @@ export async function GET() {
   const startupValidation = getAllProviderStatuses();
 
   // Test all providers concurrently
-  const [ollamaResult, googleResult, openrouterResult, openaiResult] = await Promise.all([
+  const [ollamaResult, openrouterResult, openaiResult] = await Promise.all([
     testProviderWithTimeout("ollama", "mistral:7b"),
-    environment.google_key_configured
-      ? testProviderWithTimeout("google", "gemini-1.5-flash")
-      : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "gemini-1.5-flash", error: "GOOGLE_API_KEY not configured", key_status: "missing" }),
     environment.openrouter_key_configured
-      ? testProviderWithTimeout("openrouter", "meta-llama/llama-3.3-70b-instruct:free")
-      : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "meta-llama/llama-3.3-70b-instruct:free", error: "OPENROUTER_API_KEY not configured", key_status: "missing" }),
+      ? testProviderWithTimeout("openrouter", "z-ai/glm-4.5-air")
+      : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "z-ai/glm-4.5-air", error: "OPENROUTER_API_KEY not configured", key_status: "missing" }),
     environment.openai_key_configured
       ? testProviderWithTimeout("openai", "gpt-4o-mini")
       : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "gpt-4o-mini", error: "OPENAI_API_KEY not configured", key_status: "missing" }),
   ]);
 
   // Fetch model lists concurrently for all providers
-  const [ollamaModels, googleModels, openrouterModels, openaiModels] = await Promise.all([
+  const [ollamaModels, openrouterModels, openaiModels] = await Promise.all([
     getOllamaModels(),
-    getGoogleModels(),
     getOpenRouterModels(),
     getOpenAIModels(),
   ]);
@@ -371,19 +333,6 @@ export async function GET() {
         size: model.size,
       }));
       ollamaResult.error = `${missingModels.length} required models not available`;
-    }
-  }
-
-  // Process Google models
-  if (googleModels.length > 0 && googleResult.status === "healthy") {
-    googleResult.available_models = googleModels;
-  } else if (googleResult.status !== "unhealthy" && environment.google_key_configured) {
-    // Check if tested model is available
-    const testedModel = "gemini-1.5-flash";
-    if (googleModels.length > 0 && !googleModels.includes(testedModel)) {
-      googleResult.status = "degraded";
-      googleResult.error = `Model ${testedModel} not available`;
-      googleResult.available_models = googleModels;
     }
   }
 
@@ -421,27 +370,6 @@ export async function GET() {
         ollamaValidation.message || "Check Ollama service status",
         "Ensure OLLAMA_BASE_URL is set correctly",
         "Verify Ollama is running: ollama serve",
-      ];
-    }
-  }
-
-  const googleValidation = startupValidation.get("Google");
-  if (googleValidation && !googleResult.key_status) {
-    googleResult.key_status = googleValidation.status;
-    googleResult.renewal_url = googleValidation.renewalUrl;
-    googleResult.env_var_name = googleValidation.envVarName;
-    if (googleValidation.status === "expired" || googleValidation.status === "invalid") {
-      googleResult.remediation_steps = [
-        googleValidation.message || "API key validation failed",
-        `Visit ${googleValidation.renewalUrl} to manage your API key`,
-        `Update ${googleValidation.envVarName} in your environment variables`,
-        "Restart the application after updating the key",
-      ];
-    } else if (googleValidation.status === "missing") {
-      googleResult.remediation_steps = [
-        `Obtain an API key from ${googleValidation.renewalUrl}`,
-        `Set ${googleValidation.envVarName} in your environment variables`,
-        "Restart the application after adding the key",
       ];
     }
   }
@@ -490,7 +418,6 @@ export async function GET() {
 
   const providers = {
     ollama: ollamaResult,
-    google: googleResult,
     openrouter: openrouterResult,
     openai: openaiResult,
   };

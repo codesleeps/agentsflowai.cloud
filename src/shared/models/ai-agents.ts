@@ -2,7 +2,6 @@
 
 export type AIProvider =
   | "ollama"
-  | "google"
   | "openai"
   | "anthropic"
   | "openrouter";
@@ -181,7 +180,7 @@ export const AI_AGENTS: AIAgent[] = [
       "Expert in web development, code generation, debugging, and optimization",
     icon: "💻",
     category: "web-development",
-    model: "meta-llama/llama-3.3-70b-instruct:free",
+    model: "deepseek/deepseek-chat",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "low",
@@ -198,18 +197,18 @@ export const AI_AGENTS: AIAgent[] = [
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "deepseek/deepseek-chat",
         priority: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "deepseek/deepseek-chat:free",
+        priority: 2,
       },
       {
         provider: "openai",
         model: "gpt-4o-mini",
-        priority: 2,
-      },
-      {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 3,
       },
       {
@@ -252,7 +251,7 @@ Always prioritize developer experience, maintainability, and production readines
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "meta-llama/llama-3.3-70b-instruct:free",
+    model: "z-ai/glm-4.5-air",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "low",
@@ -268,13 +267,13 @@ Always prioritize developer experience, maintainability, and production readines
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "z-ai/glm-4.5-air",
         priority: 1,
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "deepseek/deepseek-chat",
         priority: 2,
       },
       {
@@ -299,9 +298,9 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "gemini-1.5-pro",
-    provider: "google",
-    defaultProvider: "google",
+    model: "z-ai/glm-4.5-air",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
@@ -315,18 +314,18 @@ Always provide specific, actionable recommendations. Use data to support your in
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "openrouter",
+        model: "z-ai/glm-4.5-air",
         priority: 1,
+      },
+      {
+        provider: "openrouter",
+        model: "deepseek/deepseek-chat",
+        priority: 2,
       },
       {
         provider: "openai",
         model: "gpt-4o-mini",
-        priority: 2,
-      },
-      {
-        provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
         priority: 3,
       },
     ],
@@ -347,9 +346,9 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "gemini-1.5-pro",
-    provider: "google",
-    defaultProvider: "google",
+    model: "z-ai/glm-4.5-air",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
@@ -363,13 +362,13 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "openrouter",
+        model: "z-ai/glm-4.5-air",
         priority: 1,
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "deepseek/deepseek-chat",
         priority: 2,
       },
       {
@@ -394,9 +393,9 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "gemini-1.5-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "z-ai/glm-4.5-air",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'medium',
@@ -410,13 +409,13 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "z-ai/glm-4.5-air",
         priority: 1,
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "deepseek/deepseek-chat:free",
         priority: 2,
       },
       {
@@ -442,9 +441,9 @@ Always consider platform-specific best practices. Focus on engagement and commun
       "Search engine optimization, keywords, meta tags, and rankings",
     icon: "🔍",
     category: "seo",
-    model: "gemini-1.5-pro",
-    provider: "google",
-    defaultProvider: "google",
+    model: "z-ai/glm-4.5-air",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
@@ -458,13 +457,13 @@ Always consider platform-specific best practices. Focus on engagement and commun
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "openrouter",
+        model: "z-ai/glm-4.5-air",
         priority: 1,
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "deepseek/deepseek-chat",
         priority: 2,
       },
     ],
@@ -482,12 +481,12 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     id: "fast-chat-agent",
     name: "Fast Chat Agent",
     description:
-      "High-speed responses using Gemini Flash with OpenRouter fallback for quick answers and chat",
+      "High-speed responses using cost-effective Chinese models for quick answers and chat",
     icon: "⚡",
     category: "fast-chat",
-    model: "gemini-1.5-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "deepseek/deepseek-chat:free",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'small',
@@ -500,13 +499,13 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "deepseek/deepseek-chat:free",
         priority: 1
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "z-ai/glm-4.5-air:free",
         priority: 2
       },
       {
@@ -515,7 +514,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
         priority: 3
       },
     ],
-    systemPrompt: `You are a helpful, fast, and efficient AI assistant powered by Gemini Flash with OpenRouter and Ollama fallback for speed.
+    systemPrompt: `You are a helpful, fast, and efficient AI assistant powered by cost-effective Chinese models.
 - Keep answers concise and to the point.
 - Prioritize speed and clarity.
 - Be friendly and conversational.
@@ -523,14 +522,14 @@ Always follow current SEO best practices. Focus on user intent and search qualit
   },
   {
     id: "gemini-agent",
-    name: "Gemini Cloud Agent",
+    name: "Advanced Reasoning Agent",
     description:
-      "Powered by Google Gemini Flash for advanced reasoning and speed",
+      "Powered by Chinese AI models for advanced reasoning and speed",
     icon: "✨",
     category: "fast-chat",
-    model: "gemini-1.5-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "z-ai/glm-4.5-air",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'medium',
@@ -543,13 +542,13 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "z-ai/glm-4.5-air",
         priority: 1
       },
       {
         provider: "openrouter",
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "deepseek/deepseek-chat",
         priority: 2
       },
       {
@@ -558,7 +557,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
         priority: 3
       },
     ],
-    systemPrompt: `You are an advanced AI assistant powered by Google's Gemini Flash model.
+    systemPrompt: `You are an advanced AI assistant powered by cost-effective Chinese models with reasoning capabilities.
 - Leverage your advanced reasoning capabilities for complex problems.
 - Provide detailed, high-quality responses.
 - You have a large context window, so feel free to reference previous parts of the conversation in detail.
@@ -567,12 +566,12 @@ Always follow current SEO best practices. Focus on user intent and search qualit
   {
     id: "nano-banana-agent",
     name: "Nano Banana Agent",
-    description: "Creative image generation and editing powered by Gemini 1.5 Flash",
+    description: "Creative image generation and editing powered by advanced AI models",
     icon: "🍌",
     category: "content-creation",
-    model: "gemini-1.5-flash",
-    provider: "google",
-    defaultProvider: "google",
+    model: "z-ai/glm-4.5-air",
+    provider: "openrouter",
+    defaultProvider: "openrouter",
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
@@ -585,17 +584,17 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     ],
     supportedProviders: [
       {
-        provider: "google",
-        model: "gemini-1.5-flash",
+        provider: "openrouter",
+        model: "z-ai/glm-4.5-air",
         priority: 1,
       },
       {
-        provider: "google",
-        model: "gemini-1.5-pro",
+        provider: "openrouter",
+        model: "deepseek/deepseek-chat",
         priority: 2,
       },
     ],
-    systemPrompt: `You are the Nano Banana Agent, specializing in cutting-edge image generation and editing using Google's generative models. You help users:
+    systemPrompt: `You are the Nano Banana Agent, specializing in cutting-edge image generation and editing using advanced AI models. You help users:
 - Generate high-quality images from text descriptions
 - Perform consistent edits across multiple images
 - Transform and merge existing images with natural language

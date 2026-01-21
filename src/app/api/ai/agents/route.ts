@@ -104,13 +104,6 @@ function getRetryGuidance(errorType: string): { shouldRetry: boolean; initialWai
 // Get documentation URL by provider and error type
 function getDocumentationUrl(provider: string, errorType: string): string {
   const docsUrls: Record<string, Record<string, string>> = {
-    google: {
-      general: 'https://ai.google.dev/docs',
-      timeout: 'https://ai.google.dev/docs/troubleshooting#timeouts',
-      rate_limit: 'https://ai.google.dev/quotas',
-      auth_error: 'https://ai.google.dev/api-keys',
-      api_key_expired: 'https://makersuite.google.com/app/apikey',
-    },
     openrouter: {
       general: 'https://openrouter.ai/docs',
       timeout: 'https://openrouter.ai/docs/troubleshooting',
@@ -188,7 +181,6 @@ interface AIAgentResponse {
 // Module-level environment check (runs once on load)
 async function verifyEnvironmentVariables() {
   const providers = {
-    google: !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY),
     openrouter: !!process.env.OPENROUTER_API_KEY,
     openai: !!process.env.OPENAI_API_KEY,
     ollama: !!process.env.OLLAMA_BASE_URL,
@@ -277,7 +269,7 @@ async function parseProviderError(response: Response): Promise<{
                      lowerMessage.includes('api_key_invalid') || 
                      lowerMessage.includes('renew');
     
-    // Extract reason if available (Google API structure)
+    // Extract reason if available
     const reason = errorBody.error?.details?.[0]?.reason || errorBody.error?.reason;
     
     return {
@@ -369,7 +361,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log environment variable status
-    console.log(`[AI Agents] Environment check: GOOGLE_API_KEY=${!!process.env.GOOGLE_API_KEY}, GOOGLE_GENERATIVE_AI_API_KEY=${!!process.env.GOOGLE_GENERATIVE_AI_API_KEY}, OPENROUTER_API_KEY=${!!process.env.OPENROUTER_API_KEY}, OLLAMA_BASE_URL=${process.env.OLLAMA_BASE_URL || 'not set'}`);
+    console.log(`[AI Agents] Environment check: OPENROUTER_API_KEY=${!!process.env.OPENROUTER_API_KEY}, OPENAI_API_KEY=${!!process.env.OPENAI_API_KEY}, OLLAMA_BASE_URL=${process.env.OLLAMA_BASE_URL || 'not set'}`);
 
     const body = await request.json();
 
@@ -443,155 +435,6 @@ ${scrapedContent}`;
       error_message: error instanceof Error ? error.message : String(error),
     });
     return handleApiError(error);
-  }
-}
-
-// Helper function to calculate Google model timeout
-function getGoogleModelTimeout(modelName: string): number {
-  if (modelName.toLowerCase().includes('flash')) {
-    return 20000; // 20s for Flash models
-  } else if (modelName.toLowerCase().includes('pro')) {
-    return 40000; // 40s for Pro models
-  }
-  return 30000; // 30s default
-}
-
-export async function handleGoogleProvider(
-  agent: AIAgent,
-  message: string,
-  conversationHistory: AIMessage[],
-  systemPrompt: string,
-) {
-  const functionStartTime = Date.now();
-  console.log('[Google Provider] Starting request - Provider: Google, API key configured:', !!(process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY));
-
-  try {
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (!apiKey) {
-      console.error('[Google Provider] Missing API key. Checked: GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY');
-      throw new Error("GOOGLE_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is not defined");
-    }
-
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
-
-    const modelNames = [
-      agent.model,
-      "gemini-2.5-flash",
-      "gemini-2.5-pro",
-      "gemini-2.0-flash",
-    ];
-
-    let lastError;
-
-    for (const modelName of modelNames) {
-      const attemptStartTime = Date.now();
-      try {
-        console.log(`[Google Provider] Attempting model: ${modelName}`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-
-        // Build segments for generateContent
-        const contents = (conversationHistory || []).map((msg: any) => ({
-          role: msg.role === "assistant" ? "model" : "user",
-          parts: [{ text: msg.content }],
-        }));
-
-        // Google Generative AI requires the first message to be from 'user'
-        while (contents.length > 0 && contents[0].role === 'model') {
-          contents.shift();
-        }
-
-        // Add the current system prompt + message
-        const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${message}` : message;
-        contents.push({
-          role: "user",
-          parts: [{ text: fullPrompt }]
-        });
-
-        // Add timeout protection for Google API calls with model-specific timeouts
-        const timeoutMs = getGoogleModelTimeout(modelName);
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Google API timeout after ${timeoutMs}ms`)), timeoutMs)
-        );
-
-        const result = await Promise.race([
-          model.generateContent({
-            contents,
-            generationConfig: { maxOutputTokens: 2048 },
-          }),
-          timeoutPromise
-        ]);
-
-        const response = result.response;
-        const responseText = response.text();
-
-        if (!responseText) throw new Error("Empty response text");
-
-        const attemptDuration = Date.now() - attemptStartTime;
-        console.log(`[Google Provider] Model ${modelName} succeeded after ${attemptDuration}ms: ${responseText.length} chars`);
-
-        return {
-          response: responseText,
-          tokensUsed: 0,
-          modelUsed: modelName
-        };
-      } catch (error) {
-        const attemptDuration = Date.now() - attemptStartTime;
-        lastError = error;
-
-        // Determine error type and check for expired API key
-        let errorType = 'unknown';
-        let errorMessage = error instanceof Error ? error.message : String(error);
-        const lowerError = errorMessage.toLowerCase();
-
-        // Check for expired API key first (priority check)
-        if (lowerError.includes('expired') || lowerError.includes('api_key_invalid') || lowerError.includes('renew')) {
-          errorType = 'api_key_expired';
-          console.warn(`[Google Provider] Model ${modelName} failed after ${attemptDuration}ms: ${errorType} - API key expired`);
-          throw new APIKeyExpiredError('Google', 'https://makersuite.google.com/app/apikey', 'GOOGLE_API_KEY');
-        } else if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
-          errorType = 'timeout';
-        } else if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
-          errorType = 'rate_limit';
-        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-          errorType = 'network_error';
-        } else if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
-          errorType = 'auth_error';
-        } else if (errorMessage.includes('model') && errorMessage.includes('not found')) {
-          errorType = 'model_not_found';
-        } else {
-          errorType = 'api_error';
-        }
-
-        console.warn(`[Google Provider] Model ${modelName} failed after ${attemptDuration}ms: ${errorType} - ${errorMessage}`);
-        
-        // Update lastError with enhanced message for expired keys
-        if (errorType === 'api_key_expired') {
-          lastError = new Error(errorMessage);
-        }
-        
-        continue;
-      }
-    }
-
-    const totalDuration = Date.now() - functionStartTime;
-    throw new Error(`Google AI failed after trying all models (${totalDuration}ms). Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
-  } catch (error) {
-    const totalDuration = Date.now() - functionStartTime;
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    // Determine error type for final error
-    let errorType = 'unknown';
-    if (errorMessage.includes('timeout') || errorMessage.includes('TimeoutError')) {
-      errorType = 'timeout';
-    } else if (errorMessage.includes('API key') || errorMessage.includes('authentication')) {
-      errorType = 'auth_error';
-    } else {
-      errorType = 'api_error';
-    }
-
-    console.error(`[Google Provider] Provider failed after ${totalDuration}ms: ${errorType} - ${errorMessage}`);
-    throw error;
   }
 }
 
@@ -1052,14 +895,7 @@ async function executeWithFallback(
       let result;
       const systemPrompt = agent.systemPrompt;
 
-      if (provider === "google") {
-        result = await handleGoogleProvider(
-          { ...agent, model },
-          message,
-          conversationHistory,
-          systemPrompt,
-        );
-      } else if (provider === "ollama") {
+      if (provider === "ollama") {
         result = await handleOllamaProvider({ ...agent, model }, messages);
       } else if (provider === "openrouter") {
         result = await handleOpenRouter(
@@ -1256,7 +1092,6 @@ function generateFallbackResponse(agentId: string, message: string, errorLog?: A
       if (errorType === 'api_key_expired') {
         const providerUpper = entry.provider.toUpperCase();
         const renewalUrls = {
-          google: 'https://makersuite.google.com/app/apikey',
           openrouter: 'https://openrouter.ai/keys',
           anthropic: 'https://console.anthropic.com/settings/keys'
         };

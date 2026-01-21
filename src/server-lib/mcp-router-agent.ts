@@ -20,11 +20,12 @@ import { executeSimpleGeneration } from './ai-fallback-handler';
 // Router Agent Configuration
 const ROUTER_AGENT_CONFIG = {
   agentId: 'mcp-router-agent',
-  primaryProvider: 'google',
-  primaryModel: 'gemini-1.5-flash',
+  primaryProvider: 'openrouter',
+  primaryModel: 'z-ai/glm-4.5-air',
   fallbackChain: [
-    { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', priority: 1 },
-    { provider: 'ollama', model: 'mistral', priority: 2 }
+    { provider: 'openrouter', model: 'deepseek/deepseek-chat', priority: 1 },
+    { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', priority: 2 },
+    { provider: 'ollama', model: 'mistral', priority: 3 }
   ]
 };
 
@@ -120,7 +121,7 @@ Examples:
       enableWebSearch: false,
       enableDeepResearch: false,
       reasoningEffort: 'low' as const,
-      modelProvider: 'google' as const,
+      modelProvider: 'openai' as const,
       userId: 'mcp-router-agent'
     };
 

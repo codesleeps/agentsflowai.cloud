@@ -1,6 +1,6 @@
 import { getEnv } from "./env-validation";
 
-export type AIProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'ollama';
+export type AIProvider = 'openai' | 'anthropic' | 'openrouter' | 'ollama';
 
 /**
  * Checks if a specific AI provider is configured with an API key or URL.
@@ -13,8 +13,6 @@ export function isProviderConfigured(provider: AIProvider): boolean {
       return !!env.OPENAI_API_KEY;
     case 'anthropic':
       return !!env.ANTHROPIC_API_KEY;
-    case 'google':
-      return !!(env.GOOGLE_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY);
     case 'openrouter':
       return !!env.OPENROUTER_API_KEY;
     case 'ollama':
@@ -36,8 +34,6 @@ export function getProviderKey(provider: AIProvider): string | undefined {
       return env.OPENAI_API_KEY;
     case 'anthropic':
       return env.ANTHROPIC_API_KEY;
-    case 'google':
-      return env.GOOGLE_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY;
     case 'openrouter':
       return env.OPENROUTER_API_KEY;
     default:
@@ -49,7 +45,7 @@ export function getProviderKey(provider: AIProvider): string | undefined {
  * Gets a list of all currently configured providers.
  */
 export function getConfiguredProviders(): AIProvider[] {
-  const providers: AIProvider[] = ['openai', 'anthropic', 'google', 'openrouter', 'ollama'];
+  const providers: AIProvider[] = ['openai', 'anthropic', 'openrouter', 'ollama'];
   return providers.filter(isProviderConfigured);
 }
 

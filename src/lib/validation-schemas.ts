@@ -86,7 +86,6 @@ const ServiceTierEnum = z.enum(["basic", "growth", "enterprise"]);
 const OllamaActionEnum = z.enum(["generate", "chat", "models", "pull"]);
 const AIProviderEnum = z.enum([
   "ollama",
-  "google",
   "anthropic",
   "openai",
   "openrouter",
@@ -413,7 +412,7 @@ export const GenerateTextRequestSchema = z.object({
   enableWebSearch: z.boolean().optional().default(false),
   enableDeepResearch: z.boolean().optional().default(false),
   reasoningEffort: z.enum(["low", "medium", "high"]).optional().default("low"),
-  modelProvider: z.enum(["openai", "google"]).optional().default("openai"),
+  modelProvider: z.enum(["openai"]).optional().default("openai"),
 });
 
 // ============================================
