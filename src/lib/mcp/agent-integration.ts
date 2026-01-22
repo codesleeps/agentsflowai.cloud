@@ -4,8 +4,8 @@
  * Helper functions to easily integrate MCP tools into existing agents
  */
 
-import { routeMCPRequest } from "../server-lib/mcp-router-agent";
-import { MCPRouterRequest, MCPIntentType, MCPRouterResponse } from "@/shared/models/mcp-types";
+import { routeMCPRequest } from "../../server-lib/mcp-router-agent";
+import { MCPRouterRequest, MCPIntentType, MCPRouterResponse } from "../../shared/models/mcp-types";
 
 /**
  * Simple MCP tool executor for agents
@@ -21,9 +21,8 @@ export async function executeMCPForAgent(
       userId,
       context: { intent },
       preferences: {
-        maxToolsPerRequest: 2,
-        enableOrchestration: intent === MCPIntentType.HYBRID_RESEARCH,
-        confidenceThreshold: 0.6
+        maxTools: 2,
+        enableOrchestration: intent === MCPIntentType.HYBRID_RESEARCH
       }
     };
 
