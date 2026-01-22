@@ -444,7 +444,7 @@ export async function handleOpenRouter(
   conversationHistory: AIMessage[],
   systemPrompt: string
 ) {
-  const OPENROUTER_TIMEOUT_MS = 30000;
+  const OPENROUTER_TIMEOUT_MS = 120000; // Increased from 30s to 2 minutes
   const functionStartTime = Date.now();
   console.log(`[OpenRouter Provider] Starting request with model: ${agent.model}`);
 
@@ -1079,7 +1079,16 @@ function generateFallbackResponse(agentId: string, message: string, errorLog?: A
   const configLink = `\n\n⚙️ **Configure API Keys**`;
 
   if (errorLog && errorLog.length > 0) {
-    diagnosticSection = `\n\n## Diagnostic Information\n\n**Agent ID:** ${agentId}\n**Timestamp:** ${new Date().toISOString()}\n**Total Attempts:** ${errorLog.length}\n\n### Provider Errors:\n`;
+    diagnosticSection = `
+
+## Diagnostic Information
+
+**Agent ID:** ${agentId}
+**Timestamp:** ${new Date().toISOString()}
+**Total Attempts:** ${errorLog.length}
+
+### Provider Errors:
+`;
 
     errorLog.forEach((entry, index) => {
       const duration = Math.round(entry.duration);

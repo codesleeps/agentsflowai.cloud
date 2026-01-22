@@ -141,9 +141,9 @@ const WARMUP_TIMEOUT = 120000;
 const CACHE_HIT_COUNTER = { hits: 0 };
 
 export const OLLAMA_TIMEOUT_CONFIG = {
-  SMALL_MODEL_TIMEOUT: 30000,
-  MEDIUM_MODEL_TIMEOUT: 45000,
-  LARGE_MODEL_TIMEOUT: 60000,
+  SMALL_MODEL_TIMEOUT: 60000,   // Increased from 30s to 1 minute
+  MEDIUM_MODEL_TIMEOUT: 90000,  // Increased from 45s to 1.5 minutes
+  LARGE_MODEL_TIMEOUT: 120000,  // Increased from 60s to 2 minutes
   FIRST_LOAD_MULTIPLIER: 2,
 };
 
