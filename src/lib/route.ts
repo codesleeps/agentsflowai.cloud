@@ -10,9 +10,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const agentId = searchParams.get("agentId");
 
-    const whereClause: any = { userId: user.id };
+    const whereClause: any = { user_id: user.id };
     if (agentId) {
-      whereClause.agentId = agentId;
+      whereClause.agent_id = agentId;
     }
 
     // Assuming AIModelConfig table exists as per requirements
@@ -20,8 +20,7 @@ export async function GET(request: NextRequest) {
     const preferences = await db.aIModelConfig.findMany({
       where: whereClause,
       orderBy: [
-        { agentId: 'asc' },
-        { priority: 'asc' }
+        { agent_id: 'asc' }
       ]
     });
 
@@ -44,22 +43,40 @@ export async function POST(request: NextRequest) {
       // 1. Delete existing config for this agent/user
       await tx.aIModelConfig.deleteMany({
         where: {
-          userId: user.id,
-          agentId: agentId
+          user_id: user.id,
+          agent_id: agentId
         }
       });
 
       // 2. Insert new config
       if (fallbackChain.length > 0) {
-        await tx.aIModelConfig.createMany({
-          data: fallbackChain.map((item, index) => ({
-            userId: user.id,
-            agentId: agentId,
-            provider: item.provider,
-            model: item.model,
-            priority: index + 1, // Ensure sequential priority
-            isEnabled: item.isEnabled ?? true
-          }))
+        // Convert fallbackChain to the expected format
+        const fallbackChainJson = fallbackChain.map((item, index) => ({
+          provider: item.provider,
+          model: item.model,
+          priority: index + 1,
+          isEnabled: item.isEnabled ?? true
+        }));
+        
+        await tx.aIModelConfig.upsert({
+          where: {
+            user_id_agent_id: {
+              user_id: user.id,
+              agent_id: agentId
+            }
+          },
+          update: {
+            primary_provider: fallbackChain[0]?.provider || 'ollama',
+            primary_model: fallbackChain[0]?.model || 'mistral',
+            fallback_chain: fallbackChainJson
+          },
+          create: {
+            user_id: user.id,
+            agent_id: agentId,
+            primary_provider: fallbackChain[0]?.provider || 'ollama',
+            primary_model: fallbackChain[0]?.model || 'mistral',
+            fallback_chain: fallbackChainJson
+          }
         });
       }
     });
@@ -82,8 +99,8 @@ export async function DELETE(request: NextRequest) {
 
     await db.aIModelConfig.deleteMany({
       where: {
-        userId: user.id,
-        agentId: agentId
+        user_id: user.id,
+        agent_id: agentId
       }
     });
 

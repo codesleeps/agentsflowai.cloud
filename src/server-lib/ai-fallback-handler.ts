@@ -317,21 +317,27 @@ async function getEffectiveAgentConfig(
 
   // 2. Check for user overrides in DB
   try {
-    const userPrefs = await db.aIModelConfig.findMany({
-      where: { userId, agentId, isEnabled: true },
-      orderBy: { priority: 'asc' }
+    const userPrefs = await db.aIModelConfig.findFirst({
+      where: { 
+        user_id: userId, 
+        agent_id: agentId 
+      }
     });
 
-    if (userPrefs.length > 0) {
-      // Use user preferences
-      const primary = userPrefs[0];
-      config.primaryProvider = primary.provider as any;
-      config.primaryModel = primary.model;
+    if (userPrefs) {
+      // Parse fallback chain from JSON
+      const fallbackChain = Array.isArray(userPrefs.fallback_chain) 
+        ? userPrefs.fallback_chain 
+        : [];
       
-      config.fallbackChain = userPrefs.map(p => ({
-        provider: p.provider as any,
-        model: p.model,
-        priority: p.priority
+      // Use user preferences
+      config.primaryProvider = userPrefs.primary_provider as any;
+      config.primaryModel = userPrefs.primary_model;
+      
+      config.fallbackChain = fallbackChain.map((item: any) => ({
+        provider: item.provider as any,
+        model: item.model,
+        priority: item.priority || 1
       }));
     }
   } catch (error) {

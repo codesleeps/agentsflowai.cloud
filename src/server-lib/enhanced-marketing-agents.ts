@@ -56,7 +56,7 @@ async function callAIWithMCPIntegration(
           userPrompt
         },
         preferences: {
-          maxToolsPerRequest: 2,
+          maxTools: 2,
           enableOrchestration: true
         }
       };
@@ -271,8 +271,8 @@ export async function runEnhancedResearchAgent(
   const input: ResearchAgentInput = {
     topic: campaign.topic,
     targetAudience: campaign.targetAudience,
-    goals: campaign.goals,
-    brandVoice: campaign.brandVoice || undefined,
+    goal: campaign.goal || undefined,
+    brandContext: campaign.brandVoice || undefined,
   };
 
   // Enhanced system prompt for research
@@ -299,7 +299,7 @@ Return a JSON object with this exact structure:
 
   const userPrompt = `Create a research brief for: ${campaign.topic}
 Target Audience: ${campaign.targetAudience}
-Goals: ${campaign.goals}
+Goals: ${campaign.goal || 'Not specified'}
 ${campaign.brandVoice ? `Brand Voice: ${campaign.brandVoice}` : ""}`;
 
   try {
@@ -333,10 +333,10 @@ ${campaign.brandVoice ? `Brand Voice: ${campaign.brandVoice}` : ""}`;
       },
     });
 
-    // Update campaign to content stage
+    // Update campaign to needs review stage
     await db.marketingCampaign.update({
       where: { id: campaignId },
-      data: { status: "content" },
+      data: { status: "needs_review" },
     });
 
     return output;
@@ -440,7 +440,7 @@ Return a JSON object with this exact structure:
 Research Brief:
 Target Audience: ${brief.targetAudience}
 Goal: ${brief.primaryGoal}
-Positioning: ${brief.positioning}
+Positioning: ${brief.summary}
 Key Messages:
 ${brief.keyMessages.map((m, i) => `${i + 1}. ${m}`).join("\n")}
 
