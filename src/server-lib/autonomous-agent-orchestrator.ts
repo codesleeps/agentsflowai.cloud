@@ -9,6 +9,8 @@ import { routeMCPRequest } from "./mcp-router-agent";
 import { executeSimpleGeneration } from "./ai-fallback-handler";
 import { getRedisClient } from "./redis-cache";
 import { db } from "./prisma";
+import { executeMCPTool } from "@/lib/mcp/tools/shared";
+import { MCPError } from "@/lib/mcp/errors";
 import {
   MCPRouterRequest,
   MCPToolRoute,
@@ -498,7 +500,7 @@ export class AutonomousAgentOrchestrator {
     try {
       // Execute plan steps
       for (const step of context.executionPlan.steps || []) {
-        const toolResults = await this.executeToolChain(taskId, step.tools);
+        const toolResults = await this.executeToolChain(taskId, step.tools, context.userId);
         results.push(...toolResults);
         
         // Update context with partial results
@@ -627,79 +629,112 @@ export class AutonomousAgentOrchestrator {
 
   // ==================== TOOL EXECUTION ====================
 
-  async executeToolChain(taskId: string, tools: MCPToolRoute[]): Promise<MCPToolExecutionResult[]> {
+  async executeToolChain(taskId: string, tools: MCPToolRoute[], userId: string): Promise<MCPToolExecutionResult[]> {
     const results: MCPToolExecutionResult[] = [];
     
     for (const toolRoute of tools) {
-      try {
-        // Build query incorporating tool parameters
-        const paramStr = toolRoute.parameters ? JSON.stringify(toolRoute.parameters) : '{}';
-        const query = `Execute ${toolRoute.serverName}.${toolRoute.toolName} with parameters: ${paramStr}`;
-        
-        const request: MCPRouterRequest = {
-          query,
-          userId: taskId,
-          context: {
-            tool: toolRoute.toolName,
-            server: toolRoute.serverName,
-            parameters: toolRoute.parameters || {}
-          },
-          preferences: {
-            maxTools: 1,
-            enableOrchestration: false
+      let retryCount = 0;
+      const maxRetries = 3;
+      let lastError: Error | null = null;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          const startTime = Date.now();
+          const params = toolRoute.parameters || {};
+          
+          // Direct tool execution with structured parameters
+          const toolResult = await executeMCPTool(
+            toolRoute.serverName, 
+            toolRoute.toolName, 
+            params, 
+            userId
+          );
+          
+          const executionTime = Date.now() - startTime;
+          
+          // Estimate cost based on tool type
+          let cost = 0.001; // Default cost
+          if (toolRoute.toolName.includes('search')) {
+            cost = 0.001;
+          } else if (toolRoute.toolName.includes('playwright') || toolRoute.toolName.includes('browse')) {
+            cost = 0.005;
+          } else if (toolRoute.toolName.includes('analyze') || toolRoute.toolName.includes('process')) {
+            cost = 0.003;
           }
-        };
+          
+          // Build MCPToolExecutionResult
+          const result: MCPToolExecutionResult = {
+            toolRoute,
+            success: toolResult.success,
+            result: toolResult.data,
+            error: toolResult.success ? undefined : 'Tool execution failed',
+            cost,
+            executionTime,
+            retryCount
+          };
 
-        const response = await routeMCPRequest(request);
-        
-        const result: MCPToolExecutionResult = {
-          toolRoute,
-          success: response.executionResults.some(r => r.success),
-          result: response.executionResults.find(r => r.success)?.result,
-          error: response.error,
-          cost: response.totalCost,
-          executionTime: response.executionTime,
-          retryCount: 0
-        };
+          results.push(result);
 
-        results.push(result);
+          // Log tool execution
+          await this.logExecution(taskId, 'mcp_tool_execution', {
+            toolRoute,
+            userId
+          }, {
+            success: result.success,
+            cost: result.cost,
+            executionTime: result.executionTime
+          });
 
-        // Log tool execution
-        await this.logExecution(taskId, 'mcp_tool_execution', {
-          toolRoute
-        }, {
-          success: result.success,
-          cost: result.cost
-        });
+          // Update tools used in metadata
+          const context = await this.contextManager.loadContext(taskId);
+          const toolsUsed = [...new Set([...context.metadata.toolsUsed, `${toolRoute.serverName}.${toolRoute.toolName}`])];
+          
+          await this.contextManager.updateContext(taskId, {
+            metadata: {
+              ...context.metadata,
+              toolsUsed,
+              totalCost: context.metadata.totalCost + result.cost
+            }
+          });
 
-        // Update tools used in metadata
-        const context = await this.contextManager.loadContext(taskId);
-        const toolsUsed = [...new Set([...context.metadata.toolsUsed, `${toolRoute.serverName}.${toolRoute.toolName}`])];
-        
-        await this.contextManager.updateContext(taskId, {
-          metadata: {
-            ...context.metadata,
-            toolsUsed,
-            totalCost: context.metadata.totalCost + result.cost
+          // Success - break out of retry loop
+          break;
+          
+        } catch (error) {
+          lastError = error as Error;
+          retryCount++;
+          
+          // Log retry attempt
+          await this.logExecution(taskId, 'mcp_tool_retry', {
+            toolRoute,
+            attempt: retryCount,
+            error: error instanceof Error ? error.message : String(error)
+          }, {});
+          
+          // If this was the last retry, add failure result
+          if (retryCount > maxRetries) {
+            const result: MCPToolExecutionResult = {
+              toolRoute,
+              success: false,
+              error: lastError instanceof Error ? lastError.message : String(lastError),
+              cost: 0,
+              executionTime: 0,
+              retryCount: maxRetries
+            };
+
+            results.push(result);
+
+            await this.logExecution(taskId, 'mcp_tool_error', {
+              toolRoute,
+              error: result.error,
+              finalFailure: true
+            }, {});
+          } else {
+            // Exponential backoff
+            const delay = 1000 * Math.pow(2, retryCount - 1);
+            await new Promise(resolve => setTimeout(resolve, delay));
           }
-        });
-
-      } catch (error) {
-        const result: MCPToolExecutionResult = {
-          toolRoute,
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-          cost: 0,
-          executionTime: 0,
-          retryCount: 0
-        };
-
-        results.push(result);
-
-        await this.logExecution(taskId, 'mcp_tool_error', {
-          toolRoute,
-          error: result.error
-        }, {});
+        }
       }
     }
 
