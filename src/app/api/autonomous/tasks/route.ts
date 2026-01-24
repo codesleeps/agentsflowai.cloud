@@ -10,7 +10,7 @@ import { handleApiError } from "@/lib/api-errors";
 import {
   createAutonomousTask,
   getTaskStatus
-} from "@/server-lib/simple-autonomous-orchestrator";
+} from "@/server-lib/autonomous-agent-orchestrator";
 
 // ==================== CREATE AUTONOMOUS TASK ====================
 

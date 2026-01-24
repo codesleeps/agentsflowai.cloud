@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
-import { AutonomousAgentOrchestrator, TaskExecutionState } from '@/server-lib/simple-autonomous-orchestrator';
+import { createAutonomousTask, getTaskStatus } from '@/server-lib/autonomous-agent-orchestrator';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,8 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields: agentId, prompt' }, { status: 400 });
     }
 
-    const orchestrator = new AutonomousAgentOrchestrator();
-    const taskId = await orchestrator.initializeTask(user.id, agentId, prompt);
+    const taskId = await createAutonomousTask(user.id, agentId, prompt);
 
     return NextResponse.json({ 
       success: true, 
@@ -42,8 +41,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing taskId parameter' }, { status: 400 });
     }
 
-    const orchestrator = new AutonomousAgentOrchestrator();
-    const taskContext = await orchestrator.getTaskContext(taskId);
+    const taskContext = await getTaskStatus(taskId);
 
     if (!taskContext) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });

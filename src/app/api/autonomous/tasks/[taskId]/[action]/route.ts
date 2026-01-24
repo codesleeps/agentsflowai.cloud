@@ -10,8 +10,11 @@ import { handleApiError } from "@/lib/api-errors";
 import {
   approveTask,
   cancelTask,
+  pauseTask,
+  resumeTask,
+  retryTask,
   getTaskStatus
-} from "@/server-lib/simple-autonomous-orchestrator";
+} from "@/server-lib/autonomous-agent-orchestrator";
 
 export async function POST(
   request: NextRequest,
@@ -73,9 +76,30 @@ export async function POST(
           message: "Task cancelled"
         });
 
+      case "pause":
+        await pauseTask(taskId);
+        return NextResponse.json({
+          success: true,
+          message: "Task paused"
+        });
+
+      case "resume":
+        await resumeTask(taskId);
+        return NextResponse.json({
+          success: true,
+          message: "Task resumed"
+        });
+
+      case "retry":
+        await retryTask(taskId);
+        return NextResponse.json({
+          success: true,
+          message: "Task retry initiated"
+        });
+
       default:
         return NextResponse.json(
-          { error: `Unsupported action: ${action}. Supported actions: approve, cancel` },
+          { error: `Unsupported action: ${action}. Supported actions: approve, cancel, pause, resume, retry` },
           { status: 400 }
         );
     }
@@ -94,6 +118,18 @@ export async function POST(
       if (error.message.includes('not paused')) {
         return NextResponse.json(
           { error: "Task is not paused" },
+          { status: 400 }
+        );
+      }
+      if (error.message.includes('Can only pause executing tasks')) {
+        return NextResponse.json(
+          { error: "Can only pause executing tasks" },
+          { status: 400 }
+        );
+      }
+      if (error.message.includes('Can only retry failed tasks')) {
+        return NextResponse.json(
+          { error: "Can only retry failed tasks" },
           { status: 400 }
         );
       }

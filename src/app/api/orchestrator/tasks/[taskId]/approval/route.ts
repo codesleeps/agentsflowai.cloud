@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
-import { approveTask, cancelTask } from '@/server-lib/simple-autonomous-orchestrator';
+import { approveTask, cancelTask } from '@/server-lib/autonomous-agent-orchestrator';
 
 export async function POST(req: NextRequest) {
   try {

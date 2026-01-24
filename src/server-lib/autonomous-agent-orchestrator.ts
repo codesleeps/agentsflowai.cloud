@@ -162,7 +162,7 @@ ${context ? `Context: ${JSON.stringify(context)}` : ''}`;
       
       // Cache for 1 hour
       try {
-        await redis.setex(cacheKey, 3600, JSON.stringify(result));
+        await redis.setEx(cacheKey, 3600, JSON.stringify(result));
       } catch (error) {
         console.warn('Failed to cache complexity result');
       }
@@ -275,7 +275,7 @@ class TaskContextManager {
 
     // Save to Redis (1 hour TTL)
     try {
-      await redis.setex(
+      await redis.setEx(
         `task:context:${taskId}`,
         3600,
         JSON.stringify(dbContext)
@@ -288,8 +288,7 @@ class TaskContextManager {
     await db.workflowExecution.update({
       where: { id: taskId },
       data: {
-        trigger_data: dbContext,
-        updated_at: new Date()
+        trigger_data: JSON.stringify(dbContext)
       }
     });
   }
@@ -315,7 +314,10 @@ class TaskContextManager {
       throw new Error(`Task context not found for taskId: ${taskId}`);
     }
 
-    return this.deserializeContext(execution.trigger_data as any);
+    const parsedData = typeof execution.trigger_data === 'string' 
+      ? JSON.parse(execution.trigger_data) 
+      : execution.trigger_data;
+    return this.deserializeContext(parsedData as any);
   }
 
   async updateContext(taskId: string, updates: Partial<TaskExecutionContext>): Promise<void> {
@@ -338,6 +340,14 @@ class TaskContextManager {
       ...data,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
+      complexity: {
+        ...data.complexity,
+        level: data.complexity.level,
+        score: data.complexity.score,
+        estimatedSteps: data.complexity.estimatedSteps,
+        reasoning: data.complexity.reasoning,
+        suggestedTools: data.complexity.suggestedTools
+      },
       metadata: {
         ...data.metadata,
         startTime: new Date(data.metadata.startTime),
@@ -390,11 +400,10 @@ export class AutonomousAgentOrchestrator {
     await db.workflowExecution.create({
       data: {
         id: taskId,
-        user_id: userId,
         workflow_id: agentId,
+        trigger_type: 'autonomous_task',
         status: 'running',
-        trigger_data: initialContext,
-        result_data: {},
+        trigger_data: JSON.stringify(initialContext),
         started_at: new Date()
       }
     });
@@ -444,7 +453,7 @@ export class AutonomousAgentOrchestrator {
       originalPrompt: context.originalPrompt
     }, {
       complexity: analysis.complexity,
-      estimatedSteps: analysis.estimatedSteps
+      estimatedDuration: analysis.estimatedDuration
     });
 
     // Transition to planning state
@@ -623,12 +632,17 @@ export class AutonomousAgentOrchestrator {
     
     for (const toolRoute of tools) {
       try {
+        // Build query incorporating tool parameters
+        const paramStr = toolRoute.parameters ? JSON.stringify(toolRoute.parameters) : '{}';
+        const query = `Execute ${toolRoute.serverName}.${toolRoute.toolName} with parameters: ${paramStr}`;
+        
         const request: MCPRouterRequest = {
-          query: `Execute tool: ${toolRoute.toolName}`,
+          query,
           userId: taskId,
           context: {
             tool: toolRoute.toolName,
-            server: toolRoute.serverName
+            server: toolRoute.serverName,
+            parameters: toolRoute.parameters || {}
           },
           preferences: {
             maxTools: 1,
@@ -741,9 +755,8 @@ export class AutonomousAgentOrchestrator {
       where: { id: taskId },
       data: {
         status: dbStatus,
-        updated_at: new Date(),
         ...(newState === TaskExecutionState.COMPLETED || newState === TaskExecutionState.FAILED || newState === TaskExecutionState.CANCELLED
-          ? { finished_at: new Date() }
+          ? { completed_at: new Date() }
           : {})
       }
     });
@@ -855,7 +868,7 @@ export class AutonomousAgentOrchestrator {
         action_type: actionType,
         input_data: inputData,
         output_data: outputData,
-        timestamp: new Date()
+        created_at: new Date()
       }
     });
   }
