@@ -48,6 +48,10 @@ export interface MCPToolResponse {
     bytesTransferred?: number
     screenshotsTaken?: number
     estimatedCost: number
+    filesProcessed?: number
+    totalBytes?: number
+    filesScanned?: number
+    matchesFound?: number
   }
   fallbackUsed?: boolean
 }
@@ -67,6 +71,16 @@ export interface PlaywrightConfig extends MCPServerConfig {
   browserType: 'chromium' | 'firefox' | 'webkit'
   headless: boolean
   viewport?: { width: number; height: number }
+}
+
+export interface FileSystemConfig extends MCPServerConfig {
+  maxFileSize: number
+  allowedDirectories: string[]
+  backupDirectory: string
+  rateLimit: {
+    windowMs: number
+    maxRequests: number
+  }
 }
 
 // Connection Pool Types
@@ -187,6 +201,10 @@ export interface MCPUsageMetrics {
   totalCost: number
   bytesTransferred?: number
   screenshotsTaken?: number
+  filesProcessed?: number
+  totalBytes?: number
+  filesScanned?: number
+  matchesFound?: number
 }
 
 export interface MCPServerMetrics {

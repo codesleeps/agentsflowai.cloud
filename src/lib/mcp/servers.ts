@@ -4,6 +4,7 @@ import {
   Context7Config,
   FetchConfig,
   PlaywrightConfig,
+  FileSystemConfig,
   context7ConfigSchema,
   fetchConfigSchema,
   playwrightConfigSchema
@@ -46,11 +47,12 @@ export const MCP_FALLBACK_CHAINS = {
       parameters: {},
       priority: 1
     }
-  ]
+  ],
+  filesystem: [] // No fallbacks for filesystem operations
 }
 
 // MCP Server Configurations
-export const MCP_SERVERS: MCPServerRegistry = {
+export const MCP_SERVERS: MCPServerRegistry & { filesystem: FileSystemConfig } = {
   context7: {
     name: 'context7',
     endpoint: env.MCP_CONTEXT7_ENDPOINT || 'http://localhost:3100',
@@ -88,6 +90,22 @@ export const MCP_SERVERS: MCPServerRegistry = {
     browserType: 'chromium',
     headless: true,
     viewport: { width: 1920, height: 1080 }
+  },
+  filesystem: {
+    name: 'filesystem',
+    endpoint: 'local',
+    timeout: 30000,
+    retryAttempts: 3,
+    retryDelay: 1000,
+    poolSize: 10,
+    capabilities: ['read_file', 'write_file', 'create_file', 'delete_file', 'list_directory', 'get_stats'],
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    allowedDirectories: ['/src', '/public', '/components', '/lib', '/utils', '/styles', '/pages', '/app'],
+    backupDirectory: '.backups',
+    rateLimit: {
+      windowMs: 60000,
+      maxRequests: 50
+    }
   }
 }
 
@@ -191,8 +209,15 @@ export const MCP_SERVER_METADATA = {
     tools: ['navigate', 'click', 'type', 'screenshot', 'extract_text'],
     rateLimit: '20 requests/minute',
     costEstimate: '$0.005 per automation'
+  },
+  filesystem: {
+    description: 'Local file system operations',
+    version: '1.0.0',
+    tools: ['read_file', 'write_file', 'create_file', 'delete_file', 'list_directory', 'get_stats'],
+    rateLimit: '50 requests/minute',
+    costEstimate: '$0.0000001 per byte'
   }
 } as const
 
 // Export types for convenience
-export type { Context7Config, FetchConfig, PlaywrightConfig }
+export type { Context7Config, FetchConfig, PlaywrightConfig, FileSystemConfig }

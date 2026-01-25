@@ -9,6 +9,8 @@
 export * from './context7'
 export * from './fetch'
 export * from './playwright'
+export * from './filesystem'
+export * from './codebase-search'
 
 // Re-export common types and utilities
 export type {
@@ -16,7 +18,8 @@ export type {
   MCPUsageMetrics,
   Context7Config,
   FetchConfig,
-  PlaywrightConfig
+  PlaywrightConfig,
+  FileSystemConfig
 } from '../types'
 
 // Re-export error types

@@ -11,6 +11,7 @@ import { getRedisClient } from "./redis-cache";
 import { db } from "./prisma";
 import { executeMCPTool } from "@/lib/mcp/tools/shared";
 import { MCPError } from "@/lib/mcp/errors";
+import { AutonomousAgentPlanner, TechnicalPlan } from "./agent-planner";
 import {
   MCPRouterRequest,
   MCPToolRoute,
@@ -73,6 +74,7 @@ export interface TaskExecutionContext {
   complexity: ComplexityResult;
   analysisResults?: TaskAnalysis;
   executionPlan?: any;
+  technicalPlan?: any; // TechnicalPlan from agent-planner
   executionResults?: MCPToolExecutionResult[];
   verificationResults?: any;
   metadata: TaskMetadata;
@@ -360,6 +362,7 @@ class TaskContextManager {
       }
     };
   }
+
 }
 
 // ==================== MAIN ORCHESTRATOR CLASS ====================
@@ -467,23 +470,47 @@ export class AutonomousAgentOrchestrator {
     
     console.log(`[Orchestrator] Planning task ${taskId} (complexity: ${context.complexity.level})`);
 
-    // For now, we'll create a simple plan based on complexity
-    // In a full implementation, this would delegate to a separate planner
-    const executionPlan = this.generateExecutionPlan(context);
+    // Use AI-powered planning system
+    const planner = new AutonomousAgentPlanner();
+    const technicalPlan = await planner.createPlan(
+      taskId, 
+      context.userId, 
+      context.agentId, 
+      context.originalPrompt
+    );
+
+    // Convert technical plan to execution format
+    const executionPlan = this.convertTechnicalPlanToExecution(technicalPlan);
 
     await this.contextManager.updateContext(taskId, {
-      executionPlan
+      executionPlan,
+      technicalPlan // Store the full technical plan for reference
     });
 
-    // Log planning
+    // Check if plan is valid before proceeding
+    const isValidPlan = technicalPlan.acceptanceCriteria.length > 0 && 
+                       technicalPlan.implementationSteps.length > 0;
+    
+    // Log planning with detailed information including validation status
     await this.logExecution(taskId, 'plan_generated', {
-      complexityLevel: context.complexity.level
+      complexityLevel: context.complexity.level,
+      planTitle: technicalPlan.summary.title,
+      affectedFiles: technicalPlan.affectedFiles.length,
+      implementationSteps: technicalPlan.implementationSteps.length,
+      isValidPlan: isValidPlan
     }, {
-      planSteps: executionPlan.steps?.length || 0
+      planSteps: executionPlan.steps?.length || 0,
+      estimatedDuration: technicalPlan.summary.estimatedTotalDuration,
+      completenessScore: isValidPlan ? 95 : 30 // Better scoring based on validation
     });
 
-    // Transition to awaiting approval
-    await this.transitionState(taskId, TaskExecutionState.AWAITING_APPROVAL);
+    // Only transition to awaiting approval if plan is valid
+    if (isValidPlan) {
+      await this.transitionState(taskId, TaskExecutionState.AWAITING_APPROVAL);
+    } else {
+      console.warn(`[Orchestrator] Invalid plan generated for task ${taskId}, transitioning to FAILED`);
+      await this.transitionState(taskId, TaskExecutionState.FAILED);
+    }
   }
 
   async handleExecutingState(taskId: string): Promise<void> {
@@ -811,6 +838,23 @@ export class AutonomousAgentOrchestrator {
 
   private generateTaskId(): string {
     return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private convertTechnicalPlanToExecution(technicalPlan: any): any {
+    // Convert the rich TechnicalPlan into the simpler execution format
+    // that the orchestrator expects
+    return {
+      steps: technicalPlan.implementationSteps?.map((step: any) => ({
+        id: step.id,
+        description: step.description,
+        tools: step.toolsNeeded || [],
+        estimatedDuration: step.estimatedDuration
+      })) || [],
+      summary: technicalPlan.summary,
+      affectedFiles: technicalPlan.affectedFiles || [],
+      dependencies: technicalPlan.dependencies || { external: [], internal: [] },
+      risks: technicalPlan.risks || []
+    };
   }
 
   private generateExecutionPlan(context: TaskExecutionContext): any {

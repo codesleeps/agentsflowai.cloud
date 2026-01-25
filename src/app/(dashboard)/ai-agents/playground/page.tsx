@@ -11,6 +11,8 @@ import {
   Zap,
   Copy,
   Check,
+  Brain,
+  Rocket
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -37,6 +39,9 @@ import { useUserAIAgents } from "@/client-lib/user-ai-agents-client";
 import { useAIAgents, generateAgentResponse, getAgentResponseWithFallback } from "@/client-lib/ai-agents-client";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { ChatArea } from "@/components/chat/ChatArea";
+import { AutonomousAgentView } from "@/components/ai-agents/AutonomousAgentView";
+import { PlanApprovalDialog } from "@/components/ai-agents/PlanApprovalDialog";
+import { FileDiffViewer } from "@/components/ai-agents/FileDiffViewer";
 import { cn } from "@/client-lib/utils";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -51,6 +56,29 @@ interface PlaygroundMessage {
   responseTime?: number;
 }
 
+interface AutonomousTask {
+  id: string;
+  status: 'analyzing' | 'planning' | 'awaiting_approval' | 'executing' | 'verifying' | 'completed' | 'failed' | 'cancelled' | 'paused';
+  progress: number;
+  estimatedTimeRemaining: number;
+  currentStep?: string;
+  steps: TaskStep[];
+  plan?: any;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface TaskStep {
+  id: string;
+  description: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  tools: string[];
+  startTime?: Date;
+  endTime?: Date;
+  output?: string;
+  error?: string;
+}
+
 export default function AgentPlaygroundPage() {
   const { data: userAgents } = useUserAIAgents();
   const { data: systemAgents } = useAIAgents();
@@ -63,6 +91,10 @@ export default function AgentPlaygroundPage() {
     model: string;
   } | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [autonomousMode, setAutonomousMode] = useState(false);
+  const [currentTask, setCurrentTask] = useState<AutonomousTask | null>(null);
+  const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const allAgents = [
@@ -102,6 +134,12 @@ export default function AgentPlaygroundPage() {
   const handleSend = async (overrideInput?: string) => {
     const messageContent = overrideInput || input;
     if (!messageContent.trim() || !selectedAgent || isLoading) return;
+
+    // Check if this should trigger autonomous mode
+    if (autonomousMode) {
+      await handleAutonomousTask(messageContent.trim());
+      return;
+    }
 
     const userMessage: PlaygroundMessage = {
       role: "user",
@@ -161,6 +199,134 @@ export default function AgentPlaygroundPage() {
     }
   };
 
+  const handleAutonomousTask = async (prompt: string) => {
+    setIsLoading(true);
+    
+    try {
+      // Create autonomous task
+      const response = await fetch('/api/autonomous/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agentId: selectedAgent.id,
+          prompt,
+          userId: 'playground-user' // In real app, get from auth context
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create autonomous task');
+      }
+
+      const taskData = await response.json();
+      
+      // Set up task tracking
+      const newTask: AutonomousTask = {
+        id: taskData.taskId,
+        status: 'analyzing',
+        progress: 0,
+        estimatedTimeRemaining: 0,
+        steps: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      setCurrentTask(newTask);
+      
+      // Start monitoring the task
+      startTaskMonitoring(taskData.taskId);
+      
+      toast.success('Autonomous task created successfully!');
+      
+    } catch (error) {
+      console.error('Error creating autonomous task:', error);
+      toast.error('Failed to create autonomous task');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startTaskMonitoring = (taskId: string) => {
+    // Connect to SSE stream
+    const eventSource = new EventSource(`/api/ai/agents/stream?taskId=${taskId}`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'status_update') {
+          setCurrentTask(prev => prev ? {
+            ...prev,
+            status: data.taskData.status,
+            progress: data.progress,
+            currentStep: data.currentStep,
+            updatedAt: new Date()
+          } : null);
+        } else if (data.type === 'task_complete') {
+          eventSource.close();
+          toast.success(`Task ${data.finalStatus}!`);
+        }
+      } catch (error) {
+        console.error('Error parsing SSE message:', error);
+      }
+    };
+    
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      eventSource.close();
+    };
+    
+    // Clean up on component unmount
+    return () => {
+      eventSource.close();
+    };
+  };
+
+  const handleApprovePlan = async () => {
+    if (!currentTask) return;
+    
+    try {
+      const response = await fetch(`/api/autonomous/tasks/${currentTask.id}/approve`, {
+        method: 'POST',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to approve plan');
+      }
+      
+      setShowApprovalDialog(false);
+      toast.success('Plan approved! Execution starting...');
+    } catch (error) {
+      console.error('Error approving plan:', error);
+      toast.error('Failed to approve plan');
+    }
+  };
+
+  const handleCancelTask = async () => {
+    if (!currentTask) return;
+    
+    try {
+      const response = await fetch(`/api/autonomous/tasks/${currentTask.id}/cancel`, {
+        method: 'POST',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to cancel task');
+      }
+      
+      setCurrentTask(prev => prev ? {
+        ...prev,
+        status: 'cancelled'
+      } : null);
+      toast.success('Task cancelled');
+    } catch (error) {
+      console.error('Error cancelling task:', error);
+      toast.error('Failed to cancel task');
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -178,6 +344,8 @@ export default function AgentPlaygroundPage() {
 
   const clearChat = () => {
     setMessages([]);
+    setCurrentTask(null);
+    setAutonomousMode(false);
     if (selectedAgent) {
       setMessages([
         {
@@ -212,6 +380,14 @@ export default function AgentPlaygroundPage() {
         </div>
         {selectedAgent && (
           <div className="flex items-center gap-2">
+            <Button 
+              variant={autonomousMode ? "default" : "outline"}
+              onClick={() => setAutonomousMode(!autonomousMode)}
+              className="flex items-center gap-2"
+            >
+              <Brain className="h-4 w-4" />
+              {autonomousMode ? 'Exit Autonomous Mode' : 'Autonomous Mode'}
+            </Button>
             <Button variant="outline" onClick={clearChat}>
               Clear Chat
             </Button>
@@ -313,36 +489,53 @@ export default function AgentPlaygroundPage() {
 
           {selectedAgent ? (
             <>
-              <ChatArea
-                messages={messages.map(m => ({
-                  ...m,
-                  timestamp: new Date(m.timestamp)
-                }))}
-                isLoading={isLoading}
-                agentIcon={selectedAgent.icon}
-                agentName={selectedAgent.name}
-              />
+              {autonomousMode && currentTask ? (
+                <div className="flex-1 p-6">
+                  <AutonomousAgentView
+                    taskId={currentTask.id}
+                    task={currentTask}
+                    onRefresh={() => {}} // TODO: Implement refresh
+                    onApprove={handleApprovePlan}
+                    onCancel={handleCancelTask}
+                  />
+                </div>
+              ) : (
+                <>
+                  <ChatArea
+                    messages={messages.map(m => ({
+                      ...m,
+                      timestamp: new Date(m.timestamp)
+                    }))}
+                    isLoading={isLoading}
+                    agentIcon={selectedAgent.icon}
+                    agentName={selectedAgent.name}
+                  />
 
-              <div className="border-t bg-background/50 backdrop-blur-sm pt-2">
-                <EnhancedChatInput
-                  onSend={(val) => handleSend(val)}
-                  isLoading={isLoading}
-                  placeholder={`Test ${selectedAgent.name} with any prompt...`}
-                  models={selectedAgent.supportedProviders?.map((p: any) => ({
-                    id: p.model,
-                    name: `${p.provider} (${p.model})`,
-                    provider: p.provider,
-                    priority: p.priority,
-                    model: p.model
-                  })) || []}
-                  selectedModelId={currentModel?.model}
-                  onModelChange={(model, provider) => {
-                    const actualModel = model;
-                    const actualProvider = provider || selectedAgent.supportedProviders?.find((p: any) => p.model === model)?.provider;
-                    handleModelChange(actualProvider, actualModel);
-                  }}
-                />
-              </div>
+                  <div className="border-t bg-background/50 backdrop-blur-sm pt-2">
+                    <EnhancedChatInput
+                      onSend={(val) => handleSend(val)}
+                      isLoading={isLoading}
+                      placeholder={autonomousMode 
+                        ? `Describe what you want ${selectedAgent.name} to build autonomously...` 
+                        : `Test ${selectedAgent.name} with any prompt...`
+                      }
+                      models={selectedAgent.supportedProviders?.map((p: any) => ({
+                        id: p.model,
+                        name: `${p.provider} (${p.model})`,
+                        provider: p.provider,
+                        priority: p.priority,
+                        model: p.model
+                      })) || []}
+                      selectedModelId={currentModel?.model}
+                      onModelChange={(model, provider) => {
+                        const actualModel = model;
+                        const actualProvider = provider || selectedAgent.supportedProviders?.find((p: any) => p.model === model)?.provider;
+                        handleModelChange(actualProvider, actualModel);
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <CardContent className="flex flex-1 items-center justify-center">
