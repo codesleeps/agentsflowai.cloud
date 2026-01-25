@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { handleOllamaProvider, handleOpenRouter, handleOpenAIProvider } from "../agents/route";
 import { logModelUsage } from "@/server-lib/ai-usage-tracker";
 import { AIAgent } from "@/shared/models/ai-agents";
 import { APIKeyExpiredError } from "@/lib/api-errors";
@@ -62,63 +61,73 @@ async function testProvider(providerName: string, model: string): Promise<Provid
   const startTime = Date.now();
 
   try {
-    let result;
-
+    // Simple ping test instead of complex provider testing
     const testMessage = "Hello, respond with 'OK'";
-    const testMessages = [
-      {
-        role: "user" as const,
-        content: testMessage,
-        agentId: "health-check-test",
-        id: "test-msg",
-        timestamp: new Date(),
-      },
-    ];
-
-    switch (providerName) {
-      case "ollama":
-        result = await handleOllamaProvider({ ...TEST_AGENT, model }, testMessages);
-        break;
-      case "openrouter":
-        result = await handleOpenRouter(
-          { ...TEST_AGENT, model },
-          testMessage,
-          [],
-          TEST_AGENT.systemPrompt
-        );
-        break;
-      case "openai":
-        result = await handleOpenAIProvider(
-          { ...TEST_AGENT, model },
-          testMessage,
-          [],
-          TEST_AGENT.systemPrompt
-        );
-        break;
-      default:
-        throw new Error(`Unknown provider: ${providerName}`);
+    
+    // Make direct API call to test provider
+    let responseOk = false;
+    
+    if (providerName === "openrouter") {
+      const apiKey = process.env.OPENROUTER_API_KEY;
+      if (apiKey) {
+        try {
+          const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`,
+              "HTTP-Referer": "https://agentsflowai.cloud",
+              "X-Title": "AgentsFlowAI",
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: "user", content: testMessage }],
+              max_tokens: 10
+            }),
+            signal: AbortSignal.timeout(10000)
+          });
+          responseOk = response.ok;
+        } catch (e) {
+          responseOk = false;
+        }
+      }
+    } else if (providerName === "ollama") {
+      const baseUrl = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+      try {
+        const response = await fetch(`${baseUrl}/api/tags`, {
+          method: "GET",
+          signal: AbortSignal.timeout(5000)
+        });
+        responseOk = response.ok;
+      } catch (e) {
+        responseOk = false;
+      }
     }
 
     const latency = Date.now() - startTime;
 
-    // Log successful diagnostic
-    await logModelUsage({
-      user_id: "system",
-      agent_id: "health-check-diagnostic",
-      provider: providerName,
-      model,
-      prompt_tokens: 0,
-      completion_tokens: result.tokensUsed || 0,
-      cost_usd: 0,
-      latency_ms: latency,
-      status: "success",
-    });
+    if (responseOk) {
+      // Log successful diagnostic
+      await logModelUsage({
+        user_id: "system",
+        agent_id: "health-check-diagnostic",
+        provider: providerName,
+        model,
+        prompt_tokens: 0,
+        completion_tokens: 10,
+        cost_usd: 0,
+        latency_ms: latency,
+        status: "success",
+      });
 
-    return {
-      status: "healthy",
-      latency_ms: latency,
-      model,
-    };
+      return {
+        status: "healthy",
+        latency_ms: latency,
+        model,
+      };
+    } else {
+      throw new Error(`${providerName} health check failed`);
+    }
   } catch (error) {
     const latency = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : String(error);
