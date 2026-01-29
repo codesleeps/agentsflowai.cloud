@@ -213,6 +213,11 @@ export const AI_AGENTS: AIAgent[] = [
       },
       {
         provider: "ollama",
+        model: "deepseek-coder:6.7b",
+        priority: 3,
+      },
+      {
+        provider: "ollama",
         model: "codellama:7b",
         priority: 4,
       },

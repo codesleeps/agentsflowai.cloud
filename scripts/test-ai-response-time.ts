@@ -145,12 +145,7 @@ async function runDiagnostics() {
       }
     } catch (error: any) {
       console.log(`💥 CRASHED: ${error.message}`);
-      results.push({ 
-        provider: test.name, 
-        success: false, 
-        timeMs: 0, 
-        error: error.message 
-      });
+      results.push(t);
     }
   }
 
