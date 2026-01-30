@@ -14,6 +14,11 @@ if (env.NODE_ENV === "production" && !baseURL.startsWith("https://")) {
 
 export const authClient = createAuthClient({
   baseURL,
+  cookies: {
+    sessionToken: {
+      name: "better-auth.session_token",
+    },
+  },
 });
 
 export const { signIn, signUp, useSession, signOut } = authClient;

@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Eye, EyeOff, Mail } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
