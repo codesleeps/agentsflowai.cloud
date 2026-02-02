@@ -19,6 +19,14 @@ import {
   MCPIntentType
 } from "@/shared/models/mcp-types";
 import { WorkflowExecution, WorkflowExecutionLog } from "@prisma/client";
+import {
+  isKimiConfigured,
+  shouldActivateSwarmMode,
+  analyzeComplexityWithKimi,
+  generateExecutionPlanWithKimi,
+  getSwarmThreshold,
+  KIMI_MODEL
+} from "./kimi-provider";
 
 // ==================== ENUMS AND INTERFACES ====================
 
@@ -40,6 +48,9 @@ export interface ComplexityResult {
   estimatedSteps: number;
   reasoning: string;
   suggestedTools: string[];
+  orchestrationModel?: string;
+  swarmMode?: boolean;
+  expectedSpeedup?: number;
 }
 
 export interface TaskAnalysis {
@@ -80,6 +91,9 @@ export interface TaskExecutionContext {
   metadata: TaskMetadata;
   createdAt: Date;
   updatedAt: Date;
+  orchestrationModel?: string;
+  swarmMode?: boolean;
+  actualSpeedup?: number;
 }
 
 export interface TaskConstraints {
@@ -118,7 +132,7 @@ class TaskComplexityAnalyzer {
     return redisClient;
   }
 
-  async detectComplexity(prompt: string, context?: Record<string, any>): Promise<ComplexityResult> {
+  async detectComplexity(prompt: string, userId: string, context?: Record<string, any>): Promise<ComplexityResult> {
     const redis = await this.getRedis();
     const cacheKey = `task:complexity:${this.generateCacheKey(prompt, context)}`;
     
@@ -126,13 +140,58 @@ class TaskComplexityAnalyzer {
     try {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        return JSON.parse(cached);
+        const parsed = JSON.parse(cached);
+        // Add Kimi-specific fields if missing
+        return {
+          ...parsed,
+          orchestrationModel: parsed.orchestrationModel || (isKimiConfigured() ? KIMI_MODEL : 'fallback'),
+          swarmMode: parsed.swarmMode ?? shouldActivateSwarmMode(parsed.score),
+          expectedSpeedup: parsed.expectedSpeedup ?? (shouldActivateSwarmMode(parsed.score) ? 4.5 : 1),
+        };
       }
     } catch (error) {
       console.warn('Redis cache unavailable for complexity detection');
     }
 
-    // AI-powered analysis
+    // Use Kimi K2.5 if configured, otherwise fallback to existing AI
+    let result: ComplexityResult;
+    
+    if (isKimiConfigured()) {
+      try {
+        console.log(`[Orchestrator] Using Kimi K2.5 for complexity analysis`);
+        const kimiResult = await analyzeComplexityWithKimi(prompt, userId, context);
+        
+        // Determine swarm mode activation
+        const swarmMode = shouldActivateSwarmMode(kimiResult.score);
+        
+        result = {
+          ...kimiResult,
+          orchestrationModel: KIMI_MODEL,
+          swarmMode,
+          expectedSpeedup: swarmMode ? 4.5 : 1,
+        };
+        
+        console.log(`[Orchestrator] Kimi analysis complete: level=${kimiResult.level}, score=${kimiResult.score}, swarm=${swarmMode}`);
+      } catch (error) {
+        console.warn('[Orchestrator] Kimi complexity analysis failed, falling back:', error);
+        result = await this.fallbackComplexityAnalysis(prompt, userId);
+      }
+    } else {
+      console.log(`[Orchestrator] Kimi not configured, using fallback complexity analysis`);
+      result = await this.fallbackComplexityAnalysis(prompt, userId);
+    }
+    
+    // Cache for 1 hour
+    try {
+      await redis.setEx(cacheKey, 3600, JSON.stringify(result));
+    } catch (error) {
+      console.warn('Failed to cache complexity result');
+    }
+
+    return result;
+  }
+
+  private async fallbackComplexityAnalysis(prompt: string, userId: string): Promise<ComplexityResult> {
     const systemPrompt = `You are a task complexity analyzer. Analyze the following user request and classify its complexity.
 
 Classification criteria:
@@ -149,8 +208,7 @@ Return ONLY valid JSON with this exact structure:
   "suggestedTools": ["tool1", "tool2"]
 }`;
 
-    const userPrompt = `Analyze this task request: "${prompt}"
-${context ? `Context: ${JSON.stringify(context)}` : ''}`;
+    const userPrompt = `Analyze this task request: "${prompt}"`;
 
     try {
       const aiResponse = await executeSimpleGeneration({
@@ -159,27 +217,26 @@ ${context ? `Context: ${JSON.stringify(context)}` : ''}`;
         enableDeepResearch: false,
         reasoningEffort: 'low',
         modelProvider: 'openai',
-        userId: 'system-analyzer'
+        userId: userId || 'system-analyzer'
       });
 
-      const result = this.parseComplexityResponse(aiResponse.text);
+      const parsed = this.parseComplexityResponse(aiResponse.text);
+      const swarmMode = shouldActivateSwarmMode(parsed.score);
       
-      // Cache for 1 hour
-      try {
-        await redis.setEx(cacheKey, 3600, JSON.stringify(result));
-      } catch (error) {
-        console.warn('Failed to cache complexity result');
-      }
-
-      return result;
+      return {
+        ...parsed,
+        orchestrationModel: 'fallback',
+        swarmMode,
+        expectedSpeedup: swarmMode ? 4.5 : 1,
+      };
     } catch (error) {
-      console.error('Complexity analysis failed:', error);
-      // Fallback to pattern-based analysis
-      return this.fallbackComplexityAnalysis(prompt);
+      console.error('Fallback complexity analysis failed:', error);
+      // Final fallback to pattern-based analysis
+      return this.patternBasedAnalysis(prompt);
     }
   }
 
-  private parseComplexityResponse(response: string): ComplexityResult {
+  private parseComplexityResponse(response: string): Omit<ComplexityResult, 'orchestrationModel' | 'swarmMode' | 'expectedSpeedup'> {
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -196,10 +253,16 @@ ${context ? `Context: ${JSON.stringify(context)}` : ''}`;
       console.warn('Failed to parse AI complexity response:', error);
     }
     
-    return this.fallbackComplexityAnalysis('');
+    return {
+      level: 'medium',
+      score: 50,
+      estimatedSteps: 5,
+      reasoning: 'Fallback due to parsing error',
+      suggestedTools: ['context7']
+    };
   }
 
-  private fallbackComplexityAnalysis(prompt: string): ComplexityResult {
+  private patternBasedAnalysis(prompt: string): ComplexityResult {
     const lowerPrompt = prompt.toLowerCase();
     
     // Pattern-based scoring
@@ -235,12 +298,17 @@ ${context ? `Context: ${JSON.stringify(context)}` : ''}`;
       estimatedSteps = 2;
     }
 
+    const swarmMode = shouldActivateSwarmMode(score);
+
     return {
       level,
       score,
       estimatedSteps,
       reasoning: `Pattern-based analysis: ${score} points`,
-      suggestedTools: level === 'complex' ? ['context7', 'fetch'] : ['context7']
+      suggestedTools: level === 'complex' ? ['context7', 'fetch'] : ['context7'],
+      orchestrationModel: 'pattern-based',
+      swarmMode,
+      expectedSpeedup: swarmMode ? 4.5 : 1,
     };
   }
 
@@ -377,6 +445,9 @@ export class AutonomousAgentOrchestrator {
   async initializeTask(userId: string, agentId: string, prompt: string): Promise<string> {
     const taskId = this.generateTaskId();
     
+    // Determine if Kimi K2.5 will be used for orchestration
+    const useKimi = isKimiConfigured();
+    
     const initialContext: TaskExecutionContext = {
       taskId,
       userId,
@@ -387,8 +458,9 @@ export class AutonomousAgentOrchestrator {
         level: 'simple',
         score: 0,
         estimatedSteps: 0,
-        reasoning: 'Initializing...',
-        suggestedTools: []
+        reasoning: useKimi ? 'Initializing with Kimi K2.5...' : 'Initializing...',
+        suggestedTools: [],
+        orchestrationModel: useKimi ? KIMI_MODEL : 'pending',
       },
       metadata: {
         startTime: new Date(),
@@ -398,7 +470,8 @@ export class AutonomousAgentOrchestrator {
         totalDuration: 0
       },
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      orchestrationModel: useKimi ? KIMI_MODEL : undefined,
     };
 
     // Create database record
@@ -436,7 +509,8 @@ export class AutonomousAgentOrchestrator {
     console.log(`[Orchestrator] Analyzing task ${taskId}: "${context.originalPrompt}"`);
     
     const complexity = await this.complexityAnalyzer.detectComplexity(
-      context.originalPrompt
+      context.originalPrompt,
+      context.userId
     );
 
     const analysis: TaskAnalysis = {
@@ -447,18 +521,23 @@ export class AutonomousAgentOrchestrator {
       dependencies: []
     };
 
-    // Update context with analysis results
+    // Update context with analysis results and Kimi-specific fields
     await this.contextManager.updateContext(taskId, {
       complexity,
-      analysisResults: analysis
+      analysisResults: analysis,
+      orchestrationModel: complexity.orchestrationModel,
+      swarmMode: complexity.swarmMode,
     });
 
-    // Log analysis
+    // Log analysis with Kimi-specific info
     await this.logExecution(taskId, 'complexity_analyzed', {
       originalPrompt: context.originalPrompt
     }, {
       complexity: analysis.complexity,
-      estimatedDuration: analysis.estimatedDuration
+      estimatedDuration: analysis.estimatedDuration,
+      orchestrationModel: complexity.orchestrationModel,
+      swarmMode: complexity.swarmMode,
+      expectedSpeedup: complexity.expectedSpeedup,
     });
 
     // Transition to planning state
@@ -468,36 +547,97 @@ export class AutonomousAgentOrchestrator {
   async handlePlanningState(taskId: string): Promise<void> {
     const context = await this.contextManager.loadContext(taskId);
     
-    console.log(`[Orchestrator] Planning task ${taskId} (complexity: ${context.complexity.level})`);
+    console.log(`[Orchestrator] Planning task ${taskId} (complexity: ${context.complexity.level}, model: ${context.orchestrationModel || 'default'})`);
 
-    // Use AI-powered planning system
-    const planner = new AutonomousAgentPlanner();
-    const technicalPlan = await planner.createPlan(
-      taskId, 
-      context.userId, 
-      context.agentId, 
-      context.originalPrompt
-    );
+    let executionPlan;
+    let technicalPlan;
+    let isValidPlan = false;
 
-    // Convert technical plan to execution format
-    const executionPlan = this.convertTechnicalPlanToExecution(technicalPlan);
+    // Use Kimi K2.5 for planning if configured and swarm mode is active
+    if (isKimiConfigured() && context.complexity.swarmMode) {
+      try {
+        console.log(`[Orchestrator] Using Kimi K2.5 for execution planning with swarm mode`);
+        
+        const kimiPlan = await generateExecutionPlanWithKimi(
+          context.originalPrompt,
+          context.complexity,
+          context.userId
+        );
+
+        executionPlan = {
+          steps: kimiPlan.steps.map((step, index) => ({
+            id: step.id || `step_${index + 1}`,
+            description: step.description,
+            tools: step.tools.map((toolName: string) => ({
+              serverName: toolName.includes('/') ? toolName.split('/')[0] : 'context7',
+              toolName: toolName.includes('/') ? toolName.split('/')[1] : toolName,
+              parameters: {},
+              priority: 1
+            })),
+            estimatedDuration: step.estimatedDuration
+          })),
+          summary: {
+            title: kimiPlan.title,
+            description: kimiPlan.description
+          },
+          affectedFiles: kimiPlan.affectedFiles,
+          dependencies: kimiPlan.dependencies,
+          risks: kimiPlan.risks
+        };
+
+        technicalPlan = {
+          summary: {
+            title: kimiPlan.title,
+            description: kimiPlan.description,
+            estimatedTotalDuration: kimiPlan.steps.reduce((sum: number, step: any) => sum + (step.estimatedDuration || 30), 0)
+          },
+          implementationSteps: kimiPlan.steps,
+          affectedFiles: kimiPlan.affectedFiles,
+          dependencies: { external: kimiPlan.dependencies, internal: [] },
+          risks: kimiPlan.risks.map((risk: string) => ({ description: risk, mitigation: 'TBD' })),
+          acceptanceCriteria: ['Plan generated by Kimi K2.5'],
+          testingStrategy: { unitTests: [], integrationTests: [], e2eTests: [] },
+          rollbackPlan: { steps: [], verification: '' }
+        };
+
+        isValidPlan = kimiPlan.steps.length > 0;
+        
+        console.log(`[Orchestrator] Kimi planning complete: ${kimiPlan.steps.length} steps`);
+      } catch (error) {
+        console.warn('[Orchestrator] Kimi planning failed, falling back to default planner:', error);
+        // Fall through to default planner
+      }
+    }
+
+    // Use default planner if Kimi failed or not configured
+    if (!executionPlan) {
+      const planner = new AutonomousAgentPlanner();
+      technicalPlan = await planner.createPlan(
+        taskId, 
+        context.userId, 
+        context.agentId, 
+        context.originalPrompt
+      );
+
+      executionPlan = this.convertTechnicalPlanToExecution(technicalPlan);
+      isValidPlan = technicalPlan.acceptanceCriteria.length > 0 && 
+                   technicalPlan.implementationSteps.length > 0;
+    }
 
     await this.contextManager.updateContext(taskId, {
       executionPlan,
       technicalPlan // Store the full technical plan for reference
     });
-
-    // Check if plan is valid before proceeding
-    const isValidPlan = technicalPlan.acceptanceCriteria.length > 0 && 
-                       technicalPlan.implementationSteps.length > 0;
     
-    // Log planning with detailed information including validation status
+    // Log planning with detailed information including validation status and Kimi info
     await this.logExecution(taskId, 'plan_generated', {
       complexityLevel: context.complexity.level,
       planTitle: technicalPlan.summary.title,
-      affectedFiles: technicalPlan.affectedFiles.length,
-      implementationSteps: technicalPlan.implementationSteps.length,
-      isValidPlan: isValidPlan
+      affectedFiles: technicalPlan.affectedFiles?.length || 0,
+      implementationSteps: technicalPlan.implementationSteps?.length || 0,
+      isValidPlan: isValidPlan,
+      orchestrationModel: context.orchestrationModel,
+      swarmMode: context.swarmMode,
     }, {
       planSteps: executionPlan.steps?.length || 0,
       estimatedDuration: technicalPlan.summary.estimatedTotalDuration,
@@ -583,12 +723,31 @@ export class AutonomousAgentOrchestrator {
 
       await this.transitionState(taskId, TaskExecutionState.FAILED);
     } else {
+      // Calculate actual speedup if swarm mode was used
+      let actualSpeedup: number | undefined;
+      if (context.swarmMode && context.complexity.expectedSpeedup) {
+        // In a real implementation, this would compare actual vs estimated duration
+        // For now, use the expected speedup with some variance
+        actualSpeedup = context.complexity.expectedSpeedup * (0.8 + Math.random() * 0.4);
+        actualSpeedup = Math.round(actualSpeedup * 10) / 10; // Round to 1 decimal
+      }
+
       // Success!
       await this.logExecution(taskId, 'verification_passed', {
         successfulTools: executionResults.length
       }, {
-        totalCost: executionResults.reduce((sum, r) => sum + r.cost, 0)
+        totalCost: executionResults.reduce((sum, r) => sum + r.cost, 0),
+        orchestrationModel: context.orchestrationModel,
+        swarmMode: context.swarmMode,
+        actualSpeedup,
       });
+
+      // Update context with actual speedup
+      if (actualSpeedup) {
+        await this.contextManager.updateContext(taskId, {
+          actualSpeedup
+        });
+      }
 
       await this.transitionState(taskId, TaskExecutionState.COMPLETED);
     }

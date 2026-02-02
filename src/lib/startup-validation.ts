@@ -466,6 +466,114 @@ async function checkOpenAIApiKey(): Promise<ProviderValidationResult> {
 }
 
 /**
+ * Check Moonshot API Key validity for Kimi K2.5
+ */
+async function checkMoonshotApiKey(): Promise<ProviderValidationResult> {
+  const apiKey = process.env.MOONSHOT_API_KEY;
+  const provider = 'Kimi K2.5';
+  const renewalUrl = 'https://platform.moonshot.ai/';
+  const envVarName = 'MOONSHOT_API_KEY';
+
+  if (!apiKey) {
+    return {
+      provider,
+      status: 'missing',
+      message: 'API key not configured - Kimi K2.5 orchestration disabled',
+      renewalUrl,
+      envVarName,
+      lastChecked: new Date(),
+    };
+  }
+
+  try {
+    // Use the models endpoint as a lightweight validation check
+    const response = await fetch('https://api.moonshot.cn/v1/models', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (response.ok) {
+      return {
+        provider,
+        status: 'valid',
+        message: 'Kimi K2.5 integration active',
+        renewalUrl,
+        envVarName,
+        lastChecked: new Date(),
+      };
+    }
+
+    const errorText = await response.text();
+    
+    if (errorText.includes('expired') || errorText.includes('invalid')) {
+      return {
+        provider,
+        status: errorText.includes('expired') ? 'expired' : 'invalid',
+        message: 'API key has expired or is invalid',
+        renewalUrl,
+        envVarName,
+        lastChecked: new Date(),
+      };
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return {
+        provider,
+        status: 'invalid',
+        message: 'API key is invalid or unauthorized',
+        renewalUrl,
+        envVarName,
+        lastChecked: new Date(),
+      };
+    }
+
+    return {
+      provider,
+      status: 'invalid',
+      message: `Unexpected response: ${response.status}`,
+      renewalUrl,
+      envVarName,
+      lastChecked: new Date(),
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        return {
+          provider,
+          status: 'unreachable',
+          message: 'Request timeout - service may be unreachable',
+          renewalUrl,
+          envVarName,
+          lastChecked: new Date(),
+        };
+      }
+      
+      return {
+        provider,
+        status: 'unreachable',
+        message: `Network error: ${error.message}`,
+        renewalUrl,
+        envVarName,
+        lastChecked: new Date(),
+      };
+    }
+
+    return {
+      provider,
+      status: 'unreachable',
+      message: 'Unknown error during validation',
+      renewalUrl,
+      envVarName,
+      lastChecked: new Date(),
+    };
+  }
+}
+
+/**
  * Check Ollama health (reuses existing function)
  */
 async function checkOllamaHealthWrapper(): Promise<ProviderValidationResult> {
@@ -653,6 +761,7 @@ export async function validateProviderKeys(): Promise<void> {
     checkAnthropicApiKey(),
     checkOpenAIApiKey(),
     checkOllamaHealthWrapper(),
+    checkMoonshotApiKey(),
   ];
 
   // Run AI provider validations in parallel

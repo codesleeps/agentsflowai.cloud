@@ -17,7 +17,10 @@ import {
   Clock,
   Brain,
   Zap,
-  Activity
+  Activity,
+  Rocket,
+  Flame,
+  Cpu
 } from 'lucide-react';
 import { autonomousOrchestrator } from '@/client-lib/autonomous-orchestrator-client';
 
@@ -29,6 +32,9 @@ interface Task {
     score: number;
     estimatedSteps: number;
     reasoning: string;
+    orchestrationModel?: string;
+    swarmMode?: boolean;
+    expectedSpeedup?: number;
   };
   executionPlan?: any;
   executionResults?: any[];
@@ -39,6 +45,9 @@ interface Task {
     totalDuration: number;
   };
   originalPrompt: string;
+  orchestrationModel?: string;
+  swarmMode?: boolean;
+  actualSpeedup?: number;
 }
 
 export function AutonomousOrchestratorUI() {
@@ -79,7 +88,10 @@ export function AutonomousOrchestratorUI() {
             executionPlan: task.executionPlan,
             executionResults: task.executionResults,
             metadata: task.metadata,
-            originalPrompt: task.originalPrompt
+            originalPrompt: task.originalPrompt,
+            orchestrationModel: task.orchestrationModel,
+            swarmMode: task.swarmMode,
+            actualSpeedup: task.actualSpeedup,
           });
         },
         (task) => {
@@ -130,16 +142,16 @@ export function AutonomousOrchestratorUI() {
     }
   };
 
-  const getStateIcon = (state: string) => {
+  const getStateIcon = (state: string, swarmMode?: boolean) => {
     switch (state) {
       case 'ANALYZING':
         return <Brain className="h-4 w-4" />;
       case 'PLANNING':
-        return <Zap className="h-4 w-4" />;
+        return swarmMode ? <Flame className="h-4 w-4 text-orange-500" /> : <Zap className="h-4 w-4" />;
       case 'AWAITING_APPROVAL':
         return <Clock className="h-4 w-4" />;
       case 'EXECUTING':
-        return <Play className="h-4 w-4" />;
+        return swarmMode ? <Flame className="h-4 w-4 text-orange-500" /> : <Play className="h-4 w-4" />;
       case 'VERIFYING':
         return <Activity className="h-4 w-4" />;
       case 'COMPLETED':
@@ -151,6 +163,13 @@ export function AutonomousOrchestratorUI() {
       default:
         return <RefreshCw className="h-4 w-4" />;
     }
+  };
+
+  const getStateLabel = (state: string, swarmMode?: boolean) => {
+    if (swarmMode && state === 'EXECUTING') {
+      return '🔥 EXECUTING WITH SWARM';
+    }
+    return state.replace('_', ' ');
   };
 
   const getStateColor = (state: string) => {
@@ -172,12 +191,19 @@ export function AutonomousOrchestratorUI() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-6 w-6" />
-            Autonomous Agent Orchestrator
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-6 w-6" />
+              Autonomous Agent Orchestrator
+            </CardTitle>
+            {/* Kimi K2.5 Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full text-white text-sm font-medium">
+              <Rocket className="h-4 w-4" />
+              <span>Powered by Kimi K2.5</span>
+            </div>
+          </div>
           <CardDescription>
-            Create and manage autonomous AI agent workflows with automatic complexity analysis and execution planning.
+            Create and manage autonomous AI agent workflows with advanced AI orchestration and parallel agent swarm technology.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -208,22 +234,22 @@ export function AutonomousOrchestratorUI() {
             </div>
 
             <div className="flex gap-2">
-              <Button 
-                type="submit" 
-                disabled={isLoading || isPolling || !agentId.trim() || !prompt.trim()}
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Initializing...
-                  </>
-                ) : (
-                  <>
-                    <Play className="mr-2 h-4 w-4" />
-                    Start Autonomous Task
-                  </>
-                )}
-              </Button>
+            <Button 
+              type="submit" 
+              disabled={isLoading || isPolling || !agentId.trim() || !prompt.trim()}
+            >
+              {isLoading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Initializing with Kimi K2.5...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Autonomous Task
+                </>
+              )}
+            </Button>
 
               {currentTask && (
                 <>
@@ -254,11 +280,23 @@ export function AutonomousOrchestratorUI() {
       </Card>
 
       {error && (
-        <Card>
+        <Card className="border-red-200">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="h-4 w-4" />
-              <span>{error}</span>
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-red-700">Task Failed</h4>
+                <p className="text-red-600 mt-1">
+                  {error.includes('Kimi K2.5') || error.includes('Moonshot AI') 
+                    ? error 
+                    : `Error: ${error}`}
+                </p>
+                {(error.includes('rate limit') || error.includes('timeout')) && (
+                  <p className="text-sm text-red-500 mt-2">
+                    This is a temporary issue with the Moonshot AI service. You can retry the task.
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -269,13 +307,37 @@ export function AutonomousOrchestratorUI() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Task Progress</span>
-              <Badge className={`${getStateColor(currentTask.currentState)} flex items-center gap-1`}>
-                {getStateIcon(currentTask.currentState)}
-                {currentTask.currentState.replace('_', ' ')}
-              </Badge>
+              <div className="flex items-center gap-2">
+                {/* Swarm Mode Badge */}
+                {currentTask.swarmMode && (
+                  <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white flex items-center gap-1 animate-pulse">
+                    <Flame className="h-3 w-3" />
+                    Swarm Mode Active
+                  </Badge>
+                )}
+                <Badge className={`${getStateColor(currentTask.currentState)} flex items-center gap-1`}>
+                  {getStateIcon(currentTask.currentState, currentTask.swarmMode)}
+                  {getStateLabel(currentTask.currentState, currentTask.swarmMode)}
+                </Badge>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Kimi Branding Banner */}
+            {currentTask.orchestrationModel && (
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-500/10 to-purple-600/10 rounded-lg border border-indigo-200">
+                <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg">
+                  <Rocket className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-medium text-indigo-900">Orchestrated by Kimi K2.5</p>
+                  <p className="text-sm text-indigo-700">
+                    Advanced AI with {currentTask.swarmMode ? 'Agent Swarm Technology' : 'Intelligent Task Analysis'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div>
               <h3 className="font-medium mb-2">Original Prompt</h3>
               <p className="text-sm text-muted-foreground bg-muted p-3 rounded">{currentTask.originalPrompt}</p>
@@ -283,16 +345,65 @@ export function AutonomousOrchestratorUI() {
 
             <Separator />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <h3 className="font-medium mb-2">Complexity Analysis</h3>
-                <div className="space-y-1 text-sm">
-                  <p><span className="font-medium">Level:</span> {currentTask.complexity.level}</p>
-                  <p><span className="font-medium">Score:</span> {currentTask.complexity.score}</p>
-                  <p><span className="font-medium">Estimated Steps:</span> {currentTask.complexity.estimatedSteps}</p>
+            {/* Enhanced Complexity Analysis Panel */}
+            <div>
+              <h3 className="font-medium mb-3 flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                Complexity Analysis
+                {currentTask.orchestrationModel && (
+                  <Badge variant="outline" className="text-xs">
+                    <Cpu className="h-3 w-3 mr-1" />
+                    Powered by Kimi K2.5
+                  </Badge>
+                )}
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Complexity Level</p>
+                  <p className="font-semibold capitalize">{currentTask.complexity.level}</p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Complexity Score</p>
+                  <p className="font-semibold">{currentTask.complexity.score} / 100</p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Estimated Steps</p>
+                  <p className="font-semibold">{currentTask.complexity.estimatedSteps} steps</p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Orchestration Model</p>
+                  <p className="font-semibold text-indigo-600">
+                    {currentTask.orchestrationModel?.includes('kimi') ? 'Kimi K2.5' : 'Standard'}
+                  </p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Execution Mode</p>
+                  <p className={`font-semibold ${currentTask.swarmMode ? 'text-orange-600' : ''}`}>
+                    {currentTask.swarmMode ? 'Swarm (100 agents)' : 'Standard'}
+                  </p>
+                </div>
+                <div className="bg-muted p-3 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Expected Speedup</p>
+                  <p className={`font-semibold ${currentTask.swarmMode ? 'text-orange-600' : ''}`}>
+                    {currentTask.swarmMode ? `Typically ${currentTask.complexity.expectedSpeedup}x` : '1x'}
+                  </p>
                 </div>
               </div>
+              
+              {/* Swarm Mode Activation Banner */}
+              {currentTask.swarmMode && (
+                <div className="mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 rounded-r-lg">
+                  <div className="flex items-center gap-2 text-orange-800">
+                    <Flame className="h-5 w-5" />
+                    <span className="font-semibold">🔥 Swarm Mode Active - 100 Agents Working in Parallel</span>
+                  </div>
+                </div>
+              )}
+            </div>
 
+            <Separator />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h3 className="font-medium mb-2">Metadata</h3>
                 <div className="space-y-1 text-sm">
@@ -310,6 +421,12 @@ export function AutonomousOrchestratorUI() {
                   {currentTask.executionResults && (
                     <p><span className="font-medium">Results:</span> {currentTask.executionResults.length} completed</p>
                   )}
+                  {/* Actual Speedup (shown on completion) */}
+                  {currentTask.actualSpeedup && (
+                    <p className="text-orange-600 font-medium">
+                      <span className="font-medium">Actual Speedup:</span> {currentTask.actualSpeedup}x
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -318,7 +435,14 @@ export function AutonomousOrchestratorUI() {
               <>
                 <Separator />
                 <div>
-                  <h3 className="font-medium mb-2">Execution Plan</h3>
+                  <h3 className="font-medium mb-2 flex items-center gap-2">
+                    Execution Plan
+                    {currentTask.orchestrationModel && (
+                      <span className="text-xs text-muted-foreground">
+                        (Generated by Kimi K2.5)
+                      </span>
+                    )}
+                  </h3>
                   <div className="bg-muted p-3 rounded text-sm">
                     <pre className="whitespace-pre-wrap">
                       {JSON.stringify(currentTask.executionPlan, null, 2)}
