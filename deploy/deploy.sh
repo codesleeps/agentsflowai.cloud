@@ -7,7 +7,9 @@ set -e
 # Configuration
 SERVER="deploy@srv1187860.hstgr.cloud"
 REMOTE_DIR="/home/deploy/agentsflow-ai"
-LOCAL_DIR="$(pwd)/"
+# Get the script's directory and resolve project root (one level up from deploy/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCAL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/"
 SSH_KEY="~/.ssh/deploy_key"
 
 # Color constants
@@ -151,9 +153,16 @@ test_ssh_connection
 
 echo "🚀 Starting deployment to $SERVER..."
 
-# 1. Build the project locally
-echo "📦 Building project locally..."
+# 1. Install dependencies locally (if needed)
+echo "📦 Checking dependencies..."
 cd "$LOCAL_DIR"
+if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules" ]; then
+    echo "📦 Installing dependencies..."
+    npm ci --legacy-peer-deps
+fi
+
+# 2. Build the project locally
+echo "📦 Building project locally..."
 export NEXT_PUBLIC_APP_URL="https://agentsflowai.cloud"
 export BETTER_AUTH_URL="https://agentsflowai.cloud"
 npm run build
