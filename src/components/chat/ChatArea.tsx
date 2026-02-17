@@ -157,16 +157,21 @@ export function ChatArea({
                                 "group relative max-w-[85%] rounded-3xl px-6 py-4 shadow-lg transition-all hover:shadow-primary/5",
                                 message.role === "user"
                                     ? "bg-primary text-primary-foreground shadow-primary/10 rounded-tr-md"
-                                    : "bg-white/5 backdrop-blur-2xl shadow-black/10 rounded-tl-md"
+                                    : "bg-white/10 backdrop-blur-2xl shadow-black/10 rounded-tl-md border border-white/10"
                             )}
                         >
                             {agentName && message.role === "assistant" && (
-                                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary/70">
+                                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary/80">
                                     {agentName}
                                 </div>
                             )}
 
-                            <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed text-[15px]">
+                            <div className={cn(
+                                "prose prose-sm max-w-none leading-relaxed text-[15px]",
+                                message.role === "user"
+                                    ? "prose-invert"
+                                    : "dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-black/40 prose-pre:backdrop-blur-md prose-pre:border prose-pre:border-white/10 prose-pre:shadow-inner prose-code:bg-black/30 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none"
+                            )}>
                                 <ReactMarkdown>{message.content}</ReactMarkdown>
                             </div>
 
@@ -262,10 +267,10 @@ export function ChatArea({
                         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/20 border border-primary/30 shadow-sm backdrop-blur-md">
                             {agentIcon || <Bot className="h-5 w-5 text-primary" />}
                         </div>
-                        <div className="rounded-3xl bg-white/5 backdrop-blur-2xl shadow-black/10 rounded-tl-md px-6 py-4">
+                        <div className="rounded-3xl bg-white/10 backdrop-blur-2xl shadow-black/10 rounded-tl-md px-6 py-4 border border-white/10">
                             <div className="flex items-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                <span className="text-xs font-semibold text-primary/70 animate-pulse uppercase tracking-widest">Thinking</span>
+                                <span className="text-xs font-semibold text-primary/80 animate-pulse uppercase tracking-widest">Thinking</span>
                             </div>
                         </div>
                     </div>
