@@ -170,7 +170,7 @@ export function ChatArea({
                                 "prose prose-sm max-w-none leading-relaxed text-[15px]",
                                 message.role === "user"
                                     ? "prose-invert"
-                                    : "dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-black/40 prose-pre:backdrop-blur-md prose-pre:border prose-pre:border-white/10 prose-pre:shadow-inner prose-code:bg-black/30 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none"
+                                    : "dark:prose-invert prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-black/40 prose-pre:backdrop-blur-md prose-pre:border prose-pre:border-white/10 prose-pre:shadow-inner prose-code:bg-black/30 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none prose-ol:text-white prose-ul:text-white prose-li:text-white prose-li:marker:text-white"
                             )}>
                                 <ReactMarkdown>{message.content}</ReactMarkdown>
                             </div>
