@@ -118,7 +118,7 @@ export function AutonomousAgentView({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-green-500';
+      case 'completed': return 'text-gray-700';
       case 'failed': return 'text-red-500';
       case 'cancelled': return 'text-gray-500';
       case 'awaiting_approval': return 'text-yellow-500';
@@ -532,7 +532,7 @@ export function AutonomousAgentView({
                   )}
                   
                   {task.status === 'executing' && (
-                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="p-3 bg-white rounded-lg border border-gray-200">
                       <p className="text-sm">
                         <span className="font-medium">Execution started</span>
                       </p>
@@ -540,7 +540,7 @@ export function AutonomousAgentView({
                   )}
                   
                   {task.status === 'completed' && (
-                    <div className="p-3 bg-green-100 rounded-lg border border-green-300">
+                    <div className="p-3 bg-white rounded-lg border border-gray-300">
                       <p className="text-sm">
                         <span className="font-medium">Task completed successfully</span>
                       </p>
