@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Bot, User, Clock, Zap, Loader2, AlertTriangle, ChevronDown, ChevronUp, Activity } from "lucide-react";
+import { Bot, User, Clock, Zap, Loader2, AlertTriangle, ChevronDown, ChevronUp, Activity, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/client-lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -117,6 +117,32 @@ function ErrorDetails({ errorLog }: { errorLog: Array<{ provider: string; model:
     );
 }
 
+function CopyButton({ content }: { content: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(content);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopy}
+            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10 text-muted-foreground hover:text-foreground"
+            title="Copy response"
+        >
+            {copied ? (
+                <Check className="h-3.5 w-3.5 text-green-400" />
+            ) : (
+                <Copy className="h-3.5 w-3.5" />
+            )}
+        </Button>
+    );
+}
+
 export function ChatArea({
     messages,
     isLoading,
@@ -160,6 +186,12 @@ export function ChatArea({
                                     : "bg-white/10 backdrop-blur-2xl shadow-black/10 rounded-tl-md border border-white/10"
                             )}
                         >
+                            {message.role === "assistant" && (
+                                <div className="absolute top-3 right-3">
+                                    <CopyButton content={message.content} />
+                                </div>
+                            )}
+
                             {agentName && message.role === "assistant" && (
                                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary/80">
                                     {agentName}
