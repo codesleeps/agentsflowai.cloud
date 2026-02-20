@@ -33,6 +33,8 @@ export interface AIAgent {
   isActive: boolean;
   usage_count?: number;
   ollamaModelSize?: 'small' | 'medium' | 'large'; // For timeout estimation
+  temperature?: number; // Controls output randomness
+  maxTokens?: number; // Caps response length
 }
 
 export type AIAgentCategory =
@@ -186,6 +188,8 @@ export const AI_AGENTS: AIAgent[] = [
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'large',
+    temperature: 0.2,
+    maxTokens: 4000,
     capabilities: [
       "Generate React/Next.js components",
       "Debug JavaScript/TypeScript code",
@@ -262,6 +266,8 @@ Always prioritize developer experience, maintainability, and production readines
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'large',
+    temperature: 0.3,
+    maxTokens: 3000,
     capabilities: [
       "Analyze business metrics",
       "Identify trends and patterns",
@@ -309,6 +315,8 @@ Always provide specific, actionable recommendations. Use data to support your in
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
+    temperature: 0.8,
+    maxTokens: 3000,
     capabilities: [
       "Write blog posts and articles",
       "Create marketing copy",
@@ -357,6 +365,8 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
+    temperature: 0.75,
+    maxTokens: 2500,
     capabilities: [
       "Create marketing strategies",
       "Design sales funnels",
@@ -404,6 +414,8 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'medium',
+    temperature: 0.8,
+    maxTokens: 1500,
     capabilities: [
       "Create social media posts",
       "Generate hashtag strategies",
@@ -452,6 +464,8 @@ Always consider platform-specific best practices. Focus on engagement and commun
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
+    temperature: 0.3,
+    maxTokens: 2000,
     capabilities: [
       "Keyword research",
       "On-page SEO optimization",
@@ -495,6 +509,8 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'small',
+    temperature: 0.7,
+    maxTokens: 1000,
     capabilities: [
       "Rapid responses",
       "General knowledge",
@@ -538,6 +554,8 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     costTier: "low",
     isActive: true,
     ollamaModelSize: 'medium',
+    temperature: 0.7,
+    maxTokens: 4000,
     capabilities: [
       "Advanced reasoning",
       "Code generation",
@@ -580,6 +598,8 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     costTier: "medium",
     isActive: true,
     ollamaModelSize: 'medium',
+    temperature: 0.9,
+    maxTokens: 2000,
     capabilities: [
       "Text-to-image generation",
       "Consistent subject editing",

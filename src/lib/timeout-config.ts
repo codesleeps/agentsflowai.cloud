@@ -51,17 +51,20 @@ export function withTimeout(handler, timeoutMs = 300000) { // 5 minutes default
 // AI Provider timeout configuration
 export const AI_TIMEOUTS = {
   // Per-provider timeouts
-  ollama: 120000,      // 2 minutes
-  openrouter: 180000,  // 3 minutes  
-  anthropic: 180000,   // 3 minutes
-  openai: 180000,      // 3 minutes
-  
+  ollama: 90000,        // 1.5 minutes (default fallback)
+  ollamaSmall: 30000,   // 30 seconds  (small models)
+  ollamaMedium: 60000,  // 1 minute    (medium models)
+  ollamaLarge: 90000,   // 1.5 minutes (large models)
+  openrouter: 60000,    // 1 minute
+  anthropic: 180000,    // 3 minutes
+  openai: 180000,       // 3 minutes
+
   // Overall request timeout
-  overall: 300000,     // 5 minutes
-  
+  overall: 300000,      // 5 minutes
+
   // Connection timeouts
-  connect: 10000,      // 10 seconds
-  read: 300000,        // 5 minutes
+  connect: 10000,       // 10 seconds
+  read: 300000,         // 5 minutes
 };
 
 // Utility function to apply timeouts to fetch requests

@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AI_AGENTS, AIAgent } from "@/shared/models/ai-agents";
+import { AI_TIMEOUTS } from "@/lib/timeout-config";
+import { providerHealthMonitor } from "@/server-lib/provider-health-monitor";
+import { AIProvider as ProviderConfigAIProvider } from "@/lib/provider-config";
+import {
+  getCachedAIResponse,
+  setCachedAIResponse,
+  generateCacheKey,
+} from "@/server-lib/redis-cache";
 
 interface AgentRequest {
   agentId: string;
@@ -41,10 +49,10 @@ async function callOpenRouter(agent: AIAgent, message: string, conversationHisto
     body: JSON.stringify({
       model: agent.model,
       messages,
-      temperature: 0.7,
-      max_tokens: 2000
+      temperature: agent.temperature ?? 0.7,
+      max_tokens: agent.maxTokens ?? 2000
     }),
-    signal: AbortSignal.timeout(60000)
+    signal: AbortSignal.timeout(AI_TIMEOUTS.openrouter)
   });
 
   if (!response.ok) {
@@ -59,10 +67,21 @@ async function callOpenRouter(agent: AIAgent, message: string, conversationHisto
   };
 }
 
+// Resolve the correct Ollama timeout based on agent model size
+function getOllamaTimeout(agent: AIAgent): number {
+  switch (agent.ollamaModelSize) {
+    case 'small':  return AI_TIMEOUTS.ollamaSmall;
+    case 'medium': return AI_TIMEOUTS.ollamaMedium;
+    case 'large':  return AI_TIMEOUTS.ollamaLarge;
+    default:       return AI_TIMEOUTS.ollama;
+  }
+}
+
 // Simple Ollama call function
 async function callOllama(agent: AIAgent, message: string, conversationHistory: Array<{role: string; content: string}> = []): Promise<{response: string; tokensUsed: number}> {
   const baseUrl = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
-  
+  const ollamaTimeout = getOllamaTimeout(agent);
+
   const messages = [
     ...conversationHistory,
     { role: "user", content: message }
@@ -75,9 +94,12 @@ async function callOllama(agent: AIAgent, message: string, conversationHistory: 
       model: agent.model,
       messages,
       stream: false,
-      options: { temperature: 0.7, num_predict: 2000 }
+      options: {
+        temperature: agent.temperature ?? 0.7,
+        num_predict: agent.maxTokens ?? 2000
+      }
     }),
-    signal: AbortSignal.timeout(120000)
+    signal: AbortSignal.timeout(ollamaTimeout)
   });
 
   if (!response.ok) {
@@ -104,7 +126,7 @@ export async function GET() {
 // Generate response from agent
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  
+
   try {
     const body: AgentRequest = await request.json();
     const { agentId, message, conversationHistory = [] } = body;
@@ -126,13 +148,40 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Agent API] Processing request for ${agentId}: ${message.substring(0, 100)}...`);
 
-    // Try providers in order of priority
+    // Build the full messages array used for cache key generation and provider calls
+    const cacheMessages = [
+      { role: "system", content: agent.systemPrompt },
+      ...conversationHistory,
+      { role: "user", content: message }
+    ];
+
+    // --- Provider fallback loop ---
+    // Cache keys are generated per provider/model to prevent cross-provider cache pollution.
     let lastError: Error | null = null;
-    
+
     for (const providerConfig of agent.supportedProviders.sort((a, b) => a.priority - b.priority)) {
+      // Check provider health before attempting the call
+      if (!providerHealthMonitor.isProviderAvailable(providerConfig.provider as ProviderConfigAIProvider)) {
+        console.log(`[Agent API] Skipping ${providerConfig.provider} for ${agentId} — provider blocked by health monitor`);
+        continue;
+      }
+
+      // Build a cache key specific to this provider/model combination
+      const cacheKey = generateCacheKey(providerConfig.provider, providerConfig.model, cacheMessages);
+      const cached = await getCachedAIResponse(cacheKey);
+      if (cached !== null) {
+        console.log(`[Agent API] Cache HIT for ${agentId} (${providerConfig.provider}/${providerConfig.model})`);
+        const cachedResponse: AgentResponse = {
+          ...cached,
+          generationTime: 0,
+          provider: "cache",
+        };
+        return NextResponse.json(cachedResponse);
+      }
+
       try {
         let result;
-        
+
         if (providerConfig.provider === "openrouter") {
           result = await callOpenRouter(
             { ...agent, model: providerConfig.model },
@@ -150,8 +199,11 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        // Record success with health monitor
+        providerHealthMonitor.recordSuccess(providerConfig.provider as ProviderConfigAIProvider);
+
         const totalTime = Date.now() - startTime;
-        
+
         const response: AgentResponse = {
           response: result.response,
           model: providerConfig.model,
@@ -163,12 +215,21 @@ export async function POST(request: NextRequest) {
         };
 
         console.log(`[Agent API] ${agentId} succeeded with ${providerConfig.provider}/${providerConfig.model} in ${totalTime}ms (${result.tokensUsed} tokens)`);
-        
+
+        // --- Write to Redis cache using the per-provider/model key ---
+        // Use a shorter TTL for fast-chat-agent since prompts are conversational and less repeatable
+        const cacheTtl = agentId === "fast-chat-agent" ? 60 : undefined;
+        await setCachedAIResponse(cacheKey, response, cacheTtl);
+
         return NextResponse.json(response);
 
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         console.warn(`[Agent API] ${agentId} failed with ${providerConfig.provider}/${providerConfig.model}: ${lastError.message}`);
+
+        // Record failure with health monitor
+        providerHealthMonitor.recordFailure(providerConfig.provider as ProviderConfigAIProvider);
+
         // Continue to next provider
       }
     }
@@ -176,7 +237,7 @@ export async function POST(request: NextRequest) {
     // All providers failed
     const totalTime = Date.now() - startTime;
     console.error(`[Agent API] All providers failed for ${agentId} after ${totalTime}ms`);
-    
+
     return NextResponse.json({
       response: `I'm sorry, but I'm currently unable to process your request. Please try again later.\n\nError: ${lastError?.message || 'Unknown error'}`,
       model: "fallback",
@@ -190,7 +251,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const totalTime = Date.now() - startTime;
     console.error(`[Agent API] Request failed after ${totalTime}ms:`, error);
-    
+
     return NextResponse.json({
       error: error instanceof Error ? error.message : "Unknown error",
       response: "I encountered an error processing your request. Please try again."
