@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { rateLimiter } from "./src/lib/rate-limiter";
-import { handleCors } from "./src/lib/cors";
-import { isInngestRequest } from "./src/lib/auth-helpers";
-import { auth } from "./src/lib/auth";
+import { rateLimiter } from "@/lib/rate-limiter";
+import { handleCors } from "@/lib/cors";
+import { isInngestRequest } from "@/lib/auth-helpers";
+import { auth } from "@/lib/auth";
 
 // Define protected route patterns
 const protectedRoutes = [
