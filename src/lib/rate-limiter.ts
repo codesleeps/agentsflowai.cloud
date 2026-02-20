@@ -1,3 +1,33 @@
+/**
+ * IMPORTANT — Edge Runtime Limitation
+ * ====================================
+ * Next.js middleware runs in the **Edge Runtime**: each incoming request may
+ * be handled in a fresh V8 isolate, which means this in-memory `Map` is
+ * reset on every request and never persists across requests in production
+ * (or across multiple workers in any environment).
+ *
+ * Consequences:
+ *  1. The rate-limit window is effectively per-request; no real enforcement
+ *     occurs when more than one isolate is active.
+ *  2. The `setInterval` / `cleanupInterval` that was previously defined in
+ *     the constructor never fires in Edge Runtime and leaked a timer handle
+ *     in Node.js environments — it has been removed.
+ *
+ * For production multi-worker deployments, replace this implementation with
+ * an Edge-compatible sliding-window store, for example:
+ *
+ *   import { Ratelimit } from '@upstash/ratelimit';
+ *   import { Redis }     from '@upstash/redis';
+ *
+ *   const ratelimit = new Ratelimit({
+ *     redis: Redis.fromEnv(),
+ *     limiter: Ratelimit.slidingWindow(60, '1 m'),
+ *   });
+ *
+ * The current implementation is safe only for single-process local
+ * development where a single long-lived Node.js process handles all requests.
+ */
+
 import { NextRequest } from 'next/server';
 
 interface RateLimitEntry {
@@ -12,12 +42,6 @@ interface RateLimitConfig {
 
 class RateLimiter {
   private storage = new Map<string, RateLimitEntry>();
-  private cleanupInterval: NodeJS.Timeout;
-  private readonly CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
-
-  constructor() {
-    this.cleanupInterval = setInterval(() => this.cleanup(), this.CLEANUP_INTERVAL);
-  }
 
   private getConfig(request: NextRequest): RateLimitConfig {
     const path = request.nextUrl.pathname;
@@ -36,20 +60,6 @@ class RateLimiter {
     const userId = request.headers.get('X-User-Id');
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
     return userId || ip;
-  }
-
-  private cleanup(): void {
-    const now = Date.now();
-    const keysToDelete: string[] = [];
-
-    for (const [key, entry] of this.storage.entries()) {
-      // Remove old entries that haven't been accessed recently
-      if (now - entry.lastCleanup > 30 * 60 * 1000) { // 30 minutes
-        keysToDelete.push(key);
-      }
-    }
-
-    keysToDelete.forEach(key => this.storage.delete(key));
   }
 
   check(request: NextRequest): { allowed: boolean; remaining: number; resetTime: number } {

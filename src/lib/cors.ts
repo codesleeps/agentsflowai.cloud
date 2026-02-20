@@ -26,7 +26,7 @@ export function getCorsConfig(): CorsConfig {
 
   return {
     allowedOrigins,
-    allowedMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id', 'X-Inngest-Signature'],
     exposedHeaders: ['X-Request-Id', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
     credentials: true,

@@ -48,8 +48,16 @@ const clientEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  // Optional in the Zod schema so that dev / test environments are not forced
+  // to set it. A production-specific .refine() is added below so that the Zod
+  // parse itself fails fast when NODE_ENV === 'production' and the variable is
+  // absent, without relying solely on the imperative guard further down.
   NEXT_PUBLIC_APP_URL: z
-    .preprocess((val) => (val === "" ? undefined : val), z.string().url("NEXT_PUBLIC_APP_URL must be a valid URL").optional()),
+    .preprocess((val) => (val === "" ? undefined : val), z.string().url("NEXT_PUBLIC_APP_URL must be a valid URL").optional())
+    .refine(
+      (val) => process.env.NODE_ENV !== "production" || (typeof val === "string" && val.length > 0),
+      { message: "NEXT_PUBLIC_APP_URL is required in production" }
+    ),
 
   // Development Only
   NEXT_PUBLIC_DEV_USER_NAME: z.string().optional(),

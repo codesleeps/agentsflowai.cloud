@@ -80,14 +80,12 @@ export async function middleware(request: NextRequest) {
     // console.log(`[MIDDLEWARE] ${request.method} ${pathname}`);
   }
 
-  // Development mode bypass (if configured in .env.local)
-  if (
+  // Development mode bypass flag — does NOT skip rate limiting or CORS.
+  // Only the session-cookie / getSession check is skipped when this is true.
+  const isDevBypass =
     process.env.NODE_ENV === "development" &&
-    process.env.NEXT_PUBLIC_DEV_USER_NAME &&
-    !pathname.startsWith("/api/auth") // Don't bypass auth routes themselves
-  ) {
-    return NextResponse.next();
-  }
+    !!process.env.NEXT_PUBLIC_DEV_USER_NAME &&
+    !pathname.startsWith("/api/auth");
 
   // Handle CORS preflight requests
   if (request.method === "OPTIONS") {
@@ -169,7 +167,7 @@ export async function middleware(request: NextRequest) {
           { status: 401 },
         );
       }
-    } else {
+    } else if (!isDevBypass) {
       // Check for session cookie
       // We check both standard and secure cookies
       const sessionToken =
@@ -280,9 +278,16 @@ export async function middleware(request: NextRequest) {
   );
 
   // Add CSP header
+  // 'unsafe-eval' is only included in development (e.g. for Next.js HMR / React
+  // DevTools). In production it is omitted to enforce a stricter CSP.
+  const scriptSrc =
+    process.env.NODE_ENV === "development"
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self' 'unsafe-inline'";
+
   const cspDirectives = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https://vybe.build https://i.ibb.co https://cdn.brandfetch.io",
     "connect-src 'self' https://vybe.build",
