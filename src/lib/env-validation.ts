@@ -146,7 +146,27 @@ export function validateEnv(): Env {
       // On the client, only validate client variables
       // We cast the result to full Env type but server props will be missing (undefined)
       // This is acceptable as client code shouldn't access them
-      validatedEnv = clientEnvSchema.parse(process.env) as unknown as Env;
+      try {
+        validatedEnv = clientEnvSchema.parse(process.env) as unknown as Env;
+      } catch (error) {
+        // Handle missing NEXT_PUBLIC_APP_URL at build time gracefully
+        if (error instanceof z.ZodError) {
+          const isOnlyAppUrlError = error.errors.every(
+            (e) => e.path.includes("NEXT_PUBLIC_APP_URL")
+          );
+          if (isOnlyAppUrlError) {
+            console.warn("NEXT_PUBLIC_APP_URL missing from build - using fallback");
+            validatedEnv = {
+              NEXT_PUBLIC_APP_URL: typeof window !== "undefined" ? window.location.origin : "https://agentsflowai.cloud",
+              NODE_ENV: "production",
+            } as unknown as Env;
+          } else {
+            throw error;
+          }
+        } else {
+          throw error;
+        }
+      }
     }
 
     return validatedEnv;

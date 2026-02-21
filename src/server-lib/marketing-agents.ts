@@ -16,6 +16,7 @@ import {
 } from "@/shared/models/marketing-types";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
+import { AI_TIMEOUTS } from "@/lib/timeout-config";
 
 // ============================================
 // AI PROVIDER UTILITIES
@@ -45,6 +46,7 @@ async function callAIWithFallback(
       const openrouter = new OpenAI({
         baseURL: "https://openrouter.ai/api/v1",
         apiKey: process.env.OPENROUTER_API_KEY,
+        timeout: AI_TIMEOUTS.openrouter,
       });
 
       // Try z-ai/glm-4.5-air first (agent-optimized)
@@ -92,6 +94,7 @@ async function callAIWithFallback(
     try {
       const anthropic = new Anthropic({
         apiKey: process.env.ANTHROPIC_API_KEY,
+        timeout: AI_TIMEOUTS.anthropic,
       });
 
       const message = await anthropic.messages.create({
