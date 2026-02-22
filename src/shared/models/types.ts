@@ -281,7 +281,7 @@ import { z } from "zod";
 export const AgentResponseSchema = z.object({
   content: z.string(),
   role: z.enum(["assistant", "system"]),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export interface AIMessage {

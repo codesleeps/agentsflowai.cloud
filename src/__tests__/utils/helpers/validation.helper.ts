@@ -39,7 +39,7 @@ export const expectSchemaToFail = <T>(schema: z.ZodSchema<T>, data: any) => {
 
 export const getValidationErrors = (error: any): string[] => {
   if (error instanceof z.ZodError) {
-    return error.errors.map((err) => err.message);
+    return error.issues.map((err) => err.message);
   }
   return [error.message || "Unknown validation error"];
 };

@@ -151,7 +151,7 @@ export function validateEnv(): Env {
       } catch (error) {
         // Handle missing NEXT_PUBLIC_APP_URL at build time gracefully
         if (error instanceof z.ZodError) {
-          const isOnlyAppUrlError = error.errors.every(
+          const isOnlyAppUrlError = error.issues.every(
             (e) => e.path.includes("NEXT_PUBLIC_APP_URL")
           );
           if (isOnlyAppUrlError) {
@@ -173,7 +173,7 @@ export function validateEnv(): Env {
   } catch (error) {
     console.error("Environment validation failed:", error);
     if (error instanceof z.ZodError) {
-      console.error("Validation errors:", error.errors);
+      console.error("Validation errors:", error.issues);
     }
     // Only exit process on server during runtime, not during build
     if (typeof window === "undefined") {

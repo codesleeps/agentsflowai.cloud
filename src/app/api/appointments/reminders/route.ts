@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         {
           error: "Validation failed",
           code: "VALIDATION_ERROR",
-          details: error.errors,
+          details: error.issues,
         },
         { status: 400 },
       );

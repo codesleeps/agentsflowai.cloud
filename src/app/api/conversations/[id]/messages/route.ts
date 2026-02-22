@@ -4,7 +4,7 @@ import type { Message } from '@/shared/models/types';
 import { MessageCreateSchema, validateAndSanitize } from '@/lib/validation-schemas';
 import { requireAuth } from '@/lib/auth-helpers';
 import { handleApiError } from '@/lib/api-errors';
-import { v4 as uuidv4 } from 'uuid';
+import { validate as validateUUID } from 'uuid';
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +17,7 @@ export async function GET(
     const { id } = await params;
     
     // Validate UUID format
-    if (!uuidv4.validate(id)) {
+    if (!validateUUID(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID format' }, { status: 400 });
     }
     
@@ -43,7 +43,7 @@ export async function POST(
     const { id } = await params;
     
     // Validate UUID format
-    if (!uuidv4.validate(id)) {
+    if (!validateUUID(id)) {
       return NextResponse.json({ error: 'Invalid conversation ID format' }, { status: 400 });
     }
     

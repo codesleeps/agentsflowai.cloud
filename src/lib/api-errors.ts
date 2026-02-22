@@ -77,7 +77,7 @@ export function handleApiError(error: Error): NextResponse {
     statusCode = 400;
     errorCode = 'VALIDATION_ERROR';
     message = 'Validation failed';
-    details = error.errors;
+    details = error.issues;
   } else if (error instanceof APIKeyExpiredError) {
     statusCode = 401;
     errorCode = 'API_KEY_EXPIRED';

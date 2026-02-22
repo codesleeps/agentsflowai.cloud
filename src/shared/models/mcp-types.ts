@@ -113,7 +113,7 @@ export interface MCPRouterConfig {
 export const MCPRouterRequestSchema = z.object({
   query: z.string().min(1),
   userId: z.string().min(1),
-  context: z.record(z.any()).optional(),
+  context: z.record(z.string(), z.any()).optional(),
   preferences: z.object({
     maxTools: z.number().min(1).max(10).optional(),
     timeout: z.number().min(1000).max(300000).optional(), // 1s to 5min
@@ -124,14 +124,14 @@ export const MCPRouterRequestSchema = z.object({
 export const MCPIntentClassificationSchema = z.object({
   intent: z.nativeEnum(MCPIntentType),
   confidence: z.number().min(0).max(1),
-  suggestedParameters: z.record(z.any()).optional(),
+  suggestedParameters: z.record(z.string(), z.any()).optional(),
   reasoning: z.string().optional()
 });
 
 export const MCPToolRouteSchema = z.object({
   serverName: z.string().min(1),
   toolName: z.string().min(1),
-  parameters: z.record(z.any()).optional(),
+  parameters: z.record(z.string(), z.any()).optional(),
   priority: z.number().min(1).max(10),
   conditions: z.object({
     healthCheck: z.boolean().optional(),

@@ -16,7 +16,7 @@ const createStepSchema = z.object({
     "webhook",
     "ai_agent",
   ]),
-  config: z.record(z.any()),
+  config: z.record(z.string(), z.any()),
   order: z.number().int().min(0),
   dependencies: z.array(z.string()).optional(),
 });
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request data", details: error.errors },
+        { error: "Invalid request data", details: error.issues },
         { status: 400 },
       );
     }

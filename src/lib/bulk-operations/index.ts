@@ -117,7 +117,7 @@ function validateCSVData(csvData: any[]): {
         recordIndex: index + 1,
         error:
           error instanceof z.ZodError
-            ? error.errors.map((e) => e.message).join(", ")
+            ? error.issues.map((e) => e.message).join(", ")
             : "Validation failed",
         details: error,
       });

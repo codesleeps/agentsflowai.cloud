@@ -4,7 +4,7 @@ import type { Lead } from '@/shared/models/types';
 import { LeadUpdateSchema, validateAndSanitize } from '@/lib/validation-schemas';
 import { requireAuth } from '@/lib/auth-helpers';
 import { handleApiError } from '@/lib/api-errors';
-import { v4 as uuidv4 } from 'uuid';
+import { validate as validateUUID } from 'uuid';
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +17,7 @@ export async function GET(
     const { id } = await params;
     
     // Validate UUID format
-    if (!uuidv4.validate(id)) {
+    if (!validateUUID(id)) {
       return NextResponse.json({ error: 'Invalid lead ID format' }, { status: 400 });
     }
     
@@ -47,7 +47,7 @@ export async function PATCH(
     const { id } = await params;
     
     // Validate UUID format
-    if (!uuidv4.validate(id)) {
+    if (!validateUUID(id)) {
       return NextResponse.json({ error: 'Invalid lead ID format' }, { status: 400 });
     }
     
@@ -133,7 +133,7 @@ export async function DELETE(
     const { id } = await params;
     
     // Validate UUID format
-    if (!uuidv4.validate(id)) {
+    if (!validateUUID(id)) {
       return NextResponse.json({ error: 'Invalid lead ID format' }, { status: 400 });
     }
     

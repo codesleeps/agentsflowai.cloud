@@ -41,7 +41,7 @@ const basicInfoSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().optional(),
   icon: z.string().optional(),
-  category: z.string().default("custom"),
+  category: z.string(),
 });
 
 const promptSchema = z.object({
@@ -53,8 +53,8 @@ const promptSchema = z.object({
 const modelSchema = z.object({
   provider: z.string().min(1, "Provider is required"),
   model: z.string().min(1, "Model is required"),
-  costTier: z.enum(["free", "low", "medium", "high"]).default("medium"),
-  isPublic: z.boolean().default(false),
+  costTier: z.enum(["free", "low", "medium", "high"]),
+  isPublic: z.boolean(),
 });
 
 const combinedSchema = basicInfoSchema.merge(promptSchema).merge(modelSchema);

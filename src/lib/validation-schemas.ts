@@ -174,7 +174,7 @@ export const MessageCreateSchema = z.object({
     .string()
     .min(1, "Content is required")
     .max(10000, "Content must be less than 10,000 characters"),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 // Service validation schemas
@@ -205,7 +205,7 @@ export const OllamaRequestSchema = z.object({
       }),
     )
     .optional(),
-  options: z.record(z.any()).optional(),
+  options: z.record(z.string(), z.any()).optional(),
 });
 
 export const AIAgentRequestSchema = z.object({
@@ -282,7 +282,7 @@ export const PaginationSchema = z.object({
 export const LeadEnrichmentCreateSchema = z.object({
   lead_id: z.string().uuid("Invalid lead ID format"),
   source: EnrichmentSourceEnum,
-  enrichment_data: z.record(z.any()),
+  enrichment_data: z.record(z.string(), z.any()),
   confidence_score: z.number().min(0).max(1).optional(),
   company_name: z.string().max(200).optional(),
   company_size: z.string().max(100).optional(),
@@ -297,7 +297,7 @@ export const LeadEnrichmentCreateSchema = z.object({
 export const IntentSignalCreateSchema = z.object({
   lead_id: z.string().uuid("Invalid lead ID format"),
   signal_type: IntentSignalTypeEnum,
-  signal_data: z.record(z.any()),
+  signal_data: z.record(z.string(), z.any()),
   score_impact: z.number(),
 });
 
@@ -308,7 +308,7 @@ export const IntentSignalCreateSchema = z.object({
 export const EmailCampaignCreateSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
-  target_audience: z.record(z.any()).optional(),
+  target_audience: z.record(z.string(), z.any()).optional(),
 });
 
 export const EmailCampaignUpdateSchema = z.object({
@@ -331,7 +331,7 @@ export const EmailSequenceStepCreateSchema = z.object({
   template_id: z.string().uuid("Invalid template ID format"),
   step_number: z.number().int().min(1),
   delay_hours: z.number().int().min(0),
-  condition: z.record(z.any()).optional(),
+  condition: z.record(z.string(), z.any()).optional(),
 });
 
 // ============================================
@@ -355,17 +355,17 @@ export const WorkflowUpdateSchema = z.object({
 export const WorkflowTriggerCreateSchema = z.object({
   workflow_id: z.string().uuid("Invalid workflow ID format"),
   trigger_type: WorkflowTriggerTypeEnum,
-  trigger_config: z.record(z.any()),
+  trigger_config: z.record(z.string(), z.any()),
   is_active: z.boolean().optional(),
 });
 
 export const WorkflowActionCreateSchema = z.object({
   workflow_id: z.string().uuid("Invalid workflow ID format"),
   action_type: WorkflowActionTypeEnum,
-  action_config: z.record(z.any()),
+  action_config: z.record(z.string(), z.any()),
   order: z.number().int().min(0),
   parent_action_id: z.string().uuid().optional(),
-  condition: z.record(z.any()).optional(),
+  condition: z.record(z.string(), z.any()).optional(),
 });
 
 // ============================================
@@ -376,7 +376,7 @@ export const ChannelConfigCreateSchema = z.object({
   channel_type: z.enum(["whatsapp", "sms", "messenger", "instagram", "email"]),
   is_active: z.boolean().optional(),
   provider: z.string(),
-  api_credentials: z.record(z.any()).optional(),
+  api_credentials: z.record(z.string(), z.any()).optional(),
   webhook_url: z.string().url().optional(),
   phone_number: z.string().optional(),
   page_id: z.string().optional(),

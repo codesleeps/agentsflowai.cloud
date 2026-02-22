@@ -7,7 +7,7 @@ const updateExecutionSchema = z.object({
   status: z
     .enum(["pending", "running", "completed", "failed", "cancelled"])
     .optional(),
-  outputData: z.record(z.any()).optional(),
+  outputData: z.record(z.string(), z.any()).optional(),
   errorMessage: z.string().optional(),
   completedAt: z.string().datetime().optional(),
 });
@@ -119,7 +119,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request data", details: error.errors },
+        { error: "Invalid request data", details: error.issues },
         { status: 400 },
       );
     }

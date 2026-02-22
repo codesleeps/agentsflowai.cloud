@@ -16,7 +16,7 @@ const mcpEnvSchema = z.object({
   MCP_CONTEXT7_API_KEY: z.string().optional(),
   MCP_FETCH_ENDPOINT: z.string().url().optional(),
   MCP_PLAYWRIGHT_ENDPOINT: z.string().url().optional(),
-  MCP_ENABLED: z.string().transform(val => val !== 'false').default('true')
+  MCP_ENABLED: z.string().optional().default('true').transform(val => val !== 'false')
 })
 
 // Parse environment variables

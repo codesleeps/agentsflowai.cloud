@@ -40,7 +40,7 @@ import { toast } from "sonner";
 const basicInfoSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   description: z.string().optional(),
-  category: z.string().default("automation"),
+  category: z.string(),
 });
 
 const triggerSchema = z.object({
