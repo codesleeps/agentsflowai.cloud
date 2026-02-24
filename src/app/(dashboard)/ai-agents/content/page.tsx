@@ -11,6 +11,11 @@ import {
   MessageSquare,
   Sparkles,
   ArrowLeft,
+  LayoutTemplate,
+  Wand2,
+  Users,
+  Send,
+  Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +34,18 @@ import {
 } from "@/components/ui/select";
 import { getAgentResponseWithFallback } from "@/client-lib/ai-agents-client";
 import { toast } from "sonner";
+import { ContentTemplates, ContentTemplate } from "@/components/content-creation/ContentTemplates";
+import { AISuggestions } from "@/components/content-creation/AISuggestions";
+import { CollaborationPanel } from "@/components/content-creation/CollaborationPanel";
+import { PublishPanel } from "@/components/content-creation/PublishPanel";
+import { ContentWizard, WizardData } from "@/components/content-creation/ContentWizard";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const contentTypes = [
   { id: "blog-post", label: "Blog Post", icon: FileText, description: "Long-form articles and blog content" },
@@ -47,6 +64,37 @@ export default function ContentCreationPage() {
   const [generatedContent, setGeneratedContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("create");
+
+  const handleTemplateSelect = (template: ContentTemplate) => {
+    setContentType(template.id === "newsletter" ? "email" : 
+                   template.id === "social-carousel" ? "social" : "blog-post");
+    setTone(template.defaultSettings.tone);
+    setLength(template.defaultSettings.length);
+    setActiveTab("create");
+    toast.success(`Template "${template.name}" loaded!`);
+  };
+
+  const handleWizardComplete = (data: WizardData) => {
+    setContentType(data.contentType);
+    setTopic(data.topic);
+    setTone(data.tone);
+    setLength(data.length);
+    setKeywords(data.keywords);
+    setAudience(data.audience);
+    setWizardOpen(false);
+    setActiveTab("create");
+    toast.success("Wizard configuration applied!");
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    if (!topic) {
+      setTopic(suggestion);
+    } else {
+      setKeywords(prev => prev ? `${prev}, ${suggestion}` : suggestion);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -137,24 +185,71 @@ Generate:
   return (
     <div className="flex flex-1 flex-col p-6 gap-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/ai-agents">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <PenTool className="h-8 w-8 text-green-500" />
-            Content Creation Agent
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Generate blog posts, emails, social media content, and ad copy
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/ai-agents">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <PenTool className="h-8 w-8 text-green-500" />
+              Content Creation Agent
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Generate blog posts, emails, social media content, and ad copy
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={wizardOpen} onOpenChange={setWizardOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Wand2 className="h-4 w-4" />
+                Wizard
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Content Creation Wizard</DialogTitle>
+              </DialogHeader>
+              <ContentWizard 
+                onComplete={handleWizardComplete}
+                onCancel={() => setWizardOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="create" className="gap-2">
+            <PenTool className="h-4 w-4" />
+            Create
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <LayoutTemplate className="h-4 w-4" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="suggestions" className="gap-2">
+            <Lightbulb className="h-4 w-4" />
+            AI Ideas
+          </TabsTrigger>
+          <TabsTrigger value="collaborate" className="gap-2">
+            <Users className="h-4 w-4" />
+            Collaborate
+          </TabsTrigger>
+          <TabsTrigger value="publish" className="gap-2" disabled={!generatedContent}>
+            <Send className="h-4 w-4" />
+            Publish
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="create" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
         {/* Input Section */}
         <Card>
           <CardHeader>
@@ -315,6 +410,83 @@ Generate:
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="templates" className="mt-6">
+          <ContentTemplates onSelectTemplate={handleTemplateSelect} />
+        </TabsContent>
+
+        <TabsContent value="suggestions" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Settings</CardTitle>
+                  <CardDescription>Set your topic to get personalized suggestions</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Topic</Label>
+                    <Input
+                      placeholder="Enter your content topic..."
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Content Type</Label>
+                    <Select value={contentType} onValueChange={setContentType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="blog-post">Blog Post</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="social">Social Post</SelectItem>
+                        <SelectItem value="ad-copy">Ad Copy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div>
+              <AISuggestions 
+                topic={topic} 
+                contentType={contentType}
+                onSuggestionClick={handleSuggestionClick}
+              />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="collaborate" className="mt-6">
+          <CollaborationPanel />
+        </TabsContent>
+
+        <TabsContent value="publish" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Preview</CardTitle>
+                  <CardDescription>Review before publishing</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={generatedContent}
+                    onChange={(e) => setGeneratedContent(e.target.value)}
+                    className="min-h-[400px]"
+                  />
+                </CardContent>
+              </Card>
+            </div>
+            <div>
+              <PublishPanel content={generatedContent} contentType={contentType} />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
