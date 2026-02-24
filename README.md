@@ -114,9 +114,19 @@ AgentsFlowAI is an AI-powered business automation platform designed to transform
    - Dedicated Social Media Agent page (`/ai-agents/social`) with Single Post, Campaign, and Ad Copy tools, each with a large editable output area and copy-to-clipboard
    - Quick links to specialized agents from the AI Agents Hub
 
+8. **Marketing Hub Enhancements (February 2026)**
+   - **URL Research** - Research content from any URL with AI-powered analysis
+   - **Content Repurposer** - Turn one piece of content into multiple platform formats (LinkedIn, Twitter, Instagram, Facebook, Email, Blog)
+   - **Template Library** - 6 pre-built campaign templates (Product Launch, Weekly Newsletter, Case Study, Thought Leadership, Webinar Promotion, Holiday Special)
+   - **Viral Analyzer** - AI-powered content optimization with viral score, engagement metrics, and improvement suggestions
+   - **Content Calendar** - Visual scheduling with monthly/weekly views, post statistics, and platform-specific organization
+   - **Campaign Wizard** - Step-by-step guided campaign creation for non-technical users
+   - URL input support in Content Repurposer for fetching and repurposing external content
+   - Integration between URL Research and Campaign Wizard for seamless workflow
+
 ### Production Ready Updates (December 2025)
 
-8. **Unit Testing Suite**
+9. **Unit Testing Suite**
    - Comprehensive tests for all API routes (leads, services, appointments, conversations, health, dashboard)
    - Utility function tests with edge case coverage
    - Error monitoring library tests
@@ -124,7 +134,7 @@ AgentsFlowAI is an AI-powered business automation platform designed to transform
    - Mock patterns for database queries
    - Target: 90% coverage on critical paths
 
-9. **Error Monitoring System**
+10. **Error Monitoring System**
    - Custom lightweight error monitoring library (`/lib/error-monitoring.ts`)
    - Breadcrumb tracking for debugging
    - User context and session tracking
@@ -132,13 +142,13 @@ AgentsFlowAI is an AI-powered business automation platform designed to transform
    - Can integrate with external services (Sentry, etc.)
    - React ErrorBoundary component
 
-10. **CI/CD Pipeline (GitHub Actions)**
+11. **CI/CD Pipeline (GitHub Actions)**
     - `.github/workflows/ci.yml` - Lint, type check, test, build
     - `.github/workflows/deploy.yml` - Automated production deployment
     - Codecov integration for coverage reports
     - Zero-downtime deployment with rollback support
 
-11. **Enhanced Server Setup**
+12. **Enhanced Server Setup**
     - Complete `deploy/setup-server.sh` script
     - `deploy/DEPLOYMENT-CHECKLIST.md` with step-by-step guide
     - PM2 ecosystem configuration
@@ -168,6 +178,17 @@ AgentsFlowAI is an AI-powered business automation platform designed to transform
 /services         - Service Packages (with sidebar)
 /analytics        - Business Analytics (with sidebar)
 /appointments     - Appointments (with sidebar)
+/marketing        - Marketing Hub with 6 tools (with sidebar)
+  ├── Campaigns   - Manage AI-powered marketing campaigns
+  ├── Research    - URL content research and analysis
+  ├── Repurposer  - Content repurposing across platforms
+  ├── Templates   - Pre-built campaign templates
+  ├── Analyzer    - Viral content optimization
+  └── Calendar    - Content scheduling and planning
+/ai-agents        - AI Agents Hub (with sidebar)
+  ├── /seo        - SEO Agent for keyword research
+  ├── /content    - Content Creation Agent
+  └── /social     - Social Media Agent
 ```
 
 ### Database Design Rationale
@@ -198,12 +219,24 @@ AgentsFlowAI is an AI-powered business automation platform designed to transform
 - Dashboard route group `(dashboard)` adds sidebar wrapper
 - Welcome page has its own layout without sidebar
 
+### MCP Integration (Model Context Protocol)
+
+The platform includes MCP (Model Context Protocol) integration for enhanced AI capabilities:
+
+- **MCP-Fetch** - Web content fetching for research tasks
+- **MCP-Context7** - Documentation and knowledge base access
+- **MCP-Playwright** - Browser automation for web tasks
+
+See `docs/MCP_INTEGRATION_GUIDE.md` for setup instructions.
+
 ### Future Considerations
 - WebSocket integration for real-time chat
 - Email integration for automated follow-ups
 - Calendar integration (Google Calendar, Outlook)
 - CRM integration (HubSpot, Salesforce)
 - Multi-tenant support for agencies
+- Advanced URL content extraction with Puppeteer/Playwright
+- Social media API integrations for direct publishing
 
 ---
 
