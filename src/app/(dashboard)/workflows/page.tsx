@@ -13,6 +13,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  GitBranch,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -44,8 +46,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { WorkflowCreationWizard } from "@/components/workflows/WorkflowCreationWizard";
 import { WorkflowConfigurationDialog } from "@/components/workflows/WorkflowConfigurationDialog";
+import { WorkflowBuilder } from "@/components/workflows/WorkflowBuilder";
 import { useWorkflows } from "@/client-lib/workflows-client";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function WorkflowsPage() {
   const { data: workflows, isLoading, error, mutate } = useWorkflows();
@@ -198,78 +202,108 @@ export default function WorkflowsPage() {
         </Card>
       </div>
 
-      {/* Workflows Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {workflows?.map((workflow) => (
-          <Card key={workflow.id} className="relative">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <Workflow className="h-5 w-5 text-primary" />
+      {/* Tabs for different workflow views */}
+      <Tabs defaultValue="existing" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="existing">Existing Workflows</TabsTrigger>
+          <TabsTrigger value="builder">
+            <GitBranch className="h-4 w-4 mr-2" />
+            Multi-Agent Builder
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="existing">
+          {/* Workflows Grid */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {workflows?.map((workflow) => (
+              <Card key={workflow.id} className="relative">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-primary/10 p-2">
+                        <Workflow className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="truncate text-lg">
+                          {workflow.name}
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          {workflow.description}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge className={getStatusColor(workflow.status)}>
+                      {workflow.status}
+                    </Badge>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate text-lg">
-                      {workflow.name}
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      {workflow.description}
-                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{workflow.execution_count} executions</span>
+                    <span>
+                      {workflow.success_count}/{workflow.failure_count} success/fail
+                    </span>
                   </div>
-                </div>
-                <Badge className={getStatusColor(workflow.status)}>
-                  {workflow.status}
-                </Badge>
-              </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setEditingWorkflow(workflow)}
+                    >
+                      <Settings className="mr-1 h-3 w-3" />
+                      Configure
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeletingWorkflow(workflow)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            {/* Empty State */}
+            {(!workflows || workflows.length === 0) && (
+              <Card className="col-span-full">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Workflow className="mb-4 h-16 w-16 text-muted-foreground" />
+                  <h3 className="mb-2 text-lg font-medium">No workflows yet</h3>
+                  <p className="mb-6 max-w-md text-center text-muted-foreground">
+                    Create your first automated workflow to streamline repetitive
+                    tasks and improve efficiency.
+                  </p>
+                  <Button onClick={() => setShowCreateDialog(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Your First Workflow
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="builder">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Multi-Agent Workflow Builder
+              </CardTitle>
+              <CardDescription>
+                Create workflows where multiple AI agents collaborate on complex tasks
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{workflow.execution_count} executions</span>
-                <span>
-                  {workflow.success_count}/{workflow.failure_count} success/fail
-                </span>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setEditingWorkflow(workflow)}
-                >
-                  <Settings className="mr-1 h-3 w-3" />
-                  Configure
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDeletingWorkflow(workflow)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
+            <CardContent>
+              <WorkflowBuilder />
             </CardContent>
           </Card>
-        ))}
-
-        {/* Empty State */}
-        {(!workflows || workflows.length === 0) && (
-          <Card className="col-span-full">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Workflow className="mb-4 h-16 w-16 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-medium">No workflows yet</h3>
-              <p className="mb-6 max-w-md text-center text-muted-foreground">
-                Create your first automated workflow to streamline repetitive
-                tasks and improve efficiency.
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Your First Workflow
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Dialog */}
       {editingWorkflow && (

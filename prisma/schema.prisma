@@ -955,3 +955,123 @@ model MarketingCampaignStep {
   @@index([type, status])
   @@map("marketing_campaign_steps")
 }
+
+// ============================================
+// RAG (Retrieval-Augmented Generation) MODELS
+// ============================================
+
+model KnowledgeBase {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  
+  // Embedding configuration
+  embeddingModel String @default("text-embedding-3-small") // Model used for embeddings
+  vectorDimension Int   @default(1536) // Dimensions of the embedding vectors
+  
+  // Settings
+  isActive    Boolean  @default(true)
+  isPublic    Boolean  @default(false)
+  
+  // Relations
+  documents   Document[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("knowledge_bases")
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  knowledgeBaseId String
+  
+  // Document metadata
+  name        String
+  fileType    String   // pdf, txt, docx, md, etc.
+  fileSize    Int      // Size in bytes
+  mimeType    String
+  
+  // Content storage
+  content     String   @db.Text // Full text content
+  chunks      DocumentChunk[]
+  
+  // Processing status
+  status      DocumentStatus @default(pending)
+  error       String?
+  
+  // Source tracking
+  sourceUrl   String?
+  metadata    Json?    // Additional metadata (author, date, etc.)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+  @@map("documents")
+}
+
+enum DocumentStatus {
+  pending
+  processing
+  completed
+  error
+}
+
+model DocumentChunk {
+  id          String   @id @default(uuid())
+  documentId  String
+  
+  // Chunk content
+  content     String   @db.Text
+  chunkIndex  Int      // Position in document
+  
+  // Vector embedding (stored as raw bytes or use pgvector extension)
+  embedding   String?  // JSON array of floats or use pgvector
+  
+  // Metadata for filtering
+  metadata    Json?    // Page number, section, etc.
+  
+  createdAt   DateTime @default(now())
+
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([chunkIndex])
+  @@map("document_chunks")
+}
+
+// RAG Query history for analytics
+model RAGQuery {
+  id          String   @id @default(uuid())
+  userId      String
+  knowledgeBaseId String?
+  
+  // Query details
+  query       String   @db.Text
+  response    String   @db.Text
+  
+  // Retrieved chunks for this query
+  retrievedChunks Json? // Array of chunk IDs with similarity scores
+  
+  // Performance metrics
+  latencyMs   Int      // Response time in milliseconds
+  tokensUsed  Int?
+  
+  // Feedback
+  rating      Int?     // User rating (1-5)
+  feedback    String?
+  
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([knowledgeBaseId])
+  @@index([createdAt])
+  @@map("rag_queries")
+}

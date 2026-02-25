@@ -14,6 +14,8 @@ const serverEnvSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
   MOONSHOT_API_KEY: z.string().optional(),
+  DEEPSEEK_API_KEY: z.string().optional(),
+  GOOGLE_API_KEY: z.string().optional(),
   KIMI_SWARM_THRESHOLD: z.preprocess(
     (val) => (val === "" ? undefined : val),
     z.coerce.number().min(0).max(100).optional().default(70)
@@ -95,6 +97,8 @@ export function validateEnv(): Env {
       if (parsedServer.OPENROUTER_API_KEY) configuredProviders.push('OpenRouter');
       if (parsedServer.OLLAMA_BASE_URL) configuredProviders.push('Ollama');
       if (parsedServer.MOONSHOT_API_KEY) configuredProviders.push('Kimi K2.5');
+      if (parsedServer.DEEPSEEK_API_KEY) configuredProviders.push('DeepSeek');
+      if (parsedServer.GOOGLE_API_KEY) configuredProviders.push('Google Gemini');
 
       if (configuredProviders.length === 0) {
         console.warn('⚠️ [Startup Warning] No AI providers configured. AI features will not work.');
