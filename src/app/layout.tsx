@@ -6,6 +6,7 @@ import { Providers } from "@/components/Providers";
 import { Toaster } from "@/components/ui/sonner";
 import { validateEnv } from "@/lib/env-validation";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import { CommandPalette } from "@/components/command-palette/CommandPalette";
 import { registerShutdownHandlers } from "@/lib/graceful-shutdown";
 
 const inter = Inter({
@@ -50,6 +51,7 @@ export default function RootLayout({
         >
           {children}
           <Toaster richColors />
+          <CommandPalette />
         </Providers>
       </body>
     </html>
