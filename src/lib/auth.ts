@@ -10,14 +10,18 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  // Allow multiple origins for development
+  // Allow multiple origins for development and production
   trustedOrigins: [
+    // Development
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
     "http://localhost:3002",
     "http://127.0.0.1:3002",
+    // Production
+    "https://agentsflowai.cloud",
+    "https://www.agentsflowai.cloud",
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.BETTER_AUTH_URL,
   ].filter(Boolean) as string[],

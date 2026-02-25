@@ -913,6 +913,65 @@ export default function WelcomePage() {
         </div>
       </section>
 
+      {/* Qoder Attribution */}
+      <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl">
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background">
+            <CardContent className="p-8">
+              <div className="flex flex-col items-center gap-6 text-center md:flex-row md:text-left">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="mb-2 text-xl font-semibold">
+                    Built with Qoder
+                  </h3>
+                  <p className="mb-4 text-muted-foreground">
+                    This application was developed with the assistance of{" "}
+                    <span className="font-semibold text-primary">Qoder</span>,
+                    the AI-powered coding platform that accelerates development
+                    through intelligent code generation, debugging, and
+                    architectural guidance.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      asChild
+                    >
+                      <a
+                        href="https://qoder.ai"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Discover Qoder
+                      </a>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2"
+                      asChild
+                    >
+                      <a
+                        href="https://qoder.ai/features"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Learn More
+                        <ArrowRight className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-white/[0.05] bg-black/40 backdrop-blur-md px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">

@@ -1,0 +1,75 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to agentsflowai.cloud
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_APP_URL: https://agentsflowai.cloud
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/agentsflow-ai
+            
+            # Pull latest code
+            git pull origin main
+            
+            # Install dependencies
+            npm ci --production
+            
+            # Run database migrations
+            npx prisma migrate deploy
+            
+            # Generate Prisma client
+            npx prisma generate
+            
+            # Build application
+            npm run build
+            
+            # Restart PM2
+            pm2 restart agentsflow-ai || pm2 start npm --name "agentsflow-ai" -- start
+            
+            # Save PM2 config
+            pm2 save
+            
+            echo "✅ Deployment complete!"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🚀 Successfully deployed to https://agentsflowai.cloud"
+          else
+            echo "❌ Deployment failed"
+          fi
