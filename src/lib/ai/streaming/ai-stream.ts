@@ -272,13 +272,100 @@ async function* streamDeepSeek(
 }
 
 /**
+ * Stream response from OpenRouter
+ */
+async function* streamOpenRouter(
+  messages: Array<{ role: string; content: string }>,
+  options: StreamOptions
+): AsyncGenerator<StreamChunk> {
+  const apiKey = getProviderKey("openrouter");
+  if (!apiKey) {
+    yield { type: "error", error: "OpenRouter API key not configured" };
+    return;
+  }
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "X-Title": "AgentsFlowAI",
+    },
+    body: JSON.stringify({
+      model: options.model || "openai/gpt-4o-mini",
+      messages: options.systemPrompt
+        ? [{ role: "system", content: options.systemPrompt }, ...messages]
+        : messages,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 4096,
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    yield { type: "error", error: `OpenRouter API error: ${error}` };
+    return;
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    yield { type: "error", error: "No response body" };
+    return;
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const data = line.slice(6);
+          if (data === "[DONE]") {
+            yield { type: "done" };
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              yield { type: "token", content };
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  yield { type: "done" };
+}
+
+/**
  * Main streaming function - routes to appropriate provider
+ * OpenRouter is prioritized for its model variety and fallback capabilities
  */
 export async function* streamAIResponse(
   messages: Array<{ role: string; content: string }>,
   options: StreamOptions
 ): AsyncGenerator<StreamChunk> {
   switch (options.provider) {
+    case "openrouter":
+      yield* streamOpenRouter(messages, options);
+      break;
     case "openai":
       yield* streamOpenAI(messages, options);
       break;
@@ -289,7 +376,13 @@ export async function* streamAIResponse(
       yield* streamDeepSeek(messages, options);
       break;
     default:
-      yield { type: "error", error: `Streaming not supported for ${options.provider}` };
+      // Fallback to OpenRouter if available, otherwise error
+      const openRouterKey = getProviderKey("openrouter");
+      if (openRouterKey) {
+        yield* streamOpenRouter(messages, { ...options, provider: "openrouter" });
+      } else {
+        yield { type: "error", error: `Streaming not supported for ${options.provider}` };
+      }
   }
 }
 

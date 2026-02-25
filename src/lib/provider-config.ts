@@ -55,10 +55,29 @@ export function getProviderKey(provider: AIProvider): string | undefined {
 
 /**
  * Gets a list of all currently configured providers.
+ * OpenRouter is prioritized as it provides access to multiple models.
  */
 export function getConfiguredProviders(): AIProvider[] {
-  const providers: AIProvider[] = ['openai', 'anthropic', 'openrouter', 'ollama', 'moonshot', 'deepseek', 'google'];
+  // Prioritize OpenRouter first, then others
+  const providers: AIProvider[] = ['openrouter', 'openai', 'anthropic', 'ollama', 'moonshot', 'deepseek', 'google'];
   return providers.filter(isProviderConfigured);
+}
+
+/**
+ * Gets the best available provider for general use.
+ * Prefers OpenRouter for its model variety and fallback capabilities.
+ */
+export function getPreferredProvider(): AIProvider | null {
+  const configured = getConfiguredProviders();
+  return configured.length > 0 ? configured[0] : null;
+}
+
+/**
+ * Gets provider priority order for fallback chains.
+ * OpenRouter is first as it can route to multiple backends.
+ */
+export function getProviderPriority(): AIProvider[] {
+  return ['openrouter', 'openai', 'anthropic', 'deepseek', 'google', 'moonshot', 'ollama'];
 }
 
 /**
