@@ -189,7 +189,7 @@ export async function generateRAGResponse(
       knowledgeBaseId,
       query,
       response,
-      retrievedChunks: sources as unknown as Record<string, unknown>,
+      retrievedChunks: sources as unknown as import("@prisma/client").Prisma.InputJsonValue,
       latencyMs,
     },
   });
@@ -234,7 +234,7 @@ export async function addDocument(
       fileType,
       fileSize,
       mimeType,
-      metadata: metadata as Record<string, unknown>,
+      metadata: metadata ? (metadata as object) : undefined,
     },
   });
 }
