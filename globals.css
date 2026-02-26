@@ -4,36 +4,6 @@
 
 @layer base {
   :root {
-    /* Light mode colors */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 300 100% 45%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 190 100% 45%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 300 100% 50%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 300 100% 50%;
-    --radius: 0.75rem;
-
-    /* HUD Themes */
-    --hud-magenta: 300 100% 55%;
-    --hud-cyan: 190 100% 50%;
-    --hud-sec: 320 100% 60%;
-  }
-
-  .dark {
-    /* Dark mode colors */
     --background: 240 10% 2%;
     --foreground: 0 0% 98%;
     --card: 240 10% 4%;
@@ -53,6 +23,12 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 300 100% 60%;
+    --radius: 0.75rem;
+
+    /* HUD Themes */
+    --hud-magenta: 300 100% 55%;
+    --hud-cyan: 190 100% 50%;
+    --hud-sec: 320 100% 60%;
   }
 }
 
@@ -62,11 +38,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-  }
-
-  /* Dark mode gradient background */
-  .dark body {
+    @apply text-foreground;
     background:
       radial-gradient(at 0% 0%, hsla(270, 100%, 30%, 0.4) 0, transparent 70%),
       radial-gradient(at 50% 0%, hsla(300, 100%, 35%, 0.3) 0, transparent 70%),

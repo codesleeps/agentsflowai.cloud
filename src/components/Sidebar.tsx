@@ -27,7 +27,7 @@ import {
   getAuthActiveOrganization,
   useAuthSession,
 } from "@/client-lib/auth-client";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -105,7 +105,7 @@ export function Sidebar() {
               </span>
             )}
           </div>
-          {hasMounted && (state === "expanded" || isMobile) && <ThemeToggle />}
+
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -303,7 +303,7 @@ export function MobileNav() {
 
           {/* Footer */}
           <div className="p-4 border-t">
-            <ThemeToggle />
+            {/* Theme toggle removed - dark mode only */}
           </div>
         </div>
       </SheetContent>

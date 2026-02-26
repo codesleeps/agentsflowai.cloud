@@ -3,7 +3,6 @@
 import { ExternalLink, Home } from "lucide-react";
 import Link from "next/link";
 import { authClient, getAuthActiveOrganization, useAuthSession } from "@/client-lib/auth-client";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -35,7 +34,6 @@ export function Topbar() {
             <Home className="w-6 h-6" />
           </Link>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             {session && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none">

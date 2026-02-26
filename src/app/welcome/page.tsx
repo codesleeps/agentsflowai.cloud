@@ -40,7 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 import { toast } from "sonner";
 
 const features = [
@@ -248,8 +248,6 @@ export default function WelcomePage() {
               <span className="text-xl font-bold">AgentsFlowAI</span>
             </div>
             <div className="flex items-center gap-4">
-              <ThemeToggle />
-
               {/* Desktop Navigation */}
               <div className="hidden items-center gap-8 md:flex">
                 <a

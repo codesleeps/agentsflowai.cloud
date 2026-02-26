@@ -45,8 +45,8 @@ export default function RootLayout({
       <body className="min-h-screen">
         <Providers
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}
