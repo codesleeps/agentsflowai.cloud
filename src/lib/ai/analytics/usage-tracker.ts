@@ -49,14 +49,12 @@ export interface UsageRecord {
   provider: AIProvider;
   model: string;
   agentId?: string;
-  operation: string; // e.g., "chat", "embedding", "workflow"
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
   costUsd: number;
   latencyMs: number;
   success: boolean;
-  metadata?: Record<string, unknown>;
 }
 
 export interface UsageStats {
@@ -96,18 +94,16 @@ export async function trackUsage(record: UsageRecord): Promise<void> {
     // Store in database
     await prisma.aIModelUsage.create({
       data: {
-        userId: record.userId,
+        user_id: record.userId,
         provider: record.provider,
         model: record.model,
-        agentId: record.agentId,
-        operation: record.operation,
-        inputTokens: record.inputTokens,
-        outputTokens: record.outputTokens,
-        totalTokens: record.totalTokens,
-        costUsd: record.costUsd,
-        latencyMs: record.latencyMs,
-        success: record.success,
-        metadata: record.metadata as Record<string, unknown>,
+        agent_id: record.agentId || "",
+        prompt_tokens: record.inputTokens,
+        completion_tokens: record.outputTokens,
+        total_tokens: record.totalTokens,
+        cost_usd: record.costUsd,
+        latency_ms: record.latencyMs,
+        status: record.success ? "success" : "failed",
       },
     });
   } catch (error) {
@@ -124,18 +120,18 @@ export async function getUserUsageStats(
 ): Promise<UsageStats> {
   const usages = await prisma.aIModelUsage.findMany({
     where: {
-      userId,
-      createdAt: {
+      user_id: userId,
+      created_at: {
         gte: timeRange.start,
         lte: timeRange.end,
       },
     },
   });
 
-  const totalTokens = usages.reduce((sum, u) => sum + u.totalTokens, 0);
-  const totalCost = usages.reduce((sum, u) => sum + u.costUsd, 0);
-  const totalLatency = usages.reduce((sum, u) => sum + u.latencyMs, 0);
-  const successfulRequests = usages.filter((u) => u.success).length;
+  const totalTokens = usages.reduce((sum, u) => sum + u.total_tokens, 0);
+  const totalCost = usages.reduce((sum, u) => sum + u.cost_usd, 0);
+  const totalLatency = usages.reduce((sum, u) => sum + u.latency_ms, 0);
+  const successfulRequests = usages.filter((u) => u.status === 'success').length;
 
   return {
     totalTokens,
@@ -155,24 +151,24 @@ export async function getTimeSeriesData(
 
   const usages = await prisma.aIModelUsage.findMany({
     where: {
-      userId,
-      createdAt: {
+      user_id: userId,
+      created_at: {
         gte: startDate,
       },
     },
     orderBy: {
-      createdAt: "asc",
+      created_at: "asc",
     },
   });
 
   // Group by date
   const grouped = usages.reduce((acc, usage) => {
-    const date = usage.createdAt.toISOString().split("T")[0];
+    const date = usage.created_at.toISOString().split("T")[0];
     if (!acc[date]) {
       acc[date] = { tokens: 0, cost: 0, requests: 0 };
     }
-    acc[date].tokens += usage.totalTokens;
-    acc[date].cost += usage.costUsd;
+    acc[date].tokens += usage.total_tokens;
+    acc[date].cost += usage.cost_usd;
     acc[date].requests += 1;
     return acc;
   }, {} as Record<string, { tokens: number; cost: number; requests: number }>);
@@ -201,8 +197,8 @@ export async function getProviderBreakdown(
 ): Promise<Array<{ provider: string; tokens: number; cost: number; percentage: number }>> {
   const usages = await prisma.aIModelUsage.findMany({
     where: {
-      userId,
-      createdAt: {
+      user_id: userId,
+      created_at: {
         gte: timeRange.start,
         lte: timeRange.end,
       },
@@ -213,8 +209,8 @@ export async function getProviderBreakdown(
     if (!acc[usage.provider]) {
       acc[usage.provider] = { tokens: 0, cost: 0 };
     }
-    acc[usage.provider].tokens += usage.totalTokens;
-    acc[usage.provider].cost += usage.costUsd;
+    acc[usage.provider].tokens += usage.total_tokens;
+    acc[usage.provider].cost += usage.cost_usd;
     return acc;
   }, {} as Record<string, { tokens: number; cost: number }>);
 
@@ -234,8 +230,8 @@ export async function getModelBreakdown(
 ): Promise<Array<{ model: string; tokens: number; cost: number; requests: number }>> {
   const usages = await prisma.aIModelUsage.findMany({
     where: {
-      userId,
-      createdAt: {
+      user_id: userId,
+      created_at: {
         gte: timeRange.start,
         lte: timeRange.end,
       },
@@ -246,8 +242,8 @@ export async function getModelBreakdown(
     if (!acc[usage.model]) {
       acc[usage.model] = { tokens: 0, cost: 0, requests: 0 };
     }
-    acc[usage.model].tokens += usage.totalTokens;
-    acc[usage.model].cost += usage.costUsd;
+    acc[usage.model].tokens += usage.total_tokens;
+    acc[usage.model].cost += usage.cost_usd;
     acc[usage.model].requests += 1;
     return acc;
   }, {} as Record<string, { tokens: number; cost: number; requests: number }>);
@@ -263,9 +259,9 @@ export async function getAgentUsageStats(
 ): Promise<Array<{ agentId: string; tokens: number; cost: number; requests: number }>> {
   const usages = await prisma.aIModelUsage.findMany({
     where: {
-      userId,
-      agentId: { not: null },
-      createdAt: {
+      user_id: userId,
+      agent_id: { not: "" },
+      created_at: {
         gte: timeRange.start,
         lte: timeRange.end,
       },
@@ -273,12 +269,12 @@ export async function getAgentUsageStats(
   });
 
   const grouped = usages.reduce((acc, usage) => {
-    const agentId = usage.agentId || "unknown";
+    const agentId = usage.agent_id || "unknown";
     if (!acc[agentId]) {
       acc[agentId] = { tokens: 0, cost: 0, requests: 0 };
     }
-    acc[agentId].tokens += usage.totalTokens;
-    acc[agentId].cost += usage.costUsd;
+    acc[agentId].tokens += usage.total_tokens;
+    acc[agentId].cost += usage.cost_usd;
     acc[agentId].requests += 1;
     return acc;
   }, {} as Record<string, { tokens: number; cost: number; requests: number }>);
@@ -353,31 +349,41 @@ export async function checkBudgetAlerts(
 
 // ==================== EXPORT FUNCTIONS ====================
 
-export function exportUsageToCSV(usages: Array<Record<string, unknown>>): string {
+export interface UsageExportRow {
+  created_at: Date;
+  provider: string;
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+  latency_ms: number;
+  status: string;
+}
+
+export function exportUsageToCSV(usages: UsageExportRow[]): string {
   const headers = [
     "Date",
     "Provider",
     "Model",
-    "Operation",
     "Input Tokens",
     "Output Tokens",
     "Total Tokens",
     "Cost (USD)",
     "Latency (ms)",
-    "Success",
+    "Status",
   ];
 
   const rows = usages.map((u) => [
-    (u.createdAt as Date).toISOString(),
+    u.created_at.toISOString(),
     u.provider,
     u.model,
-    u.operation,
-    u.inputTokens,
-    u.outputTokens,
-    u.totalTokens,
-    u.costUsd,
-    u.latencyMs,
-    u.success,
+    u.prompt_tokens,
+    u.completion_tokens,
+    u.total_tokens,
+    u.cost_usd,
+    u.latency_ms,
+    u.status,
   ]);
 
   return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");

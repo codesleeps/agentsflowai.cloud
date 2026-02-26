@@ -107,19 +107,19 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import("@/lib/prisma");
     const usages = await prisma.aIModelUsage.findMany({
       where: {
-        userId: user.id,
-        createdAt: {
+        user_id: user.id,
+        created_at: {
           gte: startDate,
           lte: endDate,
         },
       },
       orderBy: {
-        createdAt: "desc",
+        created_at: "desc",
       },
     });
 
     // Export to CSV
-    const csv = exportUsageToCSV(usages as unknown as Array<Record<string, unknown>>);
+    const csv = exportUsageToCSV(usages as unknown as import("@/lib/ai/analytics/usage-tracker").UsageExportRow[]);
 
     return new Response(csv, {
       headers: {
