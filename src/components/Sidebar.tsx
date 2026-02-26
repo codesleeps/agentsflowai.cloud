@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import {
   ExternalLink,
@@ -17,6 +17,8 @@ import {
   Users as TeamIcon,
   Activity,
   Rocket,
+  Menu,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -48,6 +50,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -221,5 +225,88 @@ export function Sidebar() {
         </SidebarFooter>
       )}
     </SidebarPrimitive>
+  );
+}
+
+// Mobile navigation component with hamburger menu
+export function MobileNav() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[280px] p-0">
+        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-primary" />
+              <span className="font-semibold">AgentsFlowAI</span>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex-1 overflow-auto py-4">
+            <div className="px-3 mb-6">
+              <p className="text-xs font-medium text-muted-foreground mb-2 px-3">Navigation</p>
+              <nav className="space-y-1">
+                {mainNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                      pathname === item.href
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            <div className="px-3">
+              <p className="text-xs font-medium text-muted-foreground mb-2 px-3">Account</p>
+              <nav className="space-y-1">
+                {settingsNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                      pathname === item.href
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t">
+            <ThemeToggle />
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
