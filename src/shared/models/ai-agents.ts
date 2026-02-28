@@ -260,7 +260,7 @@ Always prioritize developer experience, maintainability, and production readines
       "Data analysis, insights generation, and business intelligence",
     icon: "📊",
     category: "analytics",
-    model: "z-ai/glm-4.5-air",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "low",
@@ -279,7 +279,7 @@ Always prioritize developer experience, maintainability, and production readines
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "z-ai/glm-4.5-air",
+        model: "z-ai/glm-5",
         priority: 1,
       },
       {
@@ -309,7 +309,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     description: "Blog posts, articles, copy, and all types of written content",
     icon: "✍️",
     category: "content-creation",
-    model: "z-ai/glm-4.5-air",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "medium",
@@ -328,7 +328,7 @@ Always provide specific, actionable recommendations. Use data to support your in
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "z-ai/glm-4.5-air",
+        model: "z-ai/glm-5",
         priority: 1,
       },
       {
@@ -359,7 +359,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
       "Campaign strategies, ad copy, funnels, and marketing automation",
     icon: "📣",
     category: "marketing",
-    model: "z-ai/glm-4.5-air",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "medium",
@@ -378,7 +378,7 @@ Always focus on clarity, engagement, and conversion. Use storytelling techniques
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "z-ai/glm-4.5-air",
+        model: "z-ai/glm-5",
         priority: 1,
       },
       {
@@ -408,7 +408,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     description: "Social media content, scheduling, engagement strategies",
     icon: "📱",
     category: "social-media",
-    model: "z-ai/glm-4.5-air",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "low",
@@ -427,7 +427,7 @@ Always focus on measurable results and ROI. Consider the customer journey. Use p
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "z-ai/glm-4.5-air",
+        model: "z-ai/glm-5",
         priority: 1,
       },
       {
@@ -458,7 +458,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
       "Search engine optimization, keywords, meta tags, and rankings",
     icon: "🔍",
     category: "seo",
-    model: "z-ai/glm-4.5-air",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "medium",
@@ -477,7 +477,7 @@ Always consider platform-specific best practices. Focus on engagement and commun
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "z-ai/glm-4.5-air",
+        model: "z-ai/glm-5",
         priority: 1,
       },
       {
@@ -548,7 +548,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "Powered by Chinese AI models for advanced reasoning and speed",
     icon: "✨",
     category: "fast-chat",
-    model: "z-ai/glm-4.5-air",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "low",
@@ -566,7 +566,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "z-ai/glm-4.5-air",
+        model: "z-ai/glm-5",
         priority: 1
       },
       {
@@ -592,7 +592,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     description: "Creative image generation and editing powered by advanced AI models",
     icon: "🍌",
     category: "content-creation",
-    model: "z-ai/glm-4.5-air",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "medium",
@@ -610,7 +610,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "z-ai/glm-4.5-air",
+        model: "z-ai/glm-5",
         priority: 1,
       },
       {

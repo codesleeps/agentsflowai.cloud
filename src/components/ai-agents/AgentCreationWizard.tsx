@@ -137,8 +137,8 @@ const modelOptions = {
       description: "Cost-effective Chinese model, excellent for coding",
     },
     {
-      value: "z-ai/glm-4.5-air",
-      label: "GLM-4.5-Air",
+      value: "z-ai/glm-5",
+      label: "GLM-5",
       description: "Agent-optimized Chinese model with reasoning capabilities",
     },
     {

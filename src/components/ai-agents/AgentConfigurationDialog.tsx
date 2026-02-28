@@ -64,7 +64,7 @@ const modelOptions = {
   ],
   openrouter: [
     { value: "deepseek/deepseek-chat", label: "DeepSeek Chat" },
-    { value: "z-ai/glm-4.5-air", label: "GLM-4.5-Air" },
+    { value: "z-ai/glm-5", label: "GLM-5" },
     { value: "deepseek/deepseek-chat:free", label: "DeepSeek Chat (Free)" },
     { value: "anthropic/claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
     { value: "openai/gpt-4-turbo", label: "GPT-4 Turbo" },
