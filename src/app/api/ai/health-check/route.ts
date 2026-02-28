@@ -353,8 +353,8 @@ export async function GET() {
   const [ollamaResult, openrouterResult, openaiResult] = await Promise.all([
     testProviderWithTimeout("ollama", "mistral:7b"),
     environment.openrouter_key_configured
-      ? testProviderWithTimeout("openrouter", "z-ai/glm-4.5-air")
-      : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "z-ai/glm-4.5-air", error: "OPENROUTER_API_KEY not configured", key_status: "missing" }),
+      ? testProviderWithTimeout("openrouter", "anthropic/claude-3.5-sonnet")
+      : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "anthropic/claude-3.5-sonnet", error: "OPENROUTER_API_KEY not configured", key_status: "missing" }),
     environment.openai_key_configured
       ? testProviderWithTimeout("openai", "gpt-4o-mini")
       : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "gpt-4o-mini", error: "OPENAI_API_KEY not configured", key_status: "missing" }),
