@@ -48,11 +48,9 @@ interface HealthCheckResponse {
   providers: {
     ollama: ProviderStatus;
     openrouter: ProviderStatus;
-    openai: ProviderStatus;
   };
   environment: {
     ollama_configured: boolean;
-    openai_key_configured: boolean;
     openrouter_key_configured: boolean;
   };
 }
@@ -349,33 +347,27 @@ export async function GET() {
   // Get cached startup validation data
   const startupValidation = getAllProviderStatuses();
 
-  // Test all providers concurrently
-  const [ollamaResult, openrouterResult, openaiResult] = await Promise.all([
+  // Test all providers concurrently (OpenAI removed - not configured)
+  const [ollamaResult, openrouterResult] = await Promise.all([
     testProviderWithTimeout("ollama", "mistral:7b"),
     environment.openrouter_key_configured
       ? testProviderWithTimeout("openrouter", "z-ai/glm-5")
       : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "z-ai/glm-5", error: "OPENROUTER_API_KEY not configured", key_status: "missing" }),
-    environment.openai_key_configured
-      ? testProviderWithTimeout("openai", "gpt-4o-mini")
-      : Promise.resolve<ProviderStatus>({ status: "unhealthy", model: "gpt-4o-mini", error: "OPENAI_API_KEY not configured", key_status: "missing" }),
   ]);
 
-  // Fetch model lists concurrently for all providers
-  const [ollamaModels, openrouterModels, openaiModels] = await Promise.all([
+  // Fetch model lists concurrently for configured providers
+  const [ollamaModels, openrouterModels] = await Promise.all([
     getOllamaModels(),
     getOpenRouterModels(),
-    getOpenAIModels(),
   ]);
 
   // Process Ollama models and check for missing required models
   if (ollamaModels.length > 0 || ollamaResult.status !== "unhealthy" || (ollamaResult.error && !ollamaResult.error.includes("not configured"))) {
     ollamaResult.available_models = ollamaModels;
 
-    // Check for missing agent-required models
+    // Check for missing agent-required models (only check for models that are actually needed)
     const requiredModels = [
       { name: 'mistral:7b', size: '3.8GB' },
-      { name: 'llama3.1:8b', size: '4.7GB' },
-      { name: 'gemma2:9b', size: '5.4GB' },
     ];
 
     const missingModels = requiredModels.filter(model => !ollamaModels.includes(model.name));
@@ -403,17 +395,7 @@ export async function GET() {
     }
   }
 
-  // Process OpenAI models
-  if (openaiModels.length > 0 && openaiResult.status === "healthy") {
-    openaiResult.available_models = openaiModels;
-  } else if (openaiResult.status !== "unhealthy" && environment.openai_key_configured) {
-    const testedModel = "gpt-4o-mini";
-    if (openaiModels.length > 0 && !openaiModels.includes(testedModel)) {
-      openaiResult.status = "degraded";
-      openaiResult.error = `Model ${testedModel} not available`;
-      openaiResult.available_models = openaiModels;
-    }
-  }
+  // OpenAI removed - not configured
 
   // Merge startup validation data into provider results
   const ollamaValidation = startupValidation.get("Ollama");
@@ -450,31 +432,11 @@ export async function GET() {
     }
   }
 
-  const openaiValidation = startupValidation.get("OpenAI");
-  if (openaiValidation && !openaiResult.key_status) {
-    openaiResult.key_status = openaiValidation.status;
-    openaiResult.renewal_url = openaiValidation.renewalUrl;
-    openaiResult.env_var_name = openaiValidation.envVarName;
-    if (openaiValidation.status === "expired" || openaiValidation.status === "invalid") {
-      openaiResult.remediation_steps = [
-        openaiValidation.message || "API key validation failed",
-        `Visit ${openaiValidation.renewalUrl} to manage your API key`,
-        `Update ${openaiValidation.envVarName} in your environment variables`,
-        "Restart the application after updating the key",
-      ];
-    } else if (openaiValidation.status === "missing") {
-      openaiResult.remediation_steps = [
-        `Obtain an API key from ${openaiValidation.renewalUrl}`,
-        `Set ${openaiValidation.envVarName} in your environment variables`,
-        "Restart the application after adding the key",
-      ];
-    }
-  }
+  // OpenAI validation removed - not configured
 
   const providers = {
     ollama: ollamaResult,
     openrouter: openrouterResult,
-    openai: openaiResult,
   };
 
   // Determine overall status
