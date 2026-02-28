@@ -59,9 +59,6 @@ async function testProvider(providerName: string, model: string): Promise<Provid
   const startTime = Date.now();
 
   try {
-    // Simple ping test instead of complex provider testing
-    const testMessage = "Hello, respond with 'OK'";
-    
     // Make direct API call to test provider
     let responseOk = false;
     
@@ -99,40 +96,6 @@ async function testProvider(providerName: string, model: string): Promise<Provid
         responseOk = response.ok;
       } catch (e) {
         console.error("OpenRouter health check error:", e);
-        responseOk = false;
-      }
-    } else if (providerName === "openai") {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey === 'your-openai-key' || apiKey.startsWith('sk-xxxxx')) {
-        return {
-          status: "unhealthy",
-          model,
-          error: "OPENAI_API_KEY not configured",
-          key_status: "missing",
-        };
-      }
-      try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: [{ role: "user", content: "Hi" }],
-            max_tokens: 5
-          }),
-          signal: AbortSignal.timeout(15000)
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`OpenAI health check failed: ${response.status} - ${errorText}`);
-        }
-        responseOk = response.ok;
-      } catch (e) {
-        console.error("OpenAI health check error:", e);
         responseOk = false;
       }
     } else if (providerName === "ollama") {
@@ -297,30 +260,6 @@ async function getOpenRouterModels(): Promise<string[]> {
   }
 }
 
-async function getOpenAIModels(): Promise<string[]> {
-  try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return [];
-
-    const response = await fetch("https://api.openai.com/v1/models", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.data?.map((m: any) => m.id) || [];
-    }
-    return [];
-  } catch {
-    return [];
-  }
-}
-
 async function testProviderWithTimeout(providerName: string, model: string): Promise<ProviderStatus> {
   return Promise.race([
     testProvider(providerName, model),
@@ -340,7 +279,6 @@ export async function GET() {
   // Check environment variables at runtime
   const environment = {
     ollama_configured: !!process.env.OLLAMA_BASE_URL,
-    openai_key_configured: !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your-openai-key' && !process.env.OPENAI_API_KEY.startsWith('sk-xxxxx'),
     openrouter_key_configured: !!process.env.OPENROUTER_API_KEY,
   };
 
