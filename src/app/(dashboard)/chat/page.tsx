@@ -20,25 +20,25 @@ import { toast } from "sonner";
 
 const SERVICES = [
   {
-    id: "basic",
-    name: "Basic",
-    description: "Perfect for getting started with essential features",
-    tier: "basic" as const,
-    price: 99,
+    id: "starter",
+    name: "Starter",
+    description: "Perfect for small businesses getting started",
+    tier: "starter" as const,
+    price: 49,
   },
   {
     id: "growth",
     name: "Growth",
-    description: "Ideal for growing businesses with advanced features",
+    description: "Scale your business with advanced automation",
     tier: "growth" as const,
-    price: 299,
+    price: 149,
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    description: "Complete solution for large organizations",
+    description: "Complete digital transformation solution",
     tier: "enterprise" as const,
-    price: 999,
+    price: 299,
   },
 ];
 
@@ -324,7 +324,7 @@ export default function ChatPage() {
                     </Badge>
                   </div>
                   <p className="text-lg font-bold text-primary">
-                    ${service.price.toLocaleString()}
+                    £{service.price.toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                     {service.description}

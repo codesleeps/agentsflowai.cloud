@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const tierColors: Record<string, string> = {
-  basic: "bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30",
+  starter: "bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30",
   growth:
     "bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-500/30",
   enterprise:
@@ -22,7 +22,7 @@ const tierColors: Record<string, string> = {
 };
 
 const tierIcons: Record<string, React.ReactNode> = {
-  basic: <Package className="h-6 w-6" />,
+  starter: <Package className="h-6 w-6" />,
   growth: <Sparkles className="h-6 w-6" />,
   enterprise: <Star className="h-6 w-6" />,
 };
@@ -30,51 +30,50 @@ const tierIcons: Record<string, React.ReactNode> = {
 // Predefined service packages
 const SERVICE_PACKAGES = [
   {
-    id: "basic",
-    name: "Basic",
-    description: "Perfect for getting started with essential features",
-    tier: "basic" as const,
-    price: 99,
+    id: "starter",
+    name: "Starter",
+    description: "Perfect for small businesses getting started",
+    tier: "starter" as const,
+    price: 49,
     features: [
-      "Up to 1,000 leads per month",
+      "AI Chat Agent",
+      "Up to 500 conversations/month",
       "Basic lead scoring",
-      "Email notifications",
-      "Standard support",
-      "Basic analytics dashboard",
+      "Email support",
+      "1 team member",
     ],
   },
   {
     id: "growth",
     name: "Growth",
-    description: "Ideal for growing businesses with advanced features",
+    description: "Scale your business with advanced automation",
     tier: "growth" as const,
-    price: 299,
+    price: 149,
     features: [
-      "Up to 10,000 leads per month",
-      "Advanced lead scoring with AI",
-      "Priority email & chat support",
-      "Custom workflows automation",
-      "Advanced analytics & reporting",
-      "Lead enrichment (up to 500/month)",
-      "Integration with popular CRM tools",
+      "Everything in Starter",
+      "Unlimited conversations",
+      "Advanced AI qualification",
+      "Priority support",
+      "5 team members",
+      "Custom integrations",
+      "Analytics dashboard",
     ],
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    description: "Complete solution for large organizations",
+    description: "Complete digital transformation solution",
     tier: "enterprise" as const,
-    price: 999,
+    price: 299,
     features: [
-      "Unlimited leads",
-      "AI-powered lead scoring & insights",
+      "Everything in Growth",
       "Dedicated account manager",
-      "Custom integrations & API access",
-      "Advanced team collaboration tools",
-      "Unlimited lead enrichment",
-      "White-label solutions",
-      "SLA guarantees & premium support",
-      "Custom feature development",
+      "Custom AI training",
+      "24/7 phone support",
+      "Unlimited team members",
+      "White-label options",
+      "SLA guarantee",
+      "API access",
     ],
   },
 ];
@@ -102,8 +101,8 @@ export default function ServicesPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {SERVICE_PACKAGES.map((service) => (
           <Card key={service.id} className="relative overflow-hidden">
-            {service.tier === "enterprise" && (
-              <div className="absolute right-0 top-0 rounded-bl-lg bg-amber-500 px-3 py-1 text-xs font-semibold text-white">
+            {service.tier === "growth" && (
+              <div className="absolute right-0 top-0 rounded-bl-lg bg-purple-500 px-3 py-1 text-xs font-semibold text-white">
                 Most Popular
               </div>
             )}
@@ -122,7 +121,7 @@ export default function ServicesPage() {
             <CardContent>
               <div className="mb-6">
                 <span className="text-4xl font-bold">
-                  ${service.price.toLocaleString()}
+                  £{service.price.toLocaleString()}
                 </span>
                 <span className="text-muted-foreground">/month</span>
               </div>
@@ -138,7 +137,7 @@ export default function ServicesPage() {
             <CardFooter>
               <Button
                 className="w-full"
-                variant={service.tier === "enterprise" ? "default" : "outline"}
+                variant={service.tier === "growth" ? "default" : "outline"}
               >
                 Get Started
               </Button>
