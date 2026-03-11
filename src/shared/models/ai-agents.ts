@@ -503,7 +503,7 @@ Always follow current SEO best practices. Focus on user intent and search qualit
       "High-speed responses using cost-effective Chinese models for quick answers and chat",
     icon: "⚡",
     category: "fast-chat",
-    model: "deepseek/deepseek-chat:free",
+    model: "z-ai/glm-5",
     provider: "openrouter",
     defaultProvider: "openrouter",
     costTier: "low",
@@ -521,18 +521,13 @@ Always follow current SEO best practices. Focus on user intent and search qualit
     supportedProviders: [
       {
         provider: "openrouter",
-        model: "deepseek/deepseek-chat:free",
+        model: "z-ai/glm-5",
         priority: 1
       },
       {
-        provider: "openrouter",
-        model: "z-ai/glm-4.5-air:free",
-        priority: 2
-      },
-      {
         provider: "ollama",
-        model: "mistral:7b",
-        priority: 3
+        model: "mistral:latest",
+        priority: 2
       },
     ],
     systemPrompt: `You are a helpful, fast, and efficient AI assistant powered by cost-effective Chinese models.

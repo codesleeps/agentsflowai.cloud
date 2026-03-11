@@ -71,7 +71,8 @@
 
 .hud-card::before {
   content: '';
-  /* stylelint-disable at-rule-no-unknown */ absolute top-0 left-0 w-[2px] h-0 bg-primary transition-all duration-700 ease-in-out;
+  /* stylelint-disable at-rule-no-unknown */
+  @apply absolute top-0 left-0 w-[2px] h-0 bg-primary transition-all duration-700 ease-in-out;
 }
 
 .hud-card:hover::before {
