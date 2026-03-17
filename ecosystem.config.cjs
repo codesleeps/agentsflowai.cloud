@@ -19,7 +19,7 @@ module.exports = {
             // Secrets should be stored in .env.production on the server
             env_production: {
                 NODE_ENV: "production",
-                PORT: 3006,
+                PORT: 3000,
                 NEXT_PUBLIC_APP_URL: "https://agentsflowai.cloud",
                 BETTER_AUTH_URL: "https://agentsflowai.cloud",
                 TRUST_PROXY: "true"
