@@ -41,7 +41,6 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.className}`}>
-      <GoogleAnalytics />
       <body className="min-h-screen">
         <Providers
           attribute="class"
@@ -52,6 +51,7 @@ export default function RootLayout({
           {children}
           <Toaster richColors />
           <CommandPalette />
+          <GoogleAnalytics />
         </Providers>
       </body>
     </html>

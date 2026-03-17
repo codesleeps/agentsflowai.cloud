@@ -2,13 +2,10 @@
 
 import Script from 'next/script';
 
-export default function GoogleAnalytics() {
-  const GA_MEASUREMENT_ID = 'G-PETMLFLKEN';
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-PETMLFLKEN';
 
-  // Only load in production
-  if (process.env.NODE_ENV !== 'production') {
-    return null;
-  }
+export default function GoogleAnalytics() {
+  if (!GA_MEASUREMENT_ID) return null;
 
   return (
     <>
