@@ -3,14 +3,12 @@ import { getEnv } from "@/lib/env-validation";
 
 const env = getEnv();
 
-// Validate baseURL for production
-const baseURL = env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://agentsflowai.cloud");
-
-if (env.NODE_ENV === "production" && !baseURL.startsWith("https://")) {
-  console.warn(
-    "[AUTH] Warning: Using non-HTTPS baseURL in production. This is not recommended for security reasons.",
-  );
-}
+// Always use the current browser origin in the browser to avoid baked-in URL mismatches.
+// Falls back to NEXT_PUBLIC_APP_URL for SSR, then the production domain.
+const baseURL =
+  typeof window !== "undefined"
+    ? window.location.origin
+    : env.NEXT_PUBLIC_APP_URL || "https://agentsflowai.cloud";
 
 export const authClient = createAuthClient({
   baseURL,
