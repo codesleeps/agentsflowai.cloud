@@ -8,22 +8,27 @@ export default function HomePage() {
   const router = useRouter();
   const { data: auth, isPending, error } = useAuthSession();
   const [mounted, setMounted] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    // Safety timeout — if isPending never resolves, redirect to welcome after 4s
+    const timer = setTimeout(() => setTimedOut(true), 4000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (mounted && !isPending) {
-      if (error || !auth?.user) {
-        router.replace("/welcome");
-      } else {
+    const resolved = mounted && (!isPending || timedOut);
+    if (resolved) {
+      if (auth?.user) {
         router.replace("/dashboard");
+      } else {
+        router.replace("/welcome");
       }
     }
-  }, [mounted, isPending, auth, error, router]);
+  }, [mounted, isPending, timedOut, auth, error, router]);
 
-  if (!mounted || isPending) {
+  if (!mounted || (isPending && !timedOut)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">

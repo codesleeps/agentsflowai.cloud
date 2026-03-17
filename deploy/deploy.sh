@@ -226,6 +226,8 @@ npx prisma db seed 2>/dev/null || echo "Seed skipped"
 
 # Restart PM2
 echo "Restarting PM2..."
+fuser -k 3000/tcp 2>/dev/null || true
+sleep 1
 pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
 
 # Save PM2 config
