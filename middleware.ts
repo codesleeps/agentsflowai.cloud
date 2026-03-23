@@ -282,15 +282,15 @@ export async function middleware(request: NextRequest) {
   // DevTools). In production it is omitted to enforce a stricter CSP.
   const scriptSrc =
     process.env.NODE_ENV === "development"
-      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-      : "script-src 'self' 'unsafe-inline'";
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com"
+      : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com";
 
   const cspDirectives = [
     "default-src 'self'",
     scriptSrc,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://vybe.build https://i.ibb.co https://cdn.brandfetch.io",
-    "connect-src 'self' https://vybe.build",
+    "img-src 'self' data: https://vybe.build https://i.ibb.co https://cdn.brandfetch.io https://www.google-analytics.com",
+    "connect-src 'self' https://vybe.build https://www.google-analytics.com",
     "font-src 'self' data:",
     "frame-ancestors 'none'",
   ];
