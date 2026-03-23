@@ -13,6 +13,7 @@ const TEST_AGENT: AIAgent = {
   category: "fast-chat",
   systemPrompt: "You are a test agent. Respond with 'OK' to any message.",
   capabilities: ["Test responses"],
+  skills: [],
   model: "mistral:7b",
   provider: "ollama",
   supportedProviders: [
