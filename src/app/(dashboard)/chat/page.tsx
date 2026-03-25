@@ -182,7 +182,7 @@ export default function ChatPage() {
   ];
 
   return (
-    <div className="flex flex-1 flex-col h-full">
+    <div className="flex flex-1 flex-col h-full max-w-full overflow-x-hidden">
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="p-4">
           <div className="flex items-center justify-between">

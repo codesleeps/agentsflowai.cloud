@@ -126,7 +126,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container mx-auto max-w-4xl py-8">
+    <div className="container mx-auto max-w-4xl py-8 overflow-x-hidden">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Profile</h1>
         <p className="text-muted-foreground">

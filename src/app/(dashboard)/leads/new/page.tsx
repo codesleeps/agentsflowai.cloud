@@ -128,7 +128,7 @@ Based on the information, estimate their:
   };
 
   return (
-    <div className="flex flex-1 flex-col p-6 gap-6">
+    <div className="flex flex-1 flex-col p-6 gap-6 max-w-full overflow-x-hidden">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/leads">

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AutonomousOrchestratorPage() {
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 max-w-full overflow-x-hidden">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <h1 className="text-3xl font-bold tracking-tight">Autonomous Agent Orchestrator</h1>

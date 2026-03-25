@@ -315,7 +315,7 @@ export default function DiagnosticsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-full overflow-x-hidden">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">

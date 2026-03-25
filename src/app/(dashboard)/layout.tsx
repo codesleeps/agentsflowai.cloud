@@ -7,7 +7,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <MobileNav />
       <SidebarInset className="bg-transparent">
-        <main className="flex-1 p-4 pt-16 md:pt-4">{children}</main>
+        <main className="flex-1 p-4 pt-16 md:pt-4 overflow-x-hidden">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
