@@ -94,7 +94,7 @@ test_ssh_connection() {
             exit 1
         fi
         # Set password
-        export SSHPASS="7+VaNv6t2oC?vI)+YiLF"
+        export SSHPASS="Uk8&-47Oq-Qp#R3n;Ks3"
         set +e
         output=$(sshpass -e ssh -o ConnectTimeout=10 -o BatchMode=yes "$SERVER" "echo 'Connection successful'" 2>&1)
         exit_code=$?
